@@ -11,6 +11,7 @@ import type { OpponentView } from '@/components/tetris/opponent-field';
 import { RankBadge, RankProgressBar } from '@/components/tetris/rank-badge';
 import type { RankProgress } from '@/components/tetris/rank-badge';
 import { ShareResult } from '@/components/tetris/share-result';
+import { VersusIntro } from '@/components/tetris/versus-intro';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { sendJson } from '@/lib/api';
@@ -68,6 +69,10 @@ type Member = { id: number; name: string };
 type Presence = 'connecting' | 'waiting' | 'online' | 'left';
 /** s: board snapshot, p: pending garbage, l: lines sent, c: lines cleared. */
 type BoardWhisper = { s: string; p: number; l: number; c?: number };
+
+/** The last part of the pre-match countdown, shown on the board; the versus intro plays before it. */
+const BOARD_COUNTDOWN_MS = 5000;
+const INTRO_FADE_MS = 350;
 
 /** How long the board stays frozen after being topped out. */
 const KO_PAUSE_MS = 1500;
@@ -459,6 +464,9 @@ export default function Duel({
 
     const remaining = Math.max(0, endsAt - Math.max(clock, startsAt));
     const countdown = Math.ceil((startsAt - clock) / 1000);
+    // Skipped on a late (re)load, once its slot in the countdown has passed.
+    const introLeft = startsAt - BOARD_COUNTDOWN_MS - clock;
+    const minutes = Math.round((endsAt - startsAt) / 60_000);
     const opponentCell = Math.max(10, Math.round(cell * 0.62));
 
     return (
@@ -628,6 +636,31 @@ export default function Duel({
                     </div>
                 </div>
             </div>
+
+            {phase === 'countdown' && introLeft > 0 && (
+                <VersusIntro
+                    me={me}
+                    opponent={opponent}
+                    title={
+                        MODE_LABEL[duel.mode][
+                            duel.ranked ? 'ranked' : 'friendly'
+                        ]
+                    }
+                    rules={
+                        isRace
+                            ? `First to ${raceLines} lines wins · ${minutes} minutes`
+                            : `First to ${kosToWin} KOs wins · ${minutes} minutes`
+                    }
+                    status={
+                        presence === 'connecting'
+                            ? 'Connecting…'
+                            : presence === 'waiting'
+                              ? 'Waiting for opponent…'
+                              : undefined
+                    }
+                    leaving={introLeft < INTRO_FADE_MS}
+                />
+            )}
         </>
     );
 }
