@@ -49,7 +49,7 @@ export function prepareCanvas(
     return ctx;
 }
 
-function drawBlock(
+export function drawBlock(
     ctx: CanvasRenderingContext2D,
     x: number,
     y: number,

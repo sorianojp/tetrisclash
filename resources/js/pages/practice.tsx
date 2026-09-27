@@ -1,10 +1,12 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { RotateCcw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { ClearCallout, describeClear } from '@/components/tetris/clear-callout';
 import type { Callout } from '@/components/tetris/clear-callout';
 import { ControlsLegend } from '@/components/tetris/controls-legend';
 import { FieldOverlay } from '@/components/tetris/field-overlay';
+import { ShareResult } from '@/components/tetris/share-result';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { sendJson } from '@/lib/api';
@@ -21,6 +23,7 @@ import {
     formatRecord,
 } from '@/tetris/practice-modes';
 import type { PracticeMode, PracticeRecords } from '@/tetris/practice-modes';
+import type { ShareCardData } from '@/tetris/share-card';
 import { useCellSize, useTetrisGame } from '@/tetris/use-tetris-game';
 
 type Mode = PracticeMode;
@@ -71,6 +74,7 @@ export default function Practice({
 }: {
     records: PracticeRecords;
 }) {
+    const { auth } = usePage().props;
     const [mode, setMode] = useState<Mode>('sprint');
     const [seed, setSeed] = useState(newSeed);
     const [phase, setPhase] = useState<Phase>('countdown');
@@ -205,7 +209,12 @@ export default function Practice({
     // R restarts at any time.
     useEffect(() => {
         const onKey = (event: KeyboardEvent) => {
-            if (event.code === 'KeyR' && !event.repeat) {
+            // Typing in a dialog (e.g. the share preview) shouldn't restart the run.
+            const inDialog =
+                event.target instanceof Element &&
+                event.target.closest('[role="dialog"]');
+
+            if (event.code === 'KeyR' && !event.repeat && !inDialog) {
                 restart();
             }
         };
@@ -213,6 +222,53 @@ export default function Practice({
 
         return () => window.removeEventListener('keydown', onKey);
     });
+
+    /** The headline number of a run: its time or its score. */
+    const resultValue = (finished: Result) =>
+        showsTime(mode, finished.outcome)
+            ? formatTime(finished.timeMs)
+            : finished.score.toLocaleString();
+
+    const shareText = (finished: Result) =>
+        `${resultTitle(mode, finished.outcome)} ${MODES[mode].label}: ${resultValue(finished)} on Tetris Clash! ${window.location.origin}`;
+
+    /** Snapshot the finished run as a square card. */
+    const shareCard = (finished: Result): ShareCardData => {
+        const game = gameRef.current;
+        const seconds = finished.timeMs / 1000;
+        const pieces = game?.stats.pieces ?? 0;
+
+        return {
+            mode: MODES[mode].label,
+            headline: resultTitle(mode, finished.outcome),
+            tone:
+                finished.newBest || finished.outcome === 'cleared'
+                    ? 'win'
+                    : finished.outcome === 'toppedOut' &&
+                        mode !== 'survival' &&
+                        mode !== 'zen'
+                      ? 'loss'
+                      : 'neutral',
+            subline: MODES[mode].goal,
+            highlight: {
+                label: showsTime(mode, finished.outcome) ? 'Time' : 'Score',
+                value: resultValue(finished),
+            },
+            stats: [
+                ['Lines', String(game?.stats.lines ?? 0)],
+                ['Pieces', String(pieces)],
+                [
+                    'Pieces/sec',
+                    seconds > 0 ? (pieces / seconds).toFixed(2) : '0.00',
+                ],
+                ['Attack', String(game?.stats.linesSent ?? 0)],
+            ],
+            ribbon: finished.newBest ? 'New personal best' : undefined,
+            player: { name: auth.user.name },
+            board: game?.board ?? null,
+            toppedOut: game?.toppedOut,
+        };
+    };
 
     const countdown = Math.ceil((countdownEndsAt - now) / 800);
     const pps =
@@ -326,6 +382,13 @@ export default function Practice({
                                     mode={mode}
                                     result={result}
                                     onRestart={() => restart()}
+                                    share={
+                                        <ShareResult
+                                            getCard={() => shareCard(result)}
+                                            filename={`tetris-clash-${mode}.png`}
+                                            text={shareText(result)}
+                                        />
+                                    }
                                 />
                             </FieldOverlay>
                         )}
@@ -358,38 +421,48 @@ Practice.layout = {
     ],
 };
 
+/** Whether a finished run is measured by time (vs. score). */
+function showsTime(mode: Mode, outcome: Outcome): boolean {
+    return (
+        mode === 'survival' ||
+        ((mode === 'sprint' || mode === 'dig') && outcome === 'cleared')
+    );
+}
+
+function resultTitle(mode: Mode, outcome: Outcome): string {
+    return mode === 'survival'
+        ? 'SURVIVED'
+        : mode === 'zen'
+          ? 'GAME OVER'
+          : outcome === 'cleared'
+            ? 'FINISHED!'
+            : outcome === 'timeUp'
+              ? "TIME'S UP!"
+              : 'TOPPED OUT';
+}
+
 function ResultCard({
     mode,
     result,
     onRestart,
+    share,
 }: {
     mode: Mode;
     result: Result;
     onRestart: () => void;
+    share: ReactNode;
 }) {
     const { outcome, timeMs, score, newBest } = result;
-    const showsTime =
-        mode === 'survival' ||
-        ((mode === 'sprint' || mode === 'dig') && outcome === 'cleared');
+    const timed = showsTime(mode, outcome);
     const showsScore = mode === 'ultra' || mode === 'zen';
-
-    const title =
-        mode === 'survival'
-            ? 'SURVIVED'
-            : mode === 'zen'
-              ? 'GAME OVER'
-              : outcome === 'cleared'
-                ? 'FINISHED!'
-                : outcome === 'timeUp'
-                  ? "TIME'S UP!"
-                  : 'TOPPED OUT';
+    const title = resultTitle(mode, outcome);
 
     return (
         <div className="flex flex-col items-center gap-3 text-center text-white">
             <span className="text-3xl font-black">{title}</span>
-            {(showsTime || showsScore) && (
+            {(timed || showsScore) && (
                 <span className="text-4xl font-bold tabular-nums">
-                    {showsTime ? formatTime(timeMs) : score.toLocaleString()}
+                    {timed ? formatTime(timeMs) : score.toLocaleString()}
                 </span>
             )}
             {newBest && (
@@ -397,9 +470,12 @@ function ResultCard({
                     New personal best!
                 </span>
             )}
-            <Button onClick={onRestart} className="mt-2">
-                <RotateCcw /> Play again
-            </Button>
+            <div className="mt-2 flex flex-wrap justify-center gap-2">
+                <Button onClick={onRestart}>
+                    <RotateCcw /> Play again
+                </Button>
+                {share}
+            </div>
         </div>
     );
 }

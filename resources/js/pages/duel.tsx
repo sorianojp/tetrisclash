@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { echo } from '@laravel/echo-react';
 import { Flag, Swords, WifiOff } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { ClearCallout, describeClear } from '@/components/tetris/clear-callout';
 import type { Callout } from '@/components/tetris/clear-callout';
 import { FieldOverlay } from '@/components/tetris/field-overlay';
@@ -9,6 +10,7 @@ import { OpponentField } from '@/components/tetris/opponent-field';
 import type { OpponentView } from '@/components/tetris/opponent-field';
 import { RankBadge, RankProgressBar } from '@/components/tetris/rank-badge';
 import type { RankProgress } from '@/components/tetris/rank-badge';
+import { ShareResult } from '@/components/tetris/share-result';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { sendJson } from '@/lib/api';
@@ -18,6 +20,7 @@ import { dashboard } from '@/routes';
 import { forfeit, heartbeat, ko } from '@/routes/duels';
 import { launchAttack, pointIn } from '@/tetris/projectiles';
 import { PLAYER_LAYOUT } from '@/tetris/render';
+import type { ShareCardData } from '@/tetris/share-card';
 import { useCellSize, useTetrisGame } from '@/tetris/use-tetris-game';
 
 type DuelState = {
@@ -381,6 +384,79 @@ export default function Duel({
 
     const myKos = state.kos[me.id] ?? 0;
     const theirKos = state.kos[opponent.id] ?? 0;
+    const modeLabel =
+        MODE_LABEL[duel.mode][duel.ranked ? 'ranked' : 'friendly'];
+    const rankedUpNow = me.rank.rank > rankAtStart;
+
+    const shareText = () => {
+        const { outcome } = describeOutcome(state, me, opponent, raceLines);
+        const verb = { win: 'won', loss: 'lost', draw: 'drew' }[outcome];
+
+        return `I ${verb} a ${modeLabel.toLowerCase()} against ${opponent.name} on Tetris Clash! ${window.location.origin}`;
+    };
+
+    /** Snapshot the finished match as a square card. */
+    const shareCard = (): ShareCardData => {
+        const game = gameRef.current;
+        const { outcome, reason } = describeOutcome(
+            state,
+            me,
+            opponent,
+            raceLines,
+        );
+        const change = state.ratingChange ?? 0;
+        const xpGained = state.xp[me.id] ?? 0;
+        const lines = game?.stats.lines ?? 0;
+        const seconds = (game?.elapsedMs ?? 0) / 1000;
+        const pps =
+            seconds > 0 ? (game!.stats.pieces / seconds).toFixed(2) : '0.00';
+
+        const stats: [string, string][] = isRace
+            ? [
+                  ['Pieces', String(game?.stats.pieces ?? 0)],
+                  ['Pieces/sec', pps],
+                  ['Opponent', `${progress.theirLines} lines`],
+                  ['Time', formatTime(game?.elapsedMs ?? 0)],
+              ]
+            : [
+                  ['Lines sent', String(game?.stats.linesSent ?? 0)],
+                  ['Lines cleared', String(lines)],
+                  ['Pieces/sec', pps],
+                  ['Time', formatTime(game?.elapsedMs ?? 0, false)],
+              ];
+
+        if (state.ranked && outcome !== 'draw' && change > 0) {
+            stats[2] = ['Rating', `${outcome === 'win' ? '+' : '−'}${change}`];
+        }
+
+        if (state.ranked) {
+            stats[3] = ['XP', `+${xpGained}`];
+        }
+
+        return {
+            mode: modeLabel,
+            headline: { win: 'Victory', loss: 'Defeat', draw: 'Draw' }[outcome],
+            tone:
+                outcome === 'win'
+                    ? 'win'
+                    : outcome === 'loss'
+                      ? 'loss'
+                      : 'neutral',
+            subline: `vs ${opponent.name} · ${reason}`,
+            highlight: isRace
+                ? {
+                      label: 'Lines',
+                      value: `${Math.min(lines, raceLines)} / ${raceLines}`,
+                  }
+                : { label: 'KOs', value: `${myKos} – ${theirKos}` },
+            stats,
+            ribbon: rankedUpNow ? `Rank up! ${me.rank.title}` : undefined,
+            player: { name: me.name, rank: me.rank },
+            board: game?.board ?? null,
+            toppedOut: game?.toppedOut,
+        };
+    };
+
     const remaining = Math.max(0, endsAt - Math.max(clock, startsAt));
     const countdown = Math.ceil((startsAt - clock) / 1000);
     const opponentCell = Math.max(10, Math.round(cell * 0.62));
@@ -483,7 +559,14 @@ export default function Duel({
                                     me={me}
                                     opponent={opponent}
                                     raceLines={raceLines}
-                                    rankedUp={me.rank.rank > rankAtStart}
+                                    rankedUp={rankedUpNow}
+                                    share={
+                                        <ShareResult
+                                            getCard={shareCard}
+                                            filename={`tetris-clash-${duel.mode}-${duel.id}.png`}
+                                            text={shareText()}
+                                        />
+                                    }
                                 />
                             </FieldOverlay>
                         )}
@@ -645,19 +728,13 @@ function PlayerPlate({
     );
 }
 
-function Result({
-    state,
-    me,
-    opponent,
-    raceLines,
-    rankedUp,
-}: {
-    state: DuelState;
-    me: Player;
-    opponent: Player;
-    raceLines: number;
-    rankedUp: boolean;
-}) {
+/** Who won, from this player's side, and a short reason why. */
+function describeOutcome(
+    state: DuelState,
+    me: Player,
+    opponent: Player,
+    raceLines: number,
+): { outcome: 'win' | 'loss' | 'draw'; reason: string } {
     const outcome =
         state.winnerId === null
             ? 'draw'
@@ -678,6 +755,26 @@ function Result({
                 ? `${opponent.name} disconnected`
                 : 'you disconnected',
     }[state.finishReason ?? 'time'];
+
+    return { outcome, reason };
+}
+
+function Result({
+    state,
+    me,
+    opponent,
+    raceLines,
+    rankedUp,
+    share,
+}: {
+    state: DuelState;
+    me: Player;
+    opponent: Player;
+    raceLines: number;
+    rankedUp: boolean;
+    share: ReactNode;
+}) {
+    const { outcome, reason } = describeOutcome(state, me, opponent, raceLines);
     const change = state.ratingChange ?? 0;
     const xpGained = state.xp[me.id] ?? 0;
 
@@ -728,7 +825,7 @@ function Result({
                     <RankProgressBar progress={me.rank} className="w-56" />
                 </>
             )}
-            <div className="mt-3 flex gap-2">
+            <div className="mt-3 flex flex-wrap justify-center gap-2">
                 {state.ranked && (
                     <Button
                         onClick={() =>
@@ -741,6 +838,7 @@ function Result({
                 <Button variant="secondary" asChild>
                     <Link href={dashboard()}>Lobby</Link>
                 </Button>
+                {share}
             </div>
         </div>
     );
