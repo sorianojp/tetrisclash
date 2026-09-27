@@ -2,6 +2,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEcho } from '@laravel/echo-react';
 import { Check, Copy, Flag, Swords } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { RankBadge } from '@/components/tetris/rank-badge';
 import type { RankProgress } from '@/components/tetris/rank-badge';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,8 @@ type Props = {
         rating: number;
         rank: RankProgress;
     };
+    /** Set when this is an invite to one player rather than a shareable link. */
+    invitee: { id: number; name: string } | null;
     isChallenger: boolean;
     serverNow: number;
 };
@@ -58,6 +61,7 @@ const POLL_MS = 5000;
 export default function Challenge({
     challenge,
     challenger,
+    invitee,
     isChallenger,
     serverNow,
 }: Props) {
@@ -73,6 +77,17 @@ export default function Challenge({
         `App.Models.User.${auth.user.id}`,
         'DuelFound',
         ({ duelId }) => router.visit(showDuel(duelId)),
+    );
+
+    useEcho<{ code: string; reason: string }>(
+        `App.Models.User.${auth.user.id}`,
+        'InviteClosed',
+        ({ code, reason }) => {
+            if (code === challenge.code && reason === 'declined') {
+                toast.info(`${invitee?.name ?? 'They'} declined your invite.`);
+                router.visit(dashboard());
+            }
+        },
     );
 
     useEffect(() => {
@@ -102,7 +117,9 @@ export default function Challenge({
                         <CardTitle className="flex items-center gap-2">
                             <mode.icon className="size-5" />
                             {isChallenger
-                                ? `Your ${mode.label.toLowerCase()} challenge`
+                                ? invitee
+                                    ? `${mode.label} invite to ${invitee.name}`
+                                    : `Your ${mode.label.toLowerCase()} challenge`
                                 : `${challenger.name} challenges you!`}
                         </CardTitle>
                         <CardDescription>
@@ -128,7 +145,33 @@ export default function Challenge({
                         {challenge.status === 'accepted' ? (
                             <Closed message="This challenge was already accepted." />
                         ) : expired ? (
-                            <Closed message="This challenge has expired." />
+                            <Closed
+                                message={
+                                    invitee && isChallenger
+                                        ? `${invitee.name} didn't answer in time.`
+                                        : 'This challenge has expired.'
+                                }
+                            />
+                        ) : isChallenger && invitee ? (
+                            <>
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Spinner />
+                                    Waiting for {invitee.name} to accept…{' '}
+                                    <span className="tabular-nums">
+                                        {formatTime(remaining, false)}
+                                    </span>
+                                </div>
+                                <Button
+                                    variant="ghost"
+                                    onClick={() =>
+                                        router.delete(
+                                            destroy(challenge.code).url,
+                                        )
+                                    }
+                                >
+                                    Cancel invite
+                                </Button>
+                            </>
                         ) : isChallenger ? (
                             <>
                                 <div className="flex flex-col gap-2">

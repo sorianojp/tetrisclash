@@ -3,6 +3,7 @@
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\ChallengeController;
 use App\Http\Controllers\DuelController;
+use App\Http\Controllers\InviteController;
 use App\Http\Controllers\LobbyController;
 use App\Http\Controllers\MatchmakingController;
 use App\Http\Controllers\PlayerController;
@@ -27,7 +28,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('challenges', [ChallengeController::class, 'store'])->middleware('throttle:20,1')->name('challenges.store');
     Route::get('challenges/{challenge}', [ChallengeController::class, 'show'])->name('challenges.show');
     Route::post('challenges/{challenge}/accept', [ChallengeController::class, 'accept'])->name('challenges.accept');
+    Route::post('challenges/{challenge}/decline', [ChallengeController::class, 'decline'])->name('challenges.decline');
     Route::delete('challenges/{challenge}', [ChallengeController::class, 'destroy'])->name('challenges.destroy');
+
+    Route::post('players/{player}/invite', [InviteController::class, 'store'])->middleware('throttle:20,1')->name('players.invite');
+    Route::patch('invites/preference', [InviteController::class, 'preference'])->name('invites.preference');
 
     Route::get('players/{player}', [PlayerController::class, 'show'])->name('players.show');
 });

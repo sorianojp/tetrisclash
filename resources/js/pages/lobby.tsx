@@ -12,6 +12,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { ControlsLegend } from '@/components/tetris/controls-legend';
 import { DuelHistory } from '@/components/tetris/duel-history';
+import { OnlinePlayers } from '@/components/tetris/online-players';
 import type { DuelSummary } from '@/components/tetris/duel-history';
 import { RankBadge, RankProgressBar } from '@/components/tetris/rank-badge';
 import type { RankProgress } from '@/components/tetris/rank-badge';
@@ -184,116 +185,122 @@ export default function Lobby({
                 )}
 
                 <div className="grid gap-4 lg:grid-cols-3">
-                    <Card className="overflow-hidden lg:col-span-2">
-                        <div className="relative bg-gradient-to-br from-indigo-950 via-violet-900 to-fuchsia-900 p-6 text-white sm:p-8">
-                            <TetrominoBackdrop />
-                            <div className="relative flex flex-col gap-4">
-                                <div>
-                                    <p className="text-xs font-semibold tracking-[0.2em] text-fuchsia-200 uppercase">
-                                        Tetris Clash · 1v1
-                                    </p>
-                                    <h1 className="mt-1 text-3xl font-black tracking-tight sm:text-4xl">
-                                        Battle for the top
-                                    </h1>
-                                    <p className="mt-2 max-w-md text-sm text-indigo-100">
-                                        Two minutes. Clear lines to send
-                                        garbage. Top your opponent out three
-                                        times to win by KO. Otherwise, most KOs
-                                        wins, then most lines sent.
-                                    </p>
-                                </div>
+                    <div className="flex flex-col gap-4 lg:col-span-2">
+                        <Card className="overflow-hidden">
+                            <div className="relative bg-gradient-to-br from-indigo-950 via-violet-900 to-fuchsia-900 p-6 text-white sm:p-8">
+                                <TetrominoBackdrop />
+                                <div className="relative flex flex-col gap-4">
+                                    <div>
+                                        <p className="text-xs font-semibold tracking-[0.2em] text-fuchsia-200 uppercase">
+                                            Tetris Clash · 1v1
+                                        </p>
+                                        <h1 className="mt-1 text-3xl font-black tracking-tight sm:text-4xl">
+                                            Battle for the top
+                                        </h1>
+                                        <p className="mt-2 max-w-md text-sm text-indigo-100">
+                                            Two minutes. Clear lines to send
+                                            garbage. Top your opponent out three
+                                            times to win by KO. Otherwise, most
+                                            KOs wins, then most lines sent.
+                                        </p>
+                                    </div>
 
-                                {searching ? (
-                                    <div className="flex flex-wrap items-center gap-3">
-                                        <div className="flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 font-medium">
-                                            <Spinner />
-                                            Searching for an opponent…
-                                            <span className="text-indigo-200 tabular-nums">
-                                                {formatTime(
-                                                    Math.max(
-                                                        0,
-                                                        now - searchStartedAt,
-                                                    ),
-                                                    false,
-                                                )}
-                                            </span>
-                                            {searchRange !== undefined && (
-                                                <span className="text-xs text-indigo-200">
-                                                    {searchRange === null
-                                                        ? 'any rating'
-                                                        : `rating ±${searchRange}`}
+                                    {searching ? (
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            <div className="flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 font-medium">
+                                                <Spinner />
+                                                Searching for an opponent…
+                                                <span className="text-indigo-200 tabular-nums">
+                                                    {formatTime(
+                                                        Math.max(
+                                                            0,
+                                                            now -
+                                                                searchStartedAt,
+                                                        ),
+                                                        false,
+                                                    )}
                                                 </span>
-                                            )}
+                                                {searchRange !== undefined && (
+                                                    <span className="text-xs text-indigo-200">
+                                                        {searchRange === null
+                                                            ? 'any rating'
+                                                            : `rating ±${searchRange}`}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <Button
+                                                variant="secondary"
+                                                onClick={cancelSearch}
+                                            >
+                                                Cancel
+                                            </Button>
                                         </div>
-                                        <Button
-                                            variant="secondary"
-                                            onClick={cancelSearch}
-                                        >
-                                            Cancel
-                                        </Button>
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-wrap gap-3">
-                                        <Button
-                                            size="lg"
-                                            className="bg-amber-400 font-bold text-amber-950 hover:bg-amber-300"
-                                            onClick={startSearch}
-                                            disabled={activeDuelId !== null}
-                                        >
-                                            <Swords /> Find match
-                                        </Button>
-                                        <Button
-                                            size="lg"
-                                            variant="secondary"
-                                            className="bg-white/10 text-white hover:bg-white/20"
-                                            asChild
-                                        >
-                                            <Link href={practice()}>
-                                                <Gamepad2 /> Practice
-                                            </Link>
-                                        </Button>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button
-                                                    size="lg"
-                                                    variant="secondary"
-                                                    className="bg-white/10 text-white hover:bg-white/20"
-                                                    disabled={
-                                                        activeDuelId !== null
-                                                    }
-                                                >
-                                                    <UserPlus /> Challenge a
-                                                    friend
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="start">
-                                                <DropdownMenuItem
-                                                    onSelect={() =>
-                                                        challenge('battle')
-                                                    }
-                                                >
-                                                    <Swords /> Battle
-                                                    <span className="ml-auto text-xs text-muted-foreground">
-                                                        3 KOs
-                                                    </span>
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    onSelect={() =>
-                                                        challenge('race')
-                                                    }
-                                                >
-                                                    <Flag /> Race
-                                                    <span className="ml-auto text-xs text-muted-foreground">
-                                                        First to 40 lines
-                                                    </span>
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
-                                )}
+                                    ) : (
+                                        <div className="flex flex-wrap gap-3">
+                                            <Button
+                                                size="lg"
+                                                className="bg-amber-400 font-bold text-amber-950 hover:bg-amber-300"
+                                                onClick={startSearch}
+                                                disabled={activeDuelId !== null}
+                                            >
+                                                <Swords /> Find match
+                                            </Button>
+                                            <Button
+                                                size="lg"
+                                                variant="secondary"
+                                                className="bg-white/10 text-white hover:bg-white/20"
+                                                asChild
+                                            >
+                                                <Link href={practice()}>
+                                                    <Gamepad2 /> Practice
+                                                </Link>
+                                            </Button>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button
+                                                        size="lg"
+                                                        variant="secondary"
+                                                        className="bg-white/10 text-white hover:bg-white/20"
+                                                        disabled={
+                                                            activeDuelId !==
+                                                            null
+                                                        }
+                                                    >
+                                                        <UserPlus /> Challenge a
+                                                        friend
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="start">
+                                                    <DropdownMenuItem
+                                                        onSelect={() =>
+                                                            challenge('battle')
+                                                        }
+                                                    >
+                                                        <Swords /> Battle
+                                                        <span className="ml-auto text-xs text-muted-foreground">
+                                                            3 KOs
+                                                        </span>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onSelect={() =>
+                                                            challenge('race')
+                                                        }
+                                                    >
+                                                        <Flag /> Race
+                                                        <span className="ml-auto text-xs text-muted-foreground">
+                                                            First to 40 lines
+                                                        </span>
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    </Card>
+                        </Card>
+
+                        <OnlinePlayers canInvite={activeDuelId === null} />
+                    </div>
 
                     <Card>
                         <CardHeader>

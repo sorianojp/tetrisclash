@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Http\Controllers\MatchmakingController;
 use App\Support\Ranks;
 use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
@@ -38,6 +39,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property int $xp
  * @property CarbonImmutable|null $queued_at
  * @property CarbonImmutable|null $searching_since
+ * @property bool $accepts_invites
  */
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
@@ -54,6 +56,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         'wins' => 0,
         'losses' => 0,
         'xp' => 0,
+        'accepts_invites' => true,
     ];
 
     /**
@@ -92,6 +95,23 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * What other players see about this player in the online list.
+     *
+     * @return array{id: int, name: string, rating: int, rank: array{rank: int, title: string, xp: int, xpIntoRank: int, xpForNext: int|null}, acceptsInvites: bool, inMatch: bool}
+     */
+    public function onlineProfile(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'rating' => $this->rating,
+            'rank' => $this->rankProgress(),
+            'acceptsInvites' => $this->accepts_invites,
+            'inMatch' => MatchmakingController::activeDuelFor($this) !== null,
+        ];
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -104,6 +124,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'two_factor_confirmed_at' => 'datetime',
             'queued_at' => 'datetime',
             'searching_since' => 'datetime',
+            'accepts_invites' => 'boolean',
         ];
     }
 }

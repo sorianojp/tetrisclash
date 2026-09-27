@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Events\DuelFound;
+use App\Events\InviteClosed;
 use App\Models\Challenge;
 use App\Models\Duel;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -15,6 +17,7 @@ use Inertia\Response;
 
 /**
  * Friend challenges: share a link, and whoever opens it can start an unranked duel with you.
+ * Invites (see InviteController) are challenges only the invited player can accept.
  */
 class ChallengeController extends Controller
 {
@@ -50,7 +53,11 @@ class ChallengeController extends Controller
             }
         }
 
+        // An invite is private to its two players.
+        abort_if($challenge->isInvite() && ! in_array($user->id, [$challenge->challenger_id, $challenge->invitee_id], true), 404);
+
         $challenger = $challenge->challenger;
+        $invitee = $challenge->invitee;
 
         return Inertia::render('challenge', [
             'challenge' => [
@@ -70,6 +77,7 @@ class ChallengeController extends Controller
                 'rating' => $challenger->rating,
                 'rank' => $challenger->rankProgress(),
             ],
+            'invitee' => $invitee ? ['id' => $invitee->id, 'name' => $invitee->name] : null,
             'isChallenger' => $challenger->is($user),
             'serverNow' => now()->getTimestampMs(),
         ]);
@@ -83,7 +91,7 @@ class ChallengeController extends Controller
         $duel = DB::transaction(function () use ($user, $challenge) {
             $challenge = Challenge::query()->lockForUpdate()->findOrFail($challenge->id);
 
-            abort_if($challenge->challenger_id === $user->id, 403, 'You cannot accept your own challenge.');
+            abort_unless($challenge->canBeAcceptedBy($user), 403, 'You cannot accept this challenge.');
 
             if ($challenge->isAccepted() || $challenge->isExpired()) {
                 return null;
@@ -114,12 +122,27 @@ class ChallengeController extends Controller
         return to_route('duels.show', $duel);
     }
 
+    /**
+     * The invited player turns the invite down.
+     */
+    public function decline(Request $request, Challenge $challenge): HttpResponse
+    {
+        abort_unless($challenge->isInvite() && $challenge->invitee_id === $request->user()?->id, 403);
+
+        if (! $challenge->isAccepted()) {
+            $challenge->delete();
+            InviteClosed::dispatch($challenge->challenger_id, $challenge->code, InviteClosed::DECLINED);
+        }
+
+        return response()->noContent();
+    }
+
     public function destroy(Request $request, Challenge $challenge): RedirectResponse
     {
         abort_unless($challenge->challenger_id === $request->user()?->id, 403);
 
         if (! $challenge->isAccepted()) {
-            $challenge->delete();
+            $challenge->withdraw();
         }
 
         return to_route('dashboard');

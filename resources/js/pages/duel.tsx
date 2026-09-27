@@ -13,6 +13,7 @@ import type { RankProgress } from '@/components/tetris/rank-badge';
 import { ShareResult } from '@/components/tetris/share-result';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { refreshOnlineStatus } from '@/hooks/use-online-players';
 import { sendJson } from '@/lib/api';
 import { formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -370,6 +371,9 @@ export default function Duel({
             router.reload({ only: ['me'] });
         }
     }, [state.finished, state.ranked]);
+
+    // The online list shows who's in a match: update ours when the duel starts and ends.
+    useEffect(() => refreshOnlineStatus(), [state.finished]);
 
     const surrender = () => {
         if (!confirmForfeit) {
