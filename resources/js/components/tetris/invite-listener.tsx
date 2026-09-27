@@ -3,7 +3,7 @@ import { useEcho } from '@laravel/echo-react';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 import type { RankProgress } from '@/components/tetris/rank-badge';
-import { goOnline } from '@/hooks/use-online-players';
+import { startOnlinePing } from '@/hooks/use-online';
 import { sendJson } from '@/lib/api';
 import { accept, decline } from '@/routes/challenges';
 
@@ -26,7 +26,7 @@ const toastId = (code: string) => `invite-${code}`;
  * from other players with Accept / Decline until they expire.
  */
 export function InviteListener({ userId }: { userId: number }) {
-    useEffect(() => goOnline(), []);
+    useEffect(() => startOnlinePing(), []);
 
     useEcho<Invite>(
         `App.Models.User.${userId}`,

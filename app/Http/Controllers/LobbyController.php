@@ -16,6 +16,7 @@ class LobbyController extends Controller
     {
         /** @var User $user */
         $user = $request->user();
+        $user->markSeen();
 
         return Inertia::render('lobby', [
             'stats' => [
@@ -28,6 +29,7 @@ class LobbyController extends Controller
             'leaderboard' => $this->leaderboard(),
             'recentDuels' => Duel::recentFor($user),
             'activeDuelId' => MatchmakingController::activeDuelFor($user)?->id,
+            'onlineCount' => OnlinePlayersController::onlineCount(),
         ]);
     }
 

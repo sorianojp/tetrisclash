@@ -119,14 +119,3 @@ test('players can turn invites off and back on', function () {
     $this->actingAs($me)->patch(route('invites.preference'), ['accepts_invites' => true]);
     expect($me->fresh()->accepts_invites)->toBeTrue();
 });
-
-test('the online list shows invite and match status', function () {
-    [$me, $opponent] = User::factory()->count(2)->create();
-
-    expect($me->onlineProfile())->toMatchArray(['id' => $me->id, 'acceptsInvites' => true, 'inMatch' => false]);
-
-    Duel::start($me, $opponent);
-    $me->forceFill(['accepts_invites' => false])->save();
-
-    expect($me->onlineProfile())->toMatchArray(['acceptsInvites' => false, 'inMatch' => true]);
-});

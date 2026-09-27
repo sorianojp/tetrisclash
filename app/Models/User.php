@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-use App\Http\Controllers\MatchmakingController;
 use App\Support\Ranks;
 use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -41,6 +41,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property CarbonImmutable|null $queued_at
  * @property CarbonImmutable|null $searching_since
  * @property bool $accepts_invites
+ * @property CarbonImmutable|null $last_seen_at
  */
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
@@ -97,21 +98,31 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         return Ranks::progress($this->xp);
     }
 
+    /** A player counts as online if their app pinged within this window (it pings every 30s). */
+    public const ONLINE_WINDOW_SECONDS = 120;
+
+    /** Skip the write when the last ping was this recent. */
+    private const SEEN_WRITE_INTERVAL_SECONDS = 20;
+
     /**
-     * What other players see about this player in the online list.
-     *
-     * @return array{id: int, name: string, rating: int, rank: array{rank: int, title: string, xp: int, xpIntoRank: int, xpForNext: int|null}, acceptsInvites: bool, inMatch: bool}
+     * Record that the player has the app open.
      */
-    public function onlineProfile(): array
+    public function markSeen(): void
     {
-        return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'rating' => $this->rating,
-            'rank' => $this->rankProgress(),
-            'acceptsInvites' => $this->accepts_invites,
-            'inMatch' => MatchmakingController::activeDuelFor($this) !== null,
-        ];
+        if ($this->last_seen_at === null || $this->last_seen_at->lt(now()->subSeconds(self::SEEN_WRITE_INTERVAL_SECONDS))) {
+            $this->forceFill(['last_seen_at' => now()])->save();
+        }
+    }
+
+    /**
+     * Verified players (the only ones who can play) seen recently.
+     *
+     * @param  Builder<User>  $query
+     */
+    public function scopeOnline(Builder $query): void
+    {
+        $query->whereNotNull('email_verified_at')
+            ->where('last_seen_at', '>=', now()->subSeconds(self::ONLINE_WINDOW_SECONDS));
     }
 
     /**
@@ -128,6 +139,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'queued_at' => 'datetime',
             'searching_since' => 'datetime',
             'accepts_invites' => 'boolean',
+            'last_seen_at' => 'datetime',
         ];
     }
 }

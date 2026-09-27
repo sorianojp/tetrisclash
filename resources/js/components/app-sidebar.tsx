@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Gamepad2, Info, Swords, UserRound } from 'lucide-react';
+import { Gamepad2, Info, Swords, UserRound, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -13,6 +13,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { about, dashboard, practice } from '@/routes';
+import { index as onlineIndex } from '@/routes/online';
 import { show as showPlayer } from '@/routes/players';
 import type { NavItem } from '@/types';
 
@@ -26,6 +27,11 @@ const gameNavItems: NavItem[] = [
         title: 'Practice',
         href: practice(),
         icon: Gamepad2,
+    },
+    {
+        title: 'Online players',
+        href: onlineIndex(),
+        icon: Users,
     },
 ];
 

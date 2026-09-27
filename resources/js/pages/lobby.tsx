@@ -12,7 +12,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { ControlsLegend } from '@/components/tetris/controls-legend';
 import { DuelHistory } from '@/components/tetris/duel-history';
-import { OnlinePlayers } from '@/components/tetris/online-players';
+import { OnlineNow } from '@/components/tetris/online-now';
 import type { DuelSummary } from '@/components/tetris/duel-history';
 import { RankBadge, RankProgressBar } from '@/components/tetris/rank-badge';
 import type { RankProgress } from '@/components/tetris/rank-badge';
@@ -64,6 +64,7 @@ type Props = {
     recentDuels: DuelSummary[];
     records: PracticeRecords;
     activeDuelId: number | null;
+    onlineCount: number;
 };
 
 /** Re-join the queue this often so the server knows we're still searching. */
@@ -75,6 +76,7 @@ export default function Lobby({
     recentDuels,
     records,
     activeDuelId,
+    onlineCount,
 }: Props) {
     const { auth } = usePage().props;
     const [searching, setSearching] = useState(false);
@@ -299,7 +301,7 @@ export default function Lobby({
                             </div>
                         </Card>
 
-                        <OnlinePlayers canInvite={activeDuelId === null} />
+                        <OnlineNow initialCount={onlineCount} />
                     </div>
 
                     <Card>
