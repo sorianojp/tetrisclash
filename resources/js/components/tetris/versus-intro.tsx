@@ -15,6 +15,7 @@ export function VersusIntro({
     rules,
     status,
     leaving,
+    progress,
 }: {
     me: Player;
     opponent: Player;
@@ -25,6 +26,8 @@ export function VersusIntro({
     /** Shown while the opponent hasn't connected yet. */
     status?: string;
     leaving: boolean;
+    /** Time left in the intro, 1 → 0. */
+    progress: number;
 }) {
     return (
         <div
@@ -72,6 +75,17 @@ export function VersusIntro({
                         {status}
                     </p>
                 )}
+            </div>
+
+            {/* Drains as the intro runs out, into the board countdown. */}
+            <div
+                aria-hidden
+                className="absolute inset-x-0 bottom-0 h-1 bg-white/10"
+            >
+                <div
+                    className="h-full bg-gradient-to-r from-amber-300 via-rose-400 to-fuchsia-400 transition-[width] duration-100 ease-linear"
+                    style={{ width: `${progress * 100}%` }}
+                />
             </div>
         </div>
     );

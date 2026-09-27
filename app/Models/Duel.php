@@ -81,7 +81,7 @@ class Duel extends Model
 
     public const REPORT_ALLOWANCE = 10;
 
-    /** Time before play: a 3s "YOU vs OPPONENT" intro, then a 5s countdown on the board. */
+    /** Time before play: a 5s "YOU vs OPPONENT" intro, then a 3s countdown on the board. */
     public const COUNTDOWN_SECONDS = 8;
 
     /** Elo K-factor: the most rating one ranked duel can move. */

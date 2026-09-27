@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Energy;
 use App\Support\Ranks;
 use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
@@ -42,6 +43,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property CarbonImmutable|null $searching_since
  * @property bool $accepts_invites
  * @property CarbonImmutable|null $last_seen_at
+ * @property int|null $energy
+ * @property CarbonImmutable|null $energy_updated_at
  */
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
@@ -98,6 +101,45 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         return Ranks::progress($this->xp);
     }
 
+    /**
+     * Energy available for ranked matches right now.
+     */
+    public function currentEnergy(): int
+    {
+        return Energy::at($this->energy, $this->energy_updated_at)['current'];
+    }
+
+    /**
+     * Pay one energy for a ranked match. Spending from full starts the refill clock now;
+     * otherwise progress toward the next point carries over.
+     */
+    public function spendEnergy(): void
+    {
+        ['current' => $current, 'refillingSince' => $since] = Energy::at($this->energy, $this->energy_updated_at);
+
+        $this->forceFill([
+            'energy' => max(0, $current - 1),
+            'energy_updated_at' => $since ?? now(),
+        ])->save();
+    }
+
+    /**
+     * Energy for the client, which counts down to refills on its own.
+     *
+     * @return array{current: int, max: int, nextAt: int|null, intervalMs: int}
+     */
+    public function energyStatus(): array
+    {
+        ['current' => $current, 'refillingSince' => $since] = Energy::at($this->energy, $this->energy_updated_at);
+
+        return [
+            'current' => $current,
+            'max' => Energy::max(),
+            'nextAt' => $since?->addSeconds(Energy::intervalSeconds())->getTimestampMs(),
+            'intervalMs' => Energy::intervalSeconds() * 1000,
+        ];
+    }
+
     /** A player counts as online if their app pinged within this window (it pings every 30s). */
     public const ONLINE_WINDOW_SECONDS = 120;
 
@@ -140,6 +182,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'searching_since' => 'datetime',
             'accepts_invites' => 'boolean',
             'last_seen_at' => 'datetime',
+            'energy_updated_at' => 'datetime',
         ];
     }
 }

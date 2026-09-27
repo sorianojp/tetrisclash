@@ -30,6 +30,8 @@ class LobbyController extends Controller
             'recentDuels' => Duel::recentFor($user),
             'activeDuelId' => MatchmakingController::activeDuelFor($user)?->id,
             'onlineCount' => OnlinePlayersController::onlineCount(),
+            'energy' => $user->energyStatus(),
+            'serverNow' => now()->getTimestampMs(),
         ]);
     }
 

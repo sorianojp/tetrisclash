@@ -41,7 +41,8 @@ class MatchmakingController extends Controller
 
     /**
      * Join (or refresh a spot in) the matchmaking queue. Players are paired with the closest
-     * rating that either side's widening range accepts.
+     * rating that either side's widening range accepts. A ranked match costs both players
+     * one energy, so both need some to be paired.
      */
     public function store(Request $request): JsonResponse
     {
@@ -50,6 +51,12 @@ class MatchmakingController extends Controller
 
         if ($active = self::activeDuelFor($user)) {
             return response()->json(['duelId' => $active->id]);
+        }
+
+        if ($user->currentEnergy() < 1) {
+            $user->forceFill(['queued_at' => null, 'searching_since' => null])->save();
+
+            return response()->json(['outOfEnergy' => true, 'energy' => $user->energyStatus()]);
         }
 
         $stillQueued = $user->queued_at?->gte(now()->subSeconds(self::QUEUE_TTL_SECONDS));
@@ -62,6 +69,7 @@ class MatchmakingController extends Controller
                 ->where('queued_at', '>=', now()->subSeconds(self::QUEUE_TTL_SECONDS))
                 ->lockForUpdate()
                 ->get()
+                ->filter(fn (User $candidate) => $candidate->currentEnergy() >= 1)
                 ->filter(function (User $candidate) use ($user, $myRange) {
                     $theirRange = self::ratingRange(self::secondsSince($candidate->searching_since ?? $candidate->queued_at));
                     $range = $myRange === null || $theirRange === null ? null : max($myRange, $theirRange);
@@ -81,6 +89,9 @@ class MatchmakingController extends Controller
             }
 
             User::query()->whereKey([$user->id, $opponent->id])->update(['queued_at' => null, 'searching_since' => null]);
+
+            User::query()->lockForUpdate()->findOrFail($user->id)->spendEnergy();
+            $opponent->spendEnergy();
 
             return Duel::start($opponent, $user);
         });

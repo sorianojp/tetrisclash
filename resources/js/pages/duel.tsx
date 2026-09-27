@@ -71,7 +71,8 @@ type Presence = 'connecting' | 'waiting' | 'online' | 'left';
 type BoardWhisper = { s: string; p: number; l: number; c?: number };
 
 /** The last part of the pre-match countdown, shown on the board; the versus intro plays before it. */
-const BOARD_COUNTDOWN_MS = 5000;
+const BOARD_COUNTDOWN_MS = 3000;
+const INTRO_MS = 5000;
 const INTRO_FADE_MS = 350;
 
 /** How long the board stays frozen after being topped out. */
@@ -659,6 +660,7 @@ export default function Duel({
                               : undefined
                     }
                     leaving={introLeft < INTRO_FADE_MS}
+                    progress={Math.min(1, introLeft / INTRO_MS)}
                 />
             )}
         </>

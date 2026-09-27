@@ -8,10 +8,14 @@ import {
     Timer,
     Trophy,
     UserPlus,
+    Zap,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { ControlsLegend } from '@/components/tetris/controls-legend';
 import { DuelHistory } from '@/components/tetris/duel-history';
+import { EnergyMeter, liveEnergy } from '@/components/tetris/energy-meter';
+import type { EnergyStatus } from '@/components/tetris/energy-meter';
 import { OnlineNow } from '@/components/tetris/online-now';
 import type { DuelSummary } from '@/components/tetris/duel-history';
 import { RankBadge, RankProgressBar } from '@/components/tetris/rank-badge';
@@ -65,7 +69,12 @@ type Props = {
     records: PracticeRecords;
     activeDuelId: number | null;
     onlineCount: number;
+    energy: EnergyStatus;
+    serverNow: number;
 };
+
+const OUT_OF_ENERGY =
+    'Out of energy. It refills over time; friendly matches and practice are free.';
 
 /** Re-join the queue this often so the server knows we're still searching. */
 const QUEUE_REFRESH_MS = 5000;
@@ -77,6 +86,8 @@ export default function Lobby({
     records,
     activeDuelId,
     onlineCount,
+    energy,
+    serverNow,
 }: Props) {
     const { auth } = usePage().props;
     const [searching, setSearching] = useState(false);
@@ -84,7 +95,10 @@ export default function Lobby({
     /** Rating gap the server currently accepts for us; null = any opponent. */
     const [searchRange, setSearchRange] = useState<number | null | undefined>();
     const [now, setNow] = useState(() => Date.now());
+    const [clockOffset] = useState(() => serverNow - Date.now());
     const searchingRef = useRef(false);
+    const liveEnergyNow = liveEnergy(energy, now + clockOffset);
+    const hasEnergy = liveEnergyNow.current > 0;
 
     const goToDuel = (duelId: number) => {
         searchingRef.current = false;
@@ -102,16 +116,28 @@ export default function Lobby({
             duelId?: number;
             queued?: boolean;
             range?: number | null;
+            outOfEnergy?: boolean;
         }>(join());
 
         if (response.duelId) {
             goToDuel(response.duelId);
+        } else if (response.outOfEnergy) {
+            searchingRef.current = false;
+            setSearching(false);
+            toast.error(OUT_OF_ENERGY);
+            router.reload({ only: ['energy', 'serverNow'] });
         } else {
             setSearchRange(response.range);
         }
     };
 
     const startSearch = () => {
+        if (!hasEnergy) {
+            toast.error(OUT_OF_ENERGY);
+
+            return;
+        }
+
         setSearchRange(undefined);
         searchingRef.current = true;
         setSearching(true);
@@ -125,19 +151,22 @@ export default function Lobby({
         void sendJson(leave());
     };
 
-    // While searching: keep our queue spot fresh and tick the search timer.
+    // Ticks the search timer and the energy refill countdown.
+    useEffect(() => {
+        const tick = setInterval(() => setNow(Date.now()), 1000);
+
+        return () => clearInterval(tick);
+    }, []);
+
+    // While searching: keep our queue spot fresh.
     useEffect(() => {
         if (!searching) {
             return;
         }
 
         const refresh = setInterval(() => void joinQueue(), QUEUE_REFRESH_MS);
-        const tick = setInterval(() => setNow(Date.now()), 1000);
 
-        return () => {
-            clearInterval(refresh);
-            clearInterval(tick);
-        };
+        return () => clearInterval(refresh);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searching]);
 
@@ -243,9 +272,15 @@ export default function Lobby({
                                                 size="lg"
                                                 className="bg-amber-400 font-bold text-amber-950 hover:bg-amber-300"
                                                 onClick={startSearch}
-                                                disabled={activeDuelId !== null}
+                                                disabled={
+                                                    activeDuelId !== null ||
+                                                    !hasEnergy
+                                                }
                                             >
                                                 <Swords /> Find match
+                                                <span className="flex items-center gap-0.5 rounded bg-amber-950/15 px-1.5 text-xs">
+                                                    <Zap className="size-3" />1
+                                                </span>
                                             </Button>
                                             <Button
                                                 size="lg"
@@ -297,6 +332,13 @@ export default function Lobby({
                                             </DropdownMenu>
                                         </div>
                                     )}
+
+                                    <EnergyMeter
+                                        current={liveEnergyNow.current}
+                                        max={energy.max}
+                                        nextInMs={liveEnergyNow.nextInMs}
+                                        intervalMs={energy.intervalMs}
+                                    />
                                 </div>
                             </div>
                         </Card>
