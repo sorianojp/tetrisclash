@@ -3,7 +3,7 @@ import { Swords, Timer, Trophy, Zap } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { dashboard, login, register } from '@/routes';
+import { about, dashboard, login, register } from '@/routes';
 
 const FEATURES = [
     {
@@ -14,17 +14,17 @@ const FEATURES = [
     {
         icon: Zap,
         title: 'T-spins, combos, B2B',
-        text: 'Modern rules with SRS rotation, hold and 5-piece preview, using the Tetris Battle attack table.',
+        text: 'Modern rules with SRS rotation, hold and a 5-piece preview. Big clears hit harder.',
     },
     {
         icon: Trophy,
-        title: 'Ranked ladder',
-        text: 'Win to climb the Elo leaderboard. Three KOs ends the match early.',
+        title: 'Ranks and rating',
+        text: 'Earn XP to climb from Pebble to Clash Sovereign, and win to top the leaderboard.',
     },
     {
         icon: Timer,
-        title: '40-line sprint',
-        text: 'Warm up solo and chase your personal best.',
+        title: 'Practice and races',
+        text: 'Five solo modes with personal bests, plus friendly races against your friends.',
     },
 ];
 
@@ -67,6 +67,13 @@ export default function Welcome() {
                         {name}
                     </div>
                     <nav className="flex items-center gap-2">
+                        <Button
+                            variant="ghost"
+                            className="text-white hover:bg-white/10 hover:text-white"
+                            asChild
+                        >
+                            <Link href={about()}>About</Link>
+                        </Button>
                         {auth.user ? (
                             <Button asChild>
                                 <Link href={dashboard()}>Go to lobby</Link>

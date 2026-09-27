@@ -86,12 +86,13 @@ const MAX_LOCK_RESETS = 15;
 const SOFT_DROP_FACTOR = 20;
 const NEXT_PREVIEW = 5;
 
-/** Tetris Battle attack table. */
-const LINE_ATTACK = [0, 0, 1, 2, 4];
-const TSPIN_ATTACK = [0, 2, 4, 6];
-const TSPIN_MINI_ATTACK = [0, 0, 1];
-const COMBO_ATTACK = [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4, 5];
-const PERFECT_CLEAR_ATTACK = 10;
+/** Attack table: garbage lines sent, indexed by lines cleared (or combo count). */
+export const LINE_ATTACK = [0, 0, 1, 2, 4];
+export const TSPIN_ATTACK = [0, 2, 4, 6];
+export const TSPIN_MINI_ATTACK = [0, 0, 1];
+export const COMBO_ATTACK = [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4, 5];
+export const PERFECT_CLEAR_ATTACK = 10;
+export const BACK_TO_BACK_BONUS = 1;
 
 const filledRow = (value: Cell): Cell[] =>
     Array.from({ length: BOARD_WIDTH }, () => value);
@@ -633,7 +634,7 @@ export class Game {
                   : LINE_ATTACK[lines];
 
         if (backToBack) {
-            attack += 1;
+            attack += BACK_TO_BACK_BONUS;
         }
 
         attack += COMBO_ATTACK[Math.min(this.combo, COMBO_ATTACK.length - 1)];

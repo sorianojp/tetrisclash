@@ -190,7 +190,7 @@ export default function Lobby({
                             <div className="relative flex flex-col gap-4">
                                 <div>
                                     <p className="text-xs font-semibold tracking-[0.2em] text-fuchsia-200 uppercase">
-                                        Tetris Battle · 1v1
+                                        Tetris Clash · 1v1
                                     </p>
                                     <h1 className="mt-1 text-3xl font-black tracking-tight sm:text-4xl">
                                         Battle for the top

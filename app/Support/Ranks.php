@@ -46,6 +46,19 @@ final class Ranks
         110 => 'Clash Sovereign',
     ];
 
+    /**
+     * Title groups keyed by the first rank in each.
+     *
+     * @var array<int, string>
+     */
+    private const GROUPS = [
+        1 => 'Blocks',
+        26 => 'Builders',
+        51 => 'Fighters',
+        76 => 'Forces',
+        101 => 'Cosmic',
+    ];
+
     public const XP_WIN = 100;
 
     public const XP_DRAW = 60;
@@ -102,6 +115,37 @@ final class Ranks
         }
 
         return $title;
+    }
+
+    /**
+     * Every title band from Rank 1 to the top, with its group and the XP it starts at.
+     *
+     * @return list<array{from: int, to: int, title: string, group: string, xp: int}>
+     */
+    public static function ladder(): array
+    {
+        $starts = array_keys(self::TITLES);
+        $ladder = [];
+
+        foreach ($starts as $i => $from) {
+            $group = self::GROUPS[1];
+
+            foreach (self::GROUPS as $groupFrom => $name) {
+                if ($from >= $groupFrom) {
+                    $group = $name;
+                }
+            }
+
+            $ladder[] = [
+                'from' => $from,
+                'to' => isset($starts[$i + 1]) ? $starts[$i + 1] - 1 : self::MAX_RANK,
+                'title' => self::TITLES[$from],
+                'group' => $group,
+                'xp' => self::xpToReach($from),
+            ];
+        }
+
+        return $ladder;
     }
 
     /**

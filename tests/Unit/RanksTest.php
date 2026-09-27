@@ -53,3 +53,16 @@ test('duel xp rewards results and KOs but not quitting', function () {
         ->and(Ranks::xpForDuel('loss', 2, false))->toBe(60)
         ->and(Ranks::xpForDuel('loss', 2, true))->toBe(0);
 });
+
+test('the ladder covers every rank once, in order', function () {
+    $ladder = Ranks::ladder();
+
+    expect($ladder[0]['from'])->toBe(1)
+        ->and(end($ladder)['to'])->toBe(Ranks::MAX_RANK)
+        ->and(end($ladder)['title'])->toBe('Clash Sovereign');
+
+    foreach (array_slice($ladder, 1) as $i => $band) {
+        expect($band['from'])->toBe($ladder[$i]['to'] + 1)
+            ->and($band['xp'])->toBe(Ranks::xpToReach($band['from']));
+    }
+});

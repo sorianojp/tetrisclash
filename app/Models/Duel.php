@@ -83,6 +83,9 @@ class Duel extends Model
 
     public const COUNTDOWN_SECONDS = 5;
 
+    /** Elo K-factor: the most rating one ranked duel can move. */
+    public const RATING_K = 32;
+
     /** A player that hasn't sent a heartbeat for this long is considered gone. */
     public const DISCONNECT_SECONDS = 15;
 
@@ -331,7 +334,7 @@ class Duel extends Model
             $two->id => 0.0,
             default => 0.5,
         };
-        $change = (int) round(32 * ($actualOne - $expectedOne));
+        $change = (int) round(self::RATING_K * ($actualOne - $expectedOne));
 
         $one->rating = max(0, $one->rating + $change);
         $two->rating = max(0, $two->rating - $change);

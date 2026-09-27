@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Gamepad2, Swords, UserRound } from 'lucide-react';
+import { Gamepad2, Info, Swords, UserRound } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -12,7 +12,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard, practice } from '@/routes';
+import { about, dashboard, practice } from '@/routes';
 import { show as showPlayer } from '@/routes/players';
 import type { NavItem } from '@/types';
 
@@ -34,6 +34,7 @@ export function AppSidebar() {
     const mainNavItems: NavItem[] = [
         ...gameNavItems,
         { title: 'Profile', href: showPlayer(auth.user.id), icon: UserRound },
+        { title: 'About', href: about(), icon: Info },
     ];
 
     return (
