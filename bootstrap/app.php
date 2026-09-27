@@ -21,7 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             HandleAppearance::class,
             HandleInertiaRequests::class,
-            AddLinkHeadersForPreloadedAssets::class,
+            // Capped: every preloaded asset adds to the `Link` header, and past nginx's
+            // header buffer the page fails with a 502 ("upstream sent too big header").
+            AddLinkHeadersForPreloadedAssets::using(12),
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
