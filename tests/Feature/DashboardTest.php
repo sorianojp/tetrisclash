@@ -50,6 +50,16 @@ test('ultra and survival records keep the highest value', function () {
         ->and($user->best_survival_ms)->toBe(120000);
 });
 
+test('zen records keep the highest score', function () {
+    $user = User::factory()->create(['best_zen_score' => 50000]);
+
+    $this->actingAs($user)->postJson(route('practice.records'), ['mode' => 'zen', 'value' => 30000])->assertNoContent();
+    expect($user->fresh()->best_zen_score)->toBe(50000);
+
+    $this->actingAs($user)->postJson(route('practice.records'), ['mode' => 'zen', 'value' => 1250000])->assertNoContent();
+    expect($user->fresh()->best_zen_score)->toBe(1250000);
+});
+
 test('the first dig time is saved', function () {
     $user = User::factory()->create();
 
@@ -61,7 +71,7 @@ test('the first dig time is saved', function () {
 test('records reject unknown modes and out-of-range values', function () {
     $user = User::factory()->create();
 
-    $this->actingAs($user)->postJson(route('practice.records'), ['mode' => 'zen', 'value' => 5000])->assertJsonValidationErrors('mode');
+    $this->actingAs($user)->postJson(route('practice.records'), ['mode' => 'marathon', 'value' => 5000])->assertJsonValidationErrors('mode');
     $this->actingAs($user)->postJson(route('practice.records'), ['mode' => 'sprint', 'value' => 10])->assertJsonValidationErrors('value');
 });
 

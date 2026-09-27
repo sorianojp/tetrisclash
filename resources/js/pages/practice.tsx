@@ -66,6 +66,11 @@ function recordValue(
         return Math.round(timeMs);
     }
 
+    // Zen only ends when you top out, so every game counts.
+    if (mode === 'zen') {
+        return score;
+    }
+
     return null;
 }
 
@@ -105,7 +110,7 @@ export default function Practice({
         const value = recordValue(mode, outcome, timeMs, score);
         let newBest = false;
 
-        if (value !== null && mode !== 'zen') {
+        if (value !== null) {
             const best = records[mode];
             newBest =
                 best === null ||
@@ -275,9 +280,8 @@ export default function Practice({
         stats.timeMs > 0
             ? (stats.pieces / (stats.timeMs / 1000)).toFixed(2)
             : '0.00';
-    const best = mode === 'zen' ? null : records[mode];
-    const bestLabel =
-        mode === 'zen' || best === null ? '—' : formatRecord(mode, best);
+    const best = records[mode];
+    const bestLabel = best === null ? '—' : formatRecord(mode, best);
 
     const hud: Record<Mode, [string, string | number][]> = {
         sprint: [
@@ -310,10 +314,10 @@ export default function Practice({
         ],
         zen: [
             ['Time', formatTime(stats.timeMs)],
-            ['Lines', stats.lines],
-            ['Pieces/sec', pps],
-            ['Attack', stats.linesSent],
             ['Score', stats.score.toLocaleString()],
+            ['Pieces/sec', pps],
+            ['Lines', stats.lines],
+            ['Best', bestLabel],
         ],
     };
 

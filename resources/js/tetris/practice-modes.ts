@@ -1,8 +1,8 @@
 import { formatTime } from '@/lib/format';
 
 export type PracticeMode = 'sprint' | 'ultra' | 'dig' | 'survival' | 'zen';
-/** Modes that keep a personal best. */
-export type RecordMode = Exclude<PracticeMode, 'zen'>;
+/** Every mode keeps a personal best. */
+export type RecordMode = PracticeMode;
 export type PracticeRecords = Record<RecordMode, number | null>;
 
 export const SPRINT_LINES = 40;
@@ -28,15 +28,20 @@ export const RECORD_MODES: RecordMode[] = [
     'ultra',
     'dig',
     'survival',
+    'zen',
 ];
 
-/** Timed races keep the fastest result; Ultra and Survival keep the highest. */
+/** Timed races keep the fastest result; Ultra, Survival and Zen keep the highest. */
 export const LOWER_IS_BETTER: Record<RecordMode, boolean> = {
     sprint: true,
     dig: true,
     ultra: false,
     survival: false,
+    zen: false,
 };
 
+/** Ultra and Zen records are scores; the rest are times. */
 export const formatRecord = (mode: RecordMode, value: number) =>
-    mode === 'ultra' ? value.toLocaleString() : formatTime(value);
+    mode === 'ultra' || mode === 'zen'
+        ? value.toLocaleString()
+        : formatTime(value);

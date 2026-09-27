@@ -36,6 +36,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property int|null $best_ultra_score
  * @property int|null $best_dig_ms
  * @property int|null $best_survival_ms
+ * @property int|null $best_zen_score
  * @property int $xp
  * @property CarbonImmutable|null $queued_at
  * @property CarbonImmutable|null $searching_since
@@ -72,6 +73,8 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         'dig' => ['column' => 'best_dig_ms', 'lowerIsBetter' => true, 'min' => 4000, 'max' => 3600000],
         'ultra' => ['column' => 'best_ultra_score', 'lowerIsBetter' => false, 'min' => 0, 'max' => 500000],
         'survival' => ['column' => 'best_survival_ms', 'lowerIsBetter' => false, 'min' => 0, 'max' => 86400000],
+        // Zen has no time limit, so its score cap is far above Ultra's.
+        'zen' => ['column' => 'best_zen_score', 'lowerIsBetter' => false, 'min' => 0, 'max' => 100000000],
     ];
 
     /**

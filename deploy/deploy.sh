@@ -12,6 +12,10 @@ git pull --ff-only
 
 composer install --no-dev --optimize-autoloader --no-interaction
 
+# Drop the previous deploy's cached routes/config first: the build below asks Laravel for its
+# routes (Wayfinder), and a stale route cache would hide any routes added since.
+php artisan optimize:clear
+
 # The build bakes the VITE_REVERB_* values from .env into the JavaScript, and runs
 # Wayfinder (php artisan) to generate the typed routes, so it has to happen here.
 npm ci
