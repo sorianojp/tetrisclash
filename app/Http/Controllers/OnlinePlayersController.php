@@ -48,7 +48,9 @@ class OnlinePlayersController extends Controller
                     ->where(fn (Builder $players) => $players
                         ->whereColumn('duels.player_one_id', 'users.id')
                         ->orWhereColumn('duels.player_two_id', 'users.id'))))
-            ->orderByRaw('ABS(rating - ?)', [$user->rating])
+            // Rating gap, written so it never goes negative: `rating` is unsigned in MySQL,
+            // where `rating - ?` fails outright for anyone rated below the viewer.
+            ->orderByRaw('CASE WHEN rating >= ? THEN rating - ? ELSE ? - rating END', array_fill(0, 3, $user->rating))
             ->orderBy('name')
             ->paginate(self::PER_PAGE, ['id', 'name', 'rating', 'xp', 'accepts_invites'])
             ->withQueryString();
