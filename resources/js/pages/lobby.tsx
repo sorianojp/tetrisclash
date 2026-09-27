@@ -1,11 +1,20 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEcho } from '@laravel/echo-react';
-import { Crown, Gamepad2, Swords, Timer, Trophy } from 'lucide-react';
+import {
+    Crown,
+    Flag,
+    Gamepad2,
+    Swords,
+    Timer,
+    Trophy,
+    UserPlus,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { ControlsLegend } from '@/components/tetris/controls-legend';
+import { DuelHistory } from '@/components/tetris/duel-history';
+import type { DuelSummary } from '@/components/tetris/duel-history';
 import { RankBadge, RankProgressBar } from '@/components/tetris/rank-badge';
 import type { RankProgress } from '@/components/tetris/rank-badge';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -14,20 +23,33 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Spinner } from '@/components/ui/spinner';
 import { sendJson } from '@/lib/api';
 import { formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { dashboard, practice } from '@/routes';
+import { store as storeChallenge } from '@/routes/challenges';
 import { show as showDuel } from '@/routes/duels';
 import { join, leave } from '@/routes/matchmaking';
+import { show as showPlayer } from '@/routes/players';
+import {
+    PRACTICE_MODES,
+    RECORD_MODES,
+    formatRecord,
+} from '@/tetris/practice-modes';
+import type { PracticeRecords } from '@/tetris/practice-modes';
 
 type Props = {
     stats: {
         rating: number;
         wins: number;
         losses: number;
-        bestSprintMs: number | null;
         rank: RankProgress;
     };
     leaderboard: {
@@ -38,16 +60,8 @@ type Props = {
         losses: number;
         rank: RankProgress;
     }[];
-    recentDuels: {
-        id: number;
-        opponent: string;
-        result: 'win' | 'loss' | 'draw';
-        myKos: number;
-        theirKos: number;
-        reason: string | null;
-        ratingChange: number | null;
-        finishedAt: string | null;
-    }[];
+    recentDuels: DuelSummary[];
+    records: PracticeRecords;
     activeDuelId: number | null;
 };
 
@@ -58,11 +72,14 @@ export default function Lobby({
     stats,
     leaderboard,
     recentDuels,
+    records,
     activeDuelId,
 }: Props) {
     const { auth } = usePage().props;
     const [searching, setSearching] = useState(false);
     const [searchStartedAt, setSearchStartedAt] = useState(0);
+    /** Rating gap the server currently accepts for us; null = any opponent. */
+    const [searchRange, setSearchRange] = useState<number | null | undefined>();
     const [now, setNow] = useState(() => Date.now());
     const searchingRef = useRef(false);
 
@@ -78,16 +95,21 @@ export default function Lobby({
     );
 
     const joinQueue = async () => {
-        const response = await sendJson<{ duelId?: number; queued?: boolean }>(
-            join(),
-        );
+        const response = await sendJson<{
+            duelId?: number;
+            queued?: boolean;
+            range?: number | null;
+        }>(join());
 
         if (response.duelId) {
             goToDuel(response.duelId);
+        } else {
+            setSearchRange(response.range);
         }
     };
 
     const startSearch = () => {
+        setSearchRange(undefined);
         searchingRef.current = true;
         setSearching(true);
         setSearchStartedAt(Date.now());
@@ -137,6 +159,10 @@ export default function Lobby({
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    /** Open a challenge link; the server sends us to its page to share it. */
+    const challenge = (mode: 'battle' | 'race') =>
+        router.post(storeChallenge().url, { mode });
 
     const played = stats.wins + stats.losses;
     const winRate = played > 0 ? Math.round((stats.wins / played) * 100) : null;
@@ -191,6 +217,13 @@ export default function Lobby({
                                                     false,
                                                 )}
                                             </span>
+                                            {searchRange !== undefined && (
+                                                <span className="text-xs text-indigo-200">
+                                                    {searchRange === null
+                                                        ? 'any rating'
+                                                        : `rating ±${searchRange}`}
+                                                </span>
+                                            )}
                                         </div>
                                         <Button
                                             variant="secondary"
@@ -219,6 +252,43 @@ export default function Lobby({
                                                 <Gamepad2 /> Practice
                                             </Link>
                                         </Button>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    size="lg"
+                                                    variant="secondary"
+                                                    className="bg-white/10 text-white hover:bg-white/20"
+                                                    disabled={
+                                                        activeDuelId !== null
+                                                    }
+                                                >
+                                                    <UserPlus /> Challenge a
+                                                    friend
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="start">
+                                                <DropdownMenuItem
+                                                    onSelect={() =>
+                                                        challenge('battle')
+                                                    }
+                                                >
+                                                    <Swords /> Battle
+                                                    <span className="ml-auto text-xs text-muted-foreground">
+                                                        3 KOs
+                                                    </span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onSelect={() =>
+                                                        challenge('race')
+                                                    }
+                                                >
+                                                    <Flag /> Race
+                                                    <span className="ml-auto text-xs text-muted-foreground">
+                                                        First to 40 lines
+                                                    </span>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
                                 )}
                             </div>
@@ -227,13 +297,21 @@ export default function Lobby({
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Your stats</CardTitle>
+                            <CardTitle className="flex items-center justify-between gap-2">
+                                Your stats
+                                <Link
+                                    href={showPlayer(auth.user.id)}
+                                    className="text-xs font-normal text-muted-foreground hover:underline"
+                                >
+                                    View profile
+                                </Link>
+                            </CardTitle>
                             <CardDescription>
                                 Ranked matches earn XP and move your rating.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="grid grid-cols-2 gap-3">
-                            <div className="col-span-2 flex flex-col gap-2 rounded-lg border p-3">
+                        <CardContent className="grid grid-cols-3 gap-3">
+                            <div className="col-span-3 flex flex-col gap-2 rounded-lg border p-3">
                                 <RankBadge
                                     progress={stats.rank}
                                     className="self-start text-sm"
@@ -254,15 +332,31 @@ export default function Lobby({
                                 label="Win rate"
                                 value={winRate === null ? '—' : `${winRate}%`}
                             />
-                            <Stat
-                                icon={<Timer className="size-4" />}
-                                label="Best 40L"
-                                value={
-                                    stats.bestSprintMs
-                                        ? formatTime(stats.bestSprintMs)
-                                        : '—'
-                                }
-                            />
+                            <div className="col-span-3 rounded-lg border p-3">
+                                <div className="mb-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                                    <Timer className="size-4" /> Practice bests
+                                </div>
+                                <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                                    {RECORD_MODES.map((mode) => (
+                                        <div
+                                            key={mode}
+                                            className="flex justify-between gap-2"
+                                        >
+                                            <dt className="text-muted-foreground">
+                                                {PRACTICE_MODES[mode].label}
+                                            </dt>
+                                            <dd className="font-semibold tabular-nums">
+                                                {records[mode] === null
+                                                    ? '—'
+                                                    : formatRecord(
+                                                          mode,
+                                                          records[mode],
+                                                      )}
+                                            </dd>
+                                        </div>
+                                    ))}
+                                </dl>
+                            </div>
                         </CardContent>
                     </Card>
                 </div>
@@ -298,9 +392,12 @@ export default function Lobby({
                                                 progress={player.rank}
                                                 compact
                                             />
-                                            <span className="flex-1 truncate font-medium">
+                                            <Link
+                                                href={showPlayer(player.id)}
+                                                className="flex-1 truncate font-medium hover:underline"
+                                            >
                                                 {player.name}
-                                            </span>
+                                            </Link>
                                             <span className="text-xs text-muted-foreground tabular-nums">
                                                 {player.wins}–{player.losses}
                                             </span>
@@ -319,40 +416,10 @@ export default function Lobby({
                             <CardTitle>Recent matches</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            {recentDuels.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">
-                                    Your match history will show up here.
-                                </p>
-                            ) : (
-                                <ul className="flex flex-col gap-2 text-sm">
-                                    {recentDuels.map((duel) => (
-                                        <li
-                                            key={duel.id}
-                                            className="flex items-center gap-3"
-                                        >
-                                            <ResultBadge result={duel.result} />
-                                            <span className="flex-1 truncate">
-                                                vs{' '}
-                                                <span className="font-medium">
-                                                    {duel.opponent}
-                                                </span>
-                                                <span className="ml-1 text-xs text-muted-foreground">
-                                                    {duel.myKos}–{duel.theirKos}{' '}
-                                                    KO
-                                                    {duel.reason &&
-                                                    duel.reason !== 'time' &&
-                                                    duel.reason !== 'knockout'
-                                                        ? ` · ${duel.reason}`
-                                                        : ''}
-                                                </span>
-                                            </span>
-                                            <span className="text-xs whitespace-nowrap text-muted-foreground">
-                                                {duel.finishedAt}
-                                            </span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
+                            <DuelHistory
+                                duels={recentDuels}
+                                empty="Your match history will show up here."
+                            />
                         </CardContent>
                     </Card>
 
@@ -391,26 +458,6 @@ function Stat({
             </div>
             <div className="mt-1 text-xl font-bold tabular-nums">{value}</div>
         </div>
-    );
-}
-
-function ResultBadge({ result }: { result: 'win' | 'loss' | 'draw' }) {
-    const styles = {
-        win: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
-        loss: 'bg-rose-500/15 text-rose-600 dark:text-rose-400',
-        draw: 'bg-muted text-muted-foreground',
-    };
-
-    return (
-        <Badge
-            variant="outline"
-            className={cn(
-                'w-12 justify-center border-transparent uppercase',
-                styles[result],
-            )}
-        >
-            {result}
-        </Badge>
     );
 }
 

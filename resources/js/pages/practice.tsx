@@ -12,10 +12,18 @@ import { formatTime } from '@/lib/format';
 import { dashboard, practice } from '@/routes';
 import { records as recordsRoute } from '@/routes/practice';
 import type { GameStats } from '@/tetris/engine';
+import {
+    DIG_ROWS,
+    LOWER_IS_BETTER,
+    PRACTICE_MODES,
+    SPRINT_LINES,
+    ULTRA_MS,
+    formatRecord,
+} from '@/tetris/practice-modes';
+import type { PracticeMode, PracticeRecords } from '@/tetris/practice-modes';
 import { useCellSize, useTetrisGame } from '@/tetris/use-tetris-game';
 
-type Mode = 'sprint' | 'ultra' | 'dig' | 'survival' | 'zen';
-type RecordMode = Exclude<Mode, 'zen'>;
+type Mode = PracticeMode;
 type Phase = 'countdown' | 'playing' | 'done';
 type Outcome = 'cleared' | 'timeUp' | 'toppedOut';
 type Result = {
@@ -25,30 +33,9 @@ type Result = {
     newBest: boolean;
 };
 
-const SPRINT_LINES = 40;
-const ULTRA_MS = 120_000;
-const DIG_ROWS = 10;
+const MODES = PRACTICE_MODES;
 const SURVIVAL_FIRST_ATTACK_MS = 5000;
 const COUNTDOWN_MS = 2400;
-
-const MODES: Record<Mode, { label: string; goal: string }> = {
-    sprint: { label: '40 Lines', goal: 'Clear 40 lines as fast as you can.' },
-    ultra: { label: 'Ultra', goal: 'Score as much as you can in 2 minutes.' },
-    dig: { label: 'Dig', goal: `Dig through ${DIG_ROWS} rows of garbage.` },
-    survival: {
-        label: 'Survival',
-        goal: 'Garbage keeps coming, faster and bigger. Hold out.',
-    },
-    zen: { label: 'Zen', goal: 'No goal. Just stack.' },
-};
-
-/** Timed races keep the fastest result; Ultra and Survival keep the highest. */
-const LOWER_IS_BETTER: Record<RecordMode, boolean> = {
-    sprint: true,
-    dig: true,
-    ultra: false,
-    survival: false,
-};
 
 /** Survival attacks arrive more often (6s down to 1.5s) and grow to 4 lines as time passes. */
 const survivalGap = (elapsed: number) => Math.max(1500, 6000 - elapsed / 30);
@@ -56,9 +43,6 @@ const survivalAttack = (elapsed: number) =>
     1 + Math.floor(Math.random() * Math.min(4, 1 + elapsed / 40_000));
 
 const newSeed = () => Math.floor(Math.random() * 2 ** 31);
-
-const formatRecord = (mode: RecordMode, value: number) =>
-    mode === 'ultra' ? value.toLocaleString() : formatTime(value);
 
 /** The value a finished run puts on the record board, if it counts. */
 function recordValue(
@@ -85,7 +69,7 @@ function recordValue(
 export default function Practice({
     records: initialRecords,
 }: {
-    records: Record<RecordMode, number | null>;
+    records: PracticeRecords;
 }) {
     const [mode, setMode] = useState<Mode>('sprint');
     const [seed, setSeed] = useState(newSeed);

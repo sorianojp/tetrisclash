@@ -147,3 +147,60 @@ test('the duel page shows both players ranks', function () {
             ->where('me.rank.title', 'Pebble')
             ->where('opponent.rank.title', 'Combo Crafter'));
 });
+
+test('friendly duels leave rating, records and xp alone', function () {
+    $duel = Duel::factory()->unranked()->create(['player_two_kos' => 2]);
+
+    $this->actingAs($duel->playerOne)
+        ->postJson(route('duels.ko', $duel))
+        ->assertJsonPath('finished', true)
+        ->assertJsonPath('ranked', false)
+        ->assertJsonPath('ratingChange', null);
+
+    expect($duel->playerTwo->fresh())
+        ->rating->toBe(1000)
+        ->wins->toBe(0)
+        ->xp->toBe(0);
+});
+
+test('the first racer to report 40 lines wins', function () {
+    $duel = Duel::factory()->race()->create(['starts_at' => now()->subSeconds(60)]);
+
+    $this->actingAs($duel->playerTwo)->postJson(route('duels.heartbeat', $duel), ['lines' => 25]);
+    $this->actingAs($duel->playerOne)
+        ->postJson(route('duels.heartbeat', $duel), ['lines' => 40])
+        ->assertJsonPath('finished', true)
+        ->assertJsonPath('winnerId', $duel->player_one_id)
+        ->assertJsonPath('finishReason', 'finish')
+        ->assertJsonPath("lines.{$duel->player_two_id}", 25);
+});
+
+test('races have no knockouts', function () {
+    $duel = Duel::factory()->race()->create();
+
+    $this->actingAs($duel->playerOne)->postJson(route('duels.ko', $duel))->assertOk();
+
+    expect($duel->fresh()->player_two_kos)->toBe(0);
+});
+
+test('a race that runs out of time goes to the most lines', function () {
+    $duel = Duel::factory()->race()->expired()->create(['player_one_lines' => 31, 'player_two_lines' => 18]);
+
+    $this->actingAs($duel->playerOne)->postJson(route('duels.heartbeat', $duel));
+    $this->actingAs($duel->playerTwo)
+        ->postJson(route('duels.heartbeat', $duel))
+        ->assertJsonPath('finished', true)
+        ->assertJsonPath('winnerId', $duel->player_one_id);
+});
+
+test('impossible reported totals are clamped to what time allows', function () {
+    $duel = Duel::factory()->race()->create(['starts_at' => now()->subSeconds(5)]);
+
+    $this->actingAs($duel->playerOne)
+        ->postJson(route('duels.heartbeat', $duel), ['lines' => 40, 'lines_sent' => 500])
+        ->assertJsonPath('finished', false);
+
+    expect($duel->fresh())
+        ->player_one_lines->toBe(5 * Duel::MAX_LINES_PER_SECOND)
+        ->player_one_lines_sent->toBe(Duel::REPORT_ALLOWANCE + 5 * Duel::MAX_ATTACK_PER_SECOND);
+});

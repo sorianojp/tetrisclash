@@ -77,3 +77,23 @@ test('the practice page lists every record', function () {
             ->where('records.dig', null)
             ->where('records.survival', null));
 });
+
+test('practice records faster than humanly possible are rejected', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->postJson(route('practice.records'), ['mode' => 'sprint', 'value' => 9000])
+        ->assertJsonValidationErrors('value');
+
+    expect($user->fresh()->best_sprint_ms)->toBeNull();
+});
+
+test('the lobby includes practice records', function () {
+    $user = User::factory()->create(['best_dig_ms' => 30000]);
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('records.dig', 30000)
+            ->where('records.sprint', null));
+});

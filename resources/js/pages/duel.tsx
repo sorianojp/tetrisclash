@@ -10,6 +10,7 @@ import type { OpponentView } from '@/components/tetris/opponent-field';
 import { RankBadge, RankProgressBar } from '@/components/tetris/rank-badge';
 import type { RankProgress } from '@/components/tetris/rank-badge';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { sendJson } from '@/lib/api';
 import { formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -21,9 +22,20 @@ import { useCellSize, useTetrisGame } from '@/tetris/use-tetris-game';
 
 type DuelState = {
     id: number;
+    mode: 'battle' | 'race';
+    /** Unranked (friend challenge) duels don't touch rating or XP. */
+    ranked: boolean;
     kos: Record<number, number>;
+    /** Lines cleared per player, as last reported to the server (races). */
+    lines: Record<number, number>;
     winnerId: number | null;
-    finishReason: 'knockout' | 'time' | 'forfeit' | 'disconnect' | null;
+    finishReason:
+        | 'knockout'
+        | 'time'
+        | 'forfeit'
+        | 'disconnect'
+        | 'finish'
+        | null;
     ratingChange: number | null;
     /** XP each player earned, keyed by user id; null until the duel is settled. */
     xp: Record<number, number | null>;
@@ -41,14 +53,34 @@ type Props = {
     endsAt: number;
     serverNow: number;
     kosToWin: number;
+    raceLines: number;
 };
 
 type Member = { id: number; name: string };
-type BoardWhisper = { s: string; p: number; l: number };
+
+/**
+ * connecting: our realtime channel isn't joined yet (e.g. the socket server is down).
+ * waiting: we're in, the opponent hasn't arrived yet. left: they were here and dropped.
+ */
+type Presence = 'connecting' | 'waiting' | 'online' | 'left';
+/** s: board snapshot, p: pending garbage, l: lines sent, c: lines cleared. */
+type BoardWhisper = { s: string; p: number; l: number; c?: number };
 
 /** How long the board stays frozen after being topped out. */
 const KO_PAUSE_MS = 1500;
 const BOARD_SYNC_MS = 100;
+
+/**
+ * Incoming garbage we accept, mirroring the server's plausibility caps: a tampered
+ * opponent can't bury us faster than a real player could attack.
+ */
+const MAX_ATTACK_PER_SECOND = 4;
+const ATTACK_ALLOWANCE = 10;
+
+const MODE_LABEL = {
+    battle: { ranked: 'Ranked battle', friendly: 'Friendly battle' },
+    race: { ranked: 'Race', friendly: 'Friendly race' },
+};
 
 const totalKos = (state: DuelState) =>
     Object.values(state.kos).reduce((sum, k) => sum + k, 0);
@@ -62,26 +94,37 @@ export default function Duel({
     endsAt,
     serverNow,
     kosToWin,
+    raceLines,
 }: Props) {
     const [clockOffset] = useState(() => serverNow - Date.now());
     const [clock, setClock] = useState(() => Date.now() + clockOffset);
     const [state, setState] = useState(duel);
     const [knockedOut, setKnockedOut] = useState(false);
-    const [opponentOnline, setOpponentOnline] = useState(false);
+    const [presence, setPresence] = useState<Presence>('connecting');
     const [callout, setCallout] = useState<Callout | null>(null);
-    const [linesSent, setLinesSent] = useState({ mine: 0, theirs: 0 });
+    const [progress, setProgress] = useState({
+        mine: 0,
+        theirs: 0,
+        myLines: 0,
+        theirLines: 0,
+    });
     const [confirmForfeit, setConfirmForfeit] = useState(false);
-    const opponentView = useRef<OpponentView & { linesSent: number }>({
+    const opponentView = useRef<
+        OpponentView & { linesSent: number; lines: number }
+    >({
         snapshot: null,
         pending: 0,
         linesSent: 0,
+        lines: 0,
     });
+    const incomingTotal = useRef(0);
+    const isRace = duel.mode === 'race';
     const channelRef = useRef<ReturnType<
         ReturnType<typeof echo>['join']
     > | null>(null);
     const opponentBoxRef = useRef<HTMLDivElement>(null);
     const [rankAtStart] = useState(me.rank.rank);
-    const cell = useCellSize(254, 28);
+    const cell = useCellSize(270, 28);
 
     const phase = state.finished
         ? 'finished'
@@ -107,23 +150,42 @@ export default function Duel({
         // Gravity speeds up as the match goes on, like Tetris Battle.
         gravity: (elapsed) => Math.max(150, 1000 - elapsed / 150),
         events: {
+            // Races are pure speed: no garbage changes hands.
             onAttack: (lines) => {
+                if (isRace) {
+                    return;
+                }
+
                 channelRef.current?.whisper('attack', { lines });
                 fireAttack(lines, 'outgoing');
             },
-            onClear: (info) =>
+            onClear: (info) => {
                 setCallout({
                     id: Date.now(),
                     lines: describeClear(info),
                     attack: info.attack,
-                }),
+                });
+
+                // Report the finishing line right away; the first report wins the race.
+                if (
+                    isRace &&
+                    (gameRef.current?.stats.lines ?? 0) >= raceLines
+                ) {
+                    sendHeartbeat();
+                }
+            },
             onTopOut: () => {
                 setKnockedOut(true);
-                sendJson<DuelState>(ko(duel.id), {
-                    lines_sent: gameRef.current?.stats.linesSent ?? 0,
-                })
-                    .then(applyState)
-                    .catch(() => {});
+
+                // In a race, topping out only costs time.
+                if (!isRace) {
+                    sendJson<DuelState>(ko(duel.id), {
+                        lines_sent: gameRef.current?.stats.linesSent ?? 0,
+                    })
+                        .then(applyState)
+                        .catch(() => {});
+                }
+
                 setTimeout(() => {
                     gameRef.current?.clearAfterKnockOut();
                     setKnockedOut(false);
@@ -168,15 +230,19 @@ export default function Duel({
 
         channel
             .here((members: Member[]) =>
-                setOpponentOnline(members.some((m) => m.id === opponent.id)),
+                setPresence(
+                    members.some((m) => m.id === opponent.id)
+                        ? 'online'
+                        : 'waiting',
+                ),
             )
             .joining(
                 (member: Member) =>
-                    member.id === opponent.id && setOpponentOnline(true),
+                    member.id === opponent.id && setPresence('online'),
             )
             .leaving(
                 (member: Member) =>
-                    member.id === opponent.id && setOpponentOnline(false),
+                    member.id === opponent.id && setPresence('left'),
             )
             .listen('DuelUpdated', applyState)
             .listenForWhisper('board', (board: BoardWhisper) => {
@@ -184,10 +250,27 @@ export default function Duel({
                     snapshot: board.s,
                     pending: board.p,
                     linesSent: board.l,
+                    lines: board.c ?? 0,
                 };
             })
             .listenForWhisper('attack', ({ lines }: { lines: number }) => {
-                const incoming = Math.max(0, Math.min(20, Number(lines) || 0));
+                if (isRace) {
+                    return;
+                }
+
+                const played = Math.max(
+                    0,
+                    (Date.now() + clockOffset - startsAt) / 1000,
+                );
+                const budget =
+                    ATTACK_ALLOWANCE +
+                    played * MAX_ATTACK_PER_SECOND -
+                    incomingTotal.current;
+                const incoming = Math.floor(
+                    Math.max(0, Math.min(20, Number(lines) || 0, budget)),
+                );
+
+                incomingTotal.current += incoming;
                 gameRef.current?.receiveGarbage(incoming);
                 fireAttack(incoming, 'incoming');
             });
@@ -217,8 +300,9 @@ export default function Duel({
                 s: game.snapshot(),
                 p: game.pendingGarbageTotal,
                 l: game.stats.linesSent,
+                c: game.stats.lines,
             };
-            const key = `${board.s}|${board.p}|${board.l}`;
+            const key = `${board.s}|${board.p}|${board.l}|${board.c}`;
 
             if (key !== last || Date.now() - lastSentAt > 1000) {
                 channel.whisper('board', board);
@@ -238,17 +322,28 @@ export default function Duel({
 
         const timer = setInterval(() => {
             setClock(Date.now() + clockOffset);
-            setLinesSent({
+            setProgress({
                 mine: gameRef.current?.stats.linesSent ?? 0,
                 theirs: opponentView.current.linesSent,
+                myLines: gameRef.current?.stats.lines ?? 0,
+                theirLines: opponentView.current.lines,
             });
         }, 100);
 
         return () => clearInterval(timer);
     }, [clockOffset, gameRef, state.finished]);
 
-    // Heartbeats tell the server we're still here and carry our attack total.
-    // Once time is up they poll quickly until the server settles the result.
+    /** Tell the server we're still here, with our attack total and lines cleared. */
+    const sendHeartbeat = () =>
+        void sendJson<DuelState>(heartbeat(duel.id), {
+            lines_sent: gameRef.current?.stats.linesSent ?? 0,
+            lines: gameRef.current?.stats.lines ?? 0,
+        })
+            .then(applyState)
+            .catch(() => {});
+
+    // Heartbeats run every few seconds; once time is up they poll quickly until
+    // the server settles the result.
     const timeUp = phase === 'timeup';
 
     useEffect(() => {
@@ -256,29 +351,22 @@ export default function Duel({
             return;
         }
 
-        const beat = () =>
-            void sendJson<DuelState>(heartbeat(duel.id), {
-                lines_sent: gameRef.current?.stats.linesSent ?? 0,
-            })
-                .then(applyState)
-                .catch(() => {});
-
         if (timeUp) {
-            beat();
+            sendHeartbeat();
         }
 
-        const timer = setInterval(beat, timeUp ? 1000 : 3000);
+        const timer = setInterval(sendHeartbeat, timeUp ? 1000 : 3000);
 
         return () => clearInterval(timer);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [timeUp, state.finished, duel.id]);
 
-    // Once settled, pull our updated rank so the result can show XP progress and rank-ups.
+    // Once a ranked duel settles, pull our updated rank so the result can show XP and rank-ups.
     useEffect(() => {
-        if (state.finished) {
+        if (state.finished && state.ranked) {
             router.reload({ only: ['me'] });
         }
-    }, [state.finished]);
+    }, [state.finished, state.ranked]);
 
     const surrender = () => {
         if (!confirmForfeit) {
@@ -304,25 +392,40 @@ export default function Duel({
                 <header className="grid w-full max-w-4xl grid-cols-[1fr_auto_1fr] items-center gap-3">
                     <PlayerPlate
                         player={me}
+                        mode={duel.mode}
                         kos={myKos}
                         kosToWin={kosToWin}
-                        linesSent={linesSent.mine}
+                        linesSent={progress.mine}
+                        lines={progress.myLines}
+                        raceLines={raceLines}
                     />
-                    <div
-                        className={cn(
-                            'rounded-lg bg-[#080b18] px-4 py-2 text-center font-mono text-2xl font-bold text-white tabular-nums ring-1 ring-indigo-500/30',
-                            phase === 'playing' &&
-                                remaining < 15000 &&
-                                'text-rose-400',
-                        )}
-                    >
-                        {formatTime(remaining, false)}
+                    <div className="flex flex-col items-center gap-1">
+                        <div
+                            className={cn(
+                                'rounded-lg bg-[#080b18] px-4 py-2 text-center font-mono text-2xl font-bold text-white tabular-nums ring-1 ring-indigo-500/30',
+                                phase === 'playing' &&
+                                    remaining < 15000 &&
+                                    'text-rose-400',
+                            )}
+                        >
+                            {formatTime(remaining, false)}
+                        </div>
+                        <span className="text-[11px] font-semibold tracking-wider whitespace-nowrap text-muted-foreground uppercase">
+                            {
+                                MODE_LABEL[duel.mode][
+                                    duel.ranked ? 'ranked' : 'friendly'
+                                ]
+                            }
+                        </span>
                     </div>
                     <PlayerPlate
                         player={opponent}
+                        mode={duel.mode}
                         kos={theirKos}
                         kosToWin={kosToWin}
-                        linesSent={linesSent.theirs}
+                        linesSent={progress.theirs}
+                        lines={progress.theirLines}
+                        raceLines={raceLines}
                         align="right"
                     />
                 </header>
@@ -341,9 +444,16 @@ export default function Duel({
                                     >
                                         {countdown > 0 ? countdown : 'GO!'}
                                     </span>
-                                    {!opponentOnline && (
+                                    {isRace && (
+                                        <span className="text-sm font-semibold text-white">
+                                            First to {raceLines} lines
+                                        </span>
+                                    )}
+                                    {presence !== 'online' && (
                                         <span className="text-sm text-indigo-200">
-                                            Waiting for opponent…
+                                            {presence === 'connecting'
+                                                ? 'Connecting…'
+                                                : 'Waiting for opponent…'}
                                         </span>
                                     )}
                                 </div>
@@ -353,7 +463,7 @@ export default function Duel({
                         {knockedOut && phase === 'playing' && (
                             <FieldOverlay className="bg-rose-950/60">
                                 <span className="animate-callout text-6xl font-black text-rose-300">
-                                    K.O.
+                                    {isRace ? 'OOPS!' : 'K.O.'}
                                 </span>
                             </FieldOverlay>
                         )}
@@ -372,6 +482,7 @@ export default function Duel({
                                     state={state}
                                     me={me}
                                     opponent={opponent}
+                                    raceLines={raceLines}
                                     rankedUp={me.rank.rank > rankAtStart}
                                 />
                             </FieldOverlay>
@@ -397,10 +508,21 @@ export default function Duel({
                                     </span>
                                 </div>
                             )}
-                            {!opponentOnline && phase !== 'finished' && (
+                            {presence !== 'online' && phase !== 'finished' && (
                                 <div className="absolute inset-x-2 top-2 flex items-center justify-center gap-1.5 rounded-md bg-black/70 px-2 py-1 text-xs text-amber-200">
-                                    <WifiOff className="size-3.5" />{' '}
-                                    Disconnected
+                                    {presence === 'left' ? (
+                                        <>
+                                            <WifiOff className="size-3.5" />{' '}
+                                            Disconnected
+                                        </>
+                                    ) : presence === 'waiting' ? (
+                                        'Waiting for opponent…'
+                                    ) : (
+                                        <>
+                                            <Spinner className="size-3.5" />{' '}
+                                            Connecting…
+                                        </>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -431,21 +553,27 @@ Duel.layout = {
     breadcrumbs: [
         { title: 'Lobby', href: dashboard() },
         // The current page crumb isn't rendered as a link.
-        { title: 'Ranked match', href: dashboard() },
+        { title: 'Match', href: dashboard() },
     ],
 };
 
 function PlayerPlate({
     player,
+    mode,
     kos,
     kosToWin,
     linesSent,
+    lines,
+    raceLines,
     align = 'left',
 }: {
     player: Player;
+    mode: DuelState['mode'];
     kos: number;
     kosToWin: number;
     linesSent: number;
+    lines: number;
+    raceLines: number;
     align?: 'left' | 'right';
 }) {
     return (
@@ -462,33 +590,57 @@ function PlayerPlate({
                 </span>
             </div>
             <RankBadge progress={player.rank} className="max-w-full" />
-            <div
-                className={cn(
-                    'flex items-center gap-3 text-xs',
-                    align === 'right' && 'flex-row-reverse',
-                )}
-            >
+            {mode === 'race' ? (
                 <div
-                    className="flex gap-1"
-                    aria-label={`${kos} of ${kosToWin} KOs`}
+                    className={cn(
+                        'flex w-full max-w-48 items-center gap-2 text-xs',
+                        align === 'right' && 'flex-row-reverse',
+                    )}
                 >
-                    {Array.from({ length: kosToWin }, (_, i) => (
-                        <span
-                            key={i}
+                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                        <div
                             className={cn(
-                                'size-3 rotate-45 rounded-[2px] border',
-                                i < kos
-                                    ? 'border-amber-500 bg-amber-400'
-                                    : 'border-muted-foreground/40',
+                                'h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 transition-[width]',
+                                align === 'right' && 'ml-auto',
                             )}
+                            style={{
+                                width: `${Math.min(100, (lines / raceLines) * 100)}%`,
+                            }}
                         />
-                    ))}
+                    </div>
+                    <span className="text-muted-foreground tabular-nums">
+                        {Math.min(lines, raceLines)}/{raceLines}
+                    </span>
                 </div>
-                <span className="text-muted-foreground tabular-nums">
-                    <Swords className="mr-1 inline size-3" />
-                    {linesSent} sent
-                </span>
-            </div>
+            ) : (
+                <div
+                    className={cn(
+                        'flex items-center gap-3 text-xs',
+                        align === 'right' && 'flex-row-reverse',
+                    )}
+                >
+                    <div
+                        className="flex gap-1"
+                        aria-label={`${kos} of ${kosToWin} KOs`}
+                    >
+                        {Array.from({ length: kosToWin }, (_, i) => (
+                            <span
+                                key={i}
+                                className={cn(
+                                    'size-3 rotate-45 rounded-[2px] border',
+                                    i < kos
+                                        ? 'border-amber-500 bg-amber-400'
+                                        : 'border-muted-foreground/40',
+                                )}
+                            />
+                        ))}
+                    </div>
+                    <span className="text-muted-foreground tabular-nums">
+                        <Swords className="mr-1 inline size-3" />
+                        {linesSent} sent
+                    </span>
+                </div>
+            )}
         </div>
     );
 }
@@ -497,11 +649,13 @@ function Result({
     state,
     me,
     opponent,
+    raceLines,
     rankedUp,
 }: {
     state: DuelState;
     me: Player;
     opponent: Player;
+    raceLines: number;
     rankedUp: boolean;
 }) {
     const outcome =
@@ -513,6 +667,10 @@ function Result({
     const reason = {
         knockout: 'by knockout',
         time: 'on time',
+        finish:
+            outcome === 'win'
+                ? `first to ${raceLines} lines`
+                : `${opponent.name} finished first`,
         forfeit:
             outcome === 'win' ? `${opponent.name} forfeited` : 'you forfeited',
         disconnect:
@@ -539,7 +697,12 @@ function Result({
                       : 'DRAW'}
             </span>
             <span className="text-sm text-indigo-200">{reason}</span>
-            {change > 0 && outcome !== 'draw' && (
+            {!state.ranked && (
+                <span className="text-xs text-indigo-200/80">
+                    Friendly match: no rating or XP
+                </span>
+            )}
+            {state.ranked && change > 0 && outcome !== 'draw' && (
                 <span
                     className={cn(
                         'text-lg font-bold',
@@ -552,23 +715,29 @@ function Result({
                     {change} rating
                 </span>
             )}
-            <span className="text-sm font-semibold text-indigo-100">
-                +{xpGained} XP
-            </span>
-            {rankedUp && (
-                <span className="animate-callout text-2xl font-black text-amber-300">
-                    RANK UP! {me.rank.rank} · {me.rank.title}
-                </span>
+            {state.ranked && (
+                <>
+                    <span className="text-sm font-semibold text-indigo-100">
+                        +{xpGained} XP
+                    </span>
+                    {rankedUp && (
+                        <span className="animate-callout text-2xl font-black text-amber-300">
+                            RANK UP! {me.rank.rank} · {me.rank.title}
+                        </span>
+                    )}
+                    <RankProgressBar progress={me.rank} className="w-56" />
+                </>
             )}
-            <RankProgressBar progress={me.rank} className="w-56" />
             <div className="mt-3 flex gap-2">
-                <Button
-                    onClick={() =>
-                        router.visit(dashboard({ query: { queue: 1 } }))
-                    }
-                >
-                    Play again
-                </Button>
+                {state.ranked && (
+                    <Button
+                        onClick={() =>
+                            router.visit(dashboard({ query: { queue: 1 } }))
+                        }
+                    >
+                        Play again
+                    </Button>
+                )}
                 <Button variant="secondary" asChild>
                     <Link href={dashboard()}>Lobby</Link>
                 </Button>

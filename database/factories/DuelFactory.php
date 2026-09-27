@@ -41,4 +41,24 @@ class DuelFactory extends Factory
             'player_two_seen_at' => now()->subSeconds(4),
         ]);
     }
+
+    /**
+     * A first-to-40-lines race.
+     */
+    public function race(): static
+    {
+        return $this->state(fn () => [
+            'mode' => Duel::MODE_RACE,
+            'ranked' => false,
+            'ends_at' => now()->addSeconds(Duel::RACE_DURATION_SECONDS),
+        ]);
+    }
+
+    /**
+     * A friendly duel that leaves rating and XP alone.
+     */
+    public function unranked(): static
+    {
+        return $this->state(fn () => ['ranked' => false]);
+    }
 }

@@ -32,6 +32,7 @@ class DuelController extends Controller
             'endsAt' => $duel->ends_at->getTimestampMs(),
             'serverNow' => now()->getTimestampMs(),
             'kosToWin' => Duel::KOS_TO_WIN,
+            'raceLines' => Duel::RACE_LINES,
         ]);
     }
 
@@ -46,11 +47,15 @@ class DuelController extends Controller
     }
 
     /**
-     * Periodic "still here" ping carrying the player's attack total.
+     * Periodic "still here" ping carrying the player's attack total (and lines cleared, for races).
      */
     public function heartbeat(Request $request, Duel $duel): JsonResponse
     {
-        $duel->heartbeat($this->player($request, $duel), $this->linesSent($request));
+        $lines = (int) ($request->validate([
+            'lines' => ['sometimes', 'integer', 'min:0', 'max:1000'],
+        ])['lines'] ?? 0);
+
+        $duel->heartbeat($this->player($request, $duel), $this->linesSent($request), $lines);
 
         return response()->json($duel->toClient());
     }

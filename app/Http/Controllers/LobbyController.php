@@ -17,42 +17,16 @@ class LobbyController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        $recent = Duel::query()
-            ->with(['playerOne:id,name', 'playerTwo:id,name'])
-            ->whereNotNull('finished_at')
-            ->where(fn ($query) => $query->where('player_one_id', $user->id)->orWhere('player_two_id', $user->id))
-            ->latest('finished_at')
-            ->limit(8)
-            ->get()
-            ->map(function (Duel $duel) use ($user) {
-                $isOne = $duel->player_one_id === $user->id;
-
-                return [
-                    'id' => $duel->id,
-                    'opponent' => ($isOne ? $duel->playerTwo : $duel->playerOne)->name,
-                    'result' => match ($duel->winner_id) {
-                        null => 'draw',
-                        $user->id => 'win',
-                        default => 'loss',
-                    },
-                    'myKos' => $isOne ? $duel->player_one_kos : $duel->player_two_kos,
-                    'theirKos' => $isOne ? $duel->player_two_kos : $duel->player_one_kos,
-                    'reason' => $duel->finish_reason,
-                    'ratingChange' => $duel->rating_change,
-                    'finishedAt' => $duel->finished_at?->diffForHumans(),
-                ];
-            });
-
         return Inertia::render('lobby', [
             'stats' => [
                 'rating' => $user->rating,
                 'wins' => $user->wins,
                 'losses' => $user->losses,
-                'bestSprintMs' => $user->best_sprint_ms,
                 'rank' => $user->rankProgress(),
             ],
+            'records' => $user->practiceRecords(),
             'leaderboard' => $this->leaderboard(),
-            'recentDuels' => $recent,
+            'recentDuels' => Duel::recentFor($user),
             'activeDuelId' => MatchmakingController::activeDuelFor($user)?->id,
         ]);
     }
@@ -63,22 +37,9 @@ class LobbyController extends Controller
         $user = $request->user();
 
         return Inertia::render('practice', [
-            'records' => collect(self::RECORDS)->map(fn (array $record) => $user->{$record['column']}),
+            'records' => $user->practiceRecords(),
         ]);
     }
-
-    /**
-     * Practice modes with a personal best: where it's stored, whether a lower value is better,
-     * and the range a legitimate result can fall in.
-     *
-     * @var array<string, array{column: string, lowerIsBetter: bool, min: int, max: int}>
-     */
-    private const RECORDS = [
-        'sprint' => ['column' => 'best_sprint_ms', 'lowerIsBetter' => true, 'min' => 1000, 'max' => 3600000],
-        'dig' => ['column' => 'best_dig_ms', 'lowerIsBetter' => true, 'min' => 1000, 'max' => 3600000],
-        'ultra' => ['column' => 'best_ultra_score', 'lowerIsBetter' => false, 'min' => 0, 'max' => 10000000],
-        'survival' => ['column' => 'best_survival_ms', 'lowerIsBetter' => false, 'min' => 0, 'max' => 86400000],
-    ];
 
     /**
      * Save a practice result if it beats the player's record for that mode.
@@ -89,9 +50,9 @@ class LobbyController extends Controller
         $user = $request->user();
 
         $mode = $request->validate([
-            'mode' => ['required', 'string', 'in:'.implode(',', array_keys(self::RECORDS))],
+            'mode' => ['required', 'string', 'in:'.implode(',', array_keys(User::PRACTICE_RECORDS))],
         ])['mode'];
-        $record = self::RECORDS[$mode];
+        $record = User::PRACTICE_RECORDS[$mode];
 
         $value = (int) $request->validate([
             'value' => ['required', 'integer', 'min:'.$record['min'], 'max:'.$record['max']],

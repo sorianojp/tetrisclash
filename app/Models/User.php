@@ -37,6 +37,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property int|null $best_survival_ms
  * @property int $xp
  * @property CarbonImmutable|null $queued_at
+ * @property CarbonImmutable|null $searching_since
  */
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
@@ -49,8 +50,36 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
      * @var array<string, mixed>
      */
     protected $attributes = [
+        'rating' => 1000,
+        'wins' => 0,
+        'losses' => 0,
         'xp' => 0,
     ];
+
+    /**
+     * Practice modes with a personal best: where it's stored, whether a lower value is better,
+     * and the range a believable result can fall in. The bounds sit past what any human has
+     * done (e.g. 40 lines in under 10 seconds), so a tampered client can't post an impossible
+     * record, while every real result still fits.
+     *
+     * @var array<string, array{column: string, lowerIsBetter: bool, min: int, max: int}>
+     */
+    public const PRACTICE_RECORDS = [
+        'sprint' => ['column' => 'best_sprint_ms', 'lowerIsBetter' => true, 'min' => 10000, 'max' => 3600000],
+        'dig' => ['column' => 'best_dig_ms', 'lowerIsBetter' => true, 'min' => 4000, 'max' => 3600000],
+        'ultra' => ['column' => 'best_ultra_score', 'lowerIsBetter' => false, 'min' => 0, 'max' => 500000],
+        'survival' => ['column' => 'best_survival_ms', 'lowerIsBetter' => false, 'min' => 0, 'max' => 86400000],
+    ];
+
+    /**
+     * Personal bests keyed by practice mode (null when never set).
+     *
+     * @return array<string, int|null>
+     */
+    public function practiceRecords(): array
+    {
+        return array_map(fn (array $record) => $this->{$record['column']}, self::PRACTICE_RECORDS);
+    }
 
     /**
      * The player's rank, title and progress toward the next rank.
@@ -74,6 +103,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
             'queued_at' => 'datetime',
+            'searching_since' => 'datetime',
         ];
     }
 }

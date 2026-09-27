@@ -1,5 +1,5 @@
-import { Link } from '@inertiajs/react';
-import { Gamepad2, Swords } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { Gamepad2, Swords, UserRound } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -13,9 +13,10 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard, practice } from '@/routes';
+import { show as showPlayer } from '@/routes/players';
 import type { NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
+const gameNavItems: NavItem[] = [
     {
         title: 'Lobby',
         href: dashboard(),
@@ -29,6 +30,12 @@ const mainNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    const { auth } = usePage().props;
+    const mainNavItems: NavItem[] = [
+        ...gameNavItems,
+        { title: 'Profile', href: showPlayer(auth.user.id), icon: UserRound },
+    ];
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
