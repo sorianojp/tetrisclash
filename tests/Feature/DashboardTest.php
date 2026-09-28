@@ -107,3 +107,33 @@ test('the lobby includes practice records', function () {
             ->where('records.dig', 30000)
             ->where('records.sprint', null));
 });
+
+test('practice leaderboards rank personal bests in each mode\'s direction', function () {
+    $fast = User::factory()->create(['best_sprint_ms' => 40000, 'best_ultra_score' => 10000]);
+    $slow = User::factory()->create(['best_sprint_ms' => 80000, 'best_ultra_score' => 90000]);
+    User::factory()->create();
+
+    $this->actingAs($slow)
+        ->get(route('practice'))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('leaderboards.sprint.entries', 2)
+            ->where('leaderboards.sprint.entries.0.id', $fast->id)
+            ->where('leaderboards.sprint.entries.0.value', 40000)
+            ->where('leaderboards.sprint.you', ['position' => 2, 'value' => 80000])
+            ->where('leaderboards.ultra.entries.0.id', $slow->id)
+            ->where('leaderboards.ultra.you.position', 1)
+            ->has('leaderboards.dig.entries', 0)
+            ->where('leaderboards.dig.you', null));
+});
+
+test('practice leaderboards show the top ten and the viewer\'s position beyond it', function () {
+    User::factory()->count(12)->sequence(fn ($sequence) => ['best_zen_score' => 100000 - $sequence->index])->create();
+    $viewer = User::factory()->create(['best_zen_score' => 5]);
+
+    $this->actingAs($viewer)
+        ->get(route('dashboard'))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('practiceLeaderboards.zen.entries', 10)
+            ->where('practiceLeaderboards.zen.entries.0.value', 100000)
+            ->where('practiceLeaderboards.zen.you', ['position' => 13, 'value' => 5]));
+});

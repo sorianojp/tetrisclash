@@ -1,11 +1,13 @@
-import { Head, usePage } from '@inertiajs/react';
-import { RotateCcw } from 'lucide-react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { Crown, RotateCcw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ClearCallout, describeClear } from '@/components/tetris/clear-callout';
 import type { Callout } from '@/components/tetris/clear-callout';
 import { ControlsLegend } from '@/components/tetris/controls-legend';
 import { FieldOverlay } from '@/components/tetris/field-overlay';
+import { PracticeLeaderboard } from '@/components/tetris/practice-leaderboard';
+import type { PracticeBoards } from '@/components/tetris/practice-leaderboard';
 import { ShareResult } from '@/components/tetris/share-result';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -76,8 +78,10 @@ function recordValue(
 
 export default function Practice({
     records: initialRecords,
+    leaderboards,
 }: {
     records: PracticeRecords;
+    leaderboards: PracticeBoards;
 }) {
     const { auth } = usePage().props;
     const [mode, setMode] = useState<Mode>('sprint');
@@ -120,7 +124,14 @@ export default function Practice({
                 setRecords({ ...records, [mode]: value });
             }
 
-            void sendJson(recordsRoute(), { mode, value });
+            const saved = sendJson(recordsRoute(), { mode, value });
+
+            // A new best may move us up the board.
+            if (newBest) {
+                void saved.then(() =>
+                    router.reload({ only: ['leaderboards'] }),
+                );
+            }
         }
 
         setPhase('done');
@@ -407,6 +418,16 @@ export default function Practice({
                                     value={value}
                                 />
                             ))}
+                        </div>
+                        <div className="rounded-xl border p-4">
+                            <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                                <Crown className="size-4 text-amber-500" />
+                                {MODES[mode].label} leaderboard
+                            </h2>
+                            <PracticeLeaderboard
+                                mode={mode}
+                                board={leaderboards[mode]}
+                            />
                         </div>
                         <div className="rounded-xl border p-4">
                             <ControlsLegend />

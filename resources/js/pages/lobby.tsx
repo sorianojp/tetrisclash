@@ -17,6 +17,8 @@ import { DuelHistory } from '@/components/tetris/duel-history';
 import { EnergyMeter, liveEnergy } from '@/components/tetris/energy-meter';
 import type { EnergyStatus } from '@/components/tetris/energy-meter';
 import { OnlineNow } from '@/components/tetris/online-now';
+import { PracticeLeaderboard } from '@/components/tetris/practice-leaderboard';
+import type { PracticeBoards } from '@/components/tetris/practice-leaderboard';
 import type { DuelSummary } from '@/components/tetris/duel-history';
 import { RankBadge, RankProgressBar } from '@/components/tetris/rank-badge';
 import type { RankProgress } from '@/components/tetris/rank-badge';
@@ -34,6 +36,13 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { sendJson } from '@/lib/api';
 import { formatTime } from '@/lib/format';
@@ -48,7 +57,7 @@ import {
     RECORD_MODES,
     formatRecord,
 } from '@/tetris/practice-modes';
-import type { PracticeRecords } from '@/tetris/practice-modes';
+import type { PracticeRecords, RecordMode } from '@/tetris/practice-modes';
 
 type Props = {
     stats: {
@@ -65,6 +74,7 @@ type Props = {
         losses: number;
         rank: RankProgress;
     }[];
+    practiceLeaderboards: PracticeBoards;
     recentDuels: DuelSummary[];
     records: PracticeRecords;
     activeDuelId: number | null;
@@ -82,6 +92,7 @@ const QUEUE_REFRESH_MS = 5000;
 export default function Lobby({
     stats,
     leaderboard,
+    practiceLeaderboards,
     recentDuels,
     records,
     activeDuelId,
@@ -96,6 +107,7 @@ export default function Lobby({
     const [searchRange, setSearchRange] = useState<number | null | undefined>();
     const [now, setNow] = useState(() => Date.now());
     const [clockOffset] = useState(() => serverNow - Date.now());
+    const [board, setBoard] = useState<'ranked' | RecordMode>('ranked');
     const searchingRef = useRef(false);
     const liveEnergyNow = liveEnergy(energy, now + clockOffset);
     const hasEnergy = liveEnergyNow.current > 0;
@@ -415,13 +427,43 @@ export default function Lobby({
                 <div className="grid gap-4 lg:grid-cols-3">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Crown className="size-4 text-amber-500" />{' '}
-                                Leaderboard
+                            <CardTitle className="flex items-center justify-between gap-2">
+                                <span className="flex items-center gap-2">
+                                    <Crown className="size-4 text-amber-500" />{' '}
+                                    Leaderboard
+                                </span>
+                                <Select
+                                    value={board}
+                                    onValueChange={(value) =>
+                                        setBoard(value as typeof board)
+                                    }
+                                >
+                                    <SelectTrigger
+                                        size="sm"
+                                        aria-label="Leaderboard"
+                                    >
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent align="end">
+                                        <SelectItem value="ranked">
+                                            Ranked
+                                        </SelectItem>
+                                        {RECORD_MODES.map((mode) => (
+                                            <SelectItem key={mode} value={mode}>
+                                                {PRACTICE_MODES[mode].label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            {leaderboard.length === 0 ? (
+                            {board !== 'ranked' ? (
+                                <PracticeLeaderboard
+                                    mode={board}
+                                    board={practiceLeaderboards[board]}
+                                />
+                            ) : leaderboard.length === 0 ? (
                                 <p className="text-sm text-muted-foreground">
                                     No ranked matches yet. Be the first!
                                 </p>

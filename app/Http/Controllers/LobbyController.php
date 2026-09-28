@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Duel;
 use App\Models\User;
+use App\Support\PracticeLeaderboards;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
@@ -27,6 +28,7 @@ class LobbyController extends Controller
             ],
             'records' => $user->practiceRecords(),
             'leaderboard' => $this->leaderboard(),
+            'practiceLeaderboards' => PracticeLeaderboards::all($user),
             'recentDuels' => Duel::recentFor($user),
             'activeDuelId' => MatchmakingController::activeDuelFor($user)?->id,
             'onlineCount' => OnlinePlayersController::onlineCount(),
@@ -42,6 +44,7 @@ class LobbyController extends Controller
 
         return Inertia::render('practice', [
             'records' => $user->practiceRecords(),
+            'leaderboards' => PracticeLeaderboards::all($user),
         ]);
     }
 
