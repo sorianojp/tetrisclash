@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * One finished practice run that counts toward a record (see User::PRACTICE_RECORDS),
@@ -20,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  * @property-read User $user
+ * @property-read Replay|null $replay
  */
 #[Fillable(['user_id', 'mode', 'value'])]
 class PracticeRun extends Model
@@ -33,5 +35,13 @@ class PracticeRun extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * @return HasOne<Replay, $this>
+     */
+    public function replay(): HasOne
+    {
+        return $this->hasOne(Replay::class);
     }
 }

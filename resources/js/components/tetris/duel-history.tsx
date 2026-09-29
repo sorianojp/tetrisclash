@@ -1,6 +1,8 @@
 import { Link } from '@inertiajs/react';
+import { Film } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { replay as duelReplay } from '@/routes/duels';
 import { show as showPlayer } from '@/routes/players';
 
 export type DuelSummary = {
@@ -17,6 +19,7 @@ export type DuelSummary = {
     reason: string | null;
     ratingChange: number | null;
     finishedAt: string | null;
+    hasReplay: boolean;
 };
 
 /** A player's finished duels, newest first. */
@@ -64,6 +67,16 @@ export function DuelHistory({
                     <span className="text-xs whitespace-nowrap text-muted-foreground">
                         {duel.finishedAt}
                     </span>
+                    {duel.hasReplay && (
+                        <Link
+                            href={duelReplay(duel.id)}
+                            className="text-muted-foreground hover:text-foreground"
+                            title="Watch replay"
+                        >
+                            <Film className="size-4" />
+                            <span className="sr-only">Watch replay</span>
+                        </Link>
+                    )}
                 </li>
             ))}
         </ul>

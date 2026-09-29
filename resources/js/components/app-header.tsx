@@ -1,5 +1,13 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, Gamepad2, Menu, Search, Swords } from 'lucide-react';
+import {
+    BookOpen,
+    Folder,
+    Gamepad2,
+    Menu,
+    Search,
+    Swords,
+    Trophy,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
@@ -33,6 +41,7 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
 import { cn, toUrl } from '@/lib/utils';
 import { dashboard, practice } from '@/routes';
+import { index as tournamentsIndex } from '@/routes/tournaments';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
 type Props = {
@@ -49,6 +58,11 @@ const mainNavItems: NavItem[] = [
         title: 'Practice',
         href: practice(),
         icon: Gamepad2,
+    },
+    {
+        title: 'Tournaments',
+        href: tournamentsIndex(),
+        icon: Trophy,
     },
 ];
 

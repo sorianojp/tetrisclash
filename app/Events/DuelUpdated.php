@@ -11,7 +11,7 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
 /**
- * Authoritative KO count / result change for a duel.
+ * Authoritative KO count / result change for a duel, sent to its players and spectators.
  */
 class DuelUpdated implements ShouldBroadcastNow
 {
@@ -24,7 +24,10 @@ class DuelUpdated implements ShouldBroadcastNow
      */
     public function broadcastOn(): array
     {
-        return [new PresenceChannel('duel.'.$this->duel->id)];
+        return [
+            new PresenceChannel('duel.'.$this->duel->id),
+            new PresenceChannel('watch.duel.'.$this->duel->id),
+        ];
     }
 
     /**

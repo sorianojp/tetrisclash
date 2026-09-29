@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
  * (each player's best run since Monday 00:00 UTC). Tied players share a position,
  * which is one more than the number of players strictly ahead of them.
  *
- * @phpstan-type Entry array{id: int, name: string, value: int, position: int, rank: array{rank: int, title: string, xp: int, xpIntoRank: int, xpForNext: int|null}}
+ * @phpstan-type Entry array{id: int, name: string, value: int, position: int, rank: array{rank: int, title: string, xp: int, xpIntoRank: int, xpForNext: int|null}, replayId: int|null}
  * @phpstan-type Board array{entries: list<Entry>, you: array{position: int, value: int}|null}
  * @phpstan-type PracticeRecord array{column: string, lowerIsBetter: bool, min: int, max: int}
  */
@@ -32,7 +32,7 @@ final class PracticeLeaderboards
 
         foreach (User::PRACTICE_RECORDS as $mode => $record) {
             $boards[$mode] = [
-                'allTime' => self::allTime($record, $viewer),
+                'allTime' => self::allTime($mode, $record, $viewer),
                 'weekly' => self::weekly($mode, $record, $viewer),
             ];
         }
@@ -67,7 +67,7 @@ final class PracticeLeaderboards
      * @param  PracticeRecord  $record
      * @return Board
      */
-    private static function allTime(array $record, User $viewer): array
+    private static function allTime(string $mode, array $record, User $viewer): array
     {
         $column = $record['column'];
 
@@ -84,7 +84,7 @@ final class PracticeLeaderboards
         $best = $viewer->{$column};
 
         return [
-            'entries' => self::entries($top),
+            'entries' => self::entries($top, self::replayRuns($mode, $top)),
             'you' => $best === null ? null : [
                 'position' => self::allTimePosition($record, $best),
                 'value' => $best,
@@ -126,7 +126,7 @@ final class PracticeLeaderboards
         $best = self::weeklyBests($mode, $record)->where('user_id', $viewer->id)->value('best');
 
         return [
-            'entries' => self::entries($top),
+            'entries' => self::entries($top, self::replayRuns($mode, $top, self::weekStart())),
             'you' => $best === null ? null : [
                 'position' => DB::query()
                     ->fromSub(self::weeklyBests($mode, $record), 'bests')
@@ -165,12 +165,36 @@ final class PracticeLeaderboards
     }
 
     /**
+     * Runs with a replay behind the listed results, keyed "user:value".
+     *
+     * @param  array<int, array{player: User, value: int}>  $top
+     * @return array<string, int>
+     */
+    private static function replayRuns(string $mode, array $top, ?CarbonImmutable $since = null): array
+    {
+        if ($top === []) {
+            return [];
+        }
+
+        return PracticeRun::query()
+            ->where('mode', $mode)
+            ->whereIn('user_id', array_map(fn (array $row) => $row['player']->id, $top))
+            ->when($since, fn ($query) => $query->where('created_at', '>=', $since))
+            ->whereHas('replay')
+            ->orderBy('id')
+            ->get(['id', 'user_id', 'value'])
+            ->mapWithKeys(fn (PracticeRun $run) => ["{$run->user_id}:{$run->value}" => $run->id])
+            ->all();
+    }
+
+    /**
      * Number a sorted top list, giving tied values the same position.
      *
      * @param  array<int, array{player: User, value: int}>  $top  sorted best first
+     * @param  array<string, int>  $replays  run ids with replays, keyed "user:value"
      * @return list<Entry>
      */
-    private static function entries(array $top): array
+    private static function entries(array $top, array $replays): array
     {
         $entries = [];
         $position = 0;
@@ -188,6 +212,7 @@ final class PracticeLeaderboards
                 'value' => $value,
                 'position' => $position,
                 'rank' => $player->rankProgress(),
+                'replayId' => $replays["{$player->id}:{$value}"] ?? null,
             ];
         }
 

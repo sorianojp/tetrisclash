@@ -6,6 +6,7 @@ import type { RankProgress } from '@/components/tetris/rank-badge';
 import { startOnlinePing } from '@/hooks/use-online';
 import { sendJson } from '@/lib/api';
 import { accept, decline } from '@/routes/challenges';
+import { show as showDuel } from '@/routes/duels';
 
 type Invite = {
     code: string;
@@ -22,8 +23,9 @@ type Invite = {
 const toastId = (code: string) => `invite-${code}`;
 
 /**
- * On every signed-in page: keeps the player in the online list, and pops up invites
- * from other players with Accept / Decline until they expire.
+ * On every signed-in page: keeps the player in the online list, pops up invites
+ * from other players with Accept / Decline until they expire, and announces
+ * achievements as they unlock.
  */
 export function InviteListener({ userId }: { userId: number }) {
     useEffect(() => startOnlinePing(), []);
@@ -46,6 +48,23 @@ export function InviteListener({ userId }: { userId: number }) {
                 },
             });
         },
+    );
+
+    // A bracket match started: go play it, wherever we are.
+    useEcho<{ duelId: number; tournament: string }>(
+        `App.Models.User.${userId}`,
+        'TournamentMatchReady',
+        ({ duelId, tournament }) => {
+            toast.info(`${tournament}: your match is starting`);
+            router.visit(showDuel(duelId));
+        },
+    );
+
+    useEcho<{ title: string; description: string }>(
+        `App.Models.User.${userId}`,
+        'AchievementUnlocked',
+        ({ title, description }) =>
+            toast.success(`Achievement unlocked: ${title}`, { description }),
     );
 
     // The challenger took the invite back (cancelled, or sent a new one).

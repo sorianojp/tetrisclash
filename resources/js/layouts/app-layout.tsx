@@ -1,6 +1,7 @@
 import { usePage } from '@inertiajs/react';
 import { InviteListener } from '@/components/tetris/invite-listener';
 import AppLayoutTemplate from '@/layouts/app/app-sidebar-layout';
+import { applyGameTheme } from '@/tetris/themes';
 import type { BreadcrumbItem } from '@/types';
 
 export default function AppLayout({
@@ -11,6 +12,9 @@ export default function AppLayout({
     children: React.ReactNode;
 }) {
     const { auth } = usePage().props;
+
+    // Boards draw from module-level colours, so keep them on the player's theme.
+    applyGameTheme(auth.user?.piece_theme, auth.user?.board_skin);
 
     return (
         <AppLayoutTemplate breadcrumbs={breadcrumbs}>

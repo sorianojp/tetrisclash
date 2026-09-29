@@ -64,7 +64,8 @@ class OnlinePlayersController extends Controller
                 'rating' => $player->rating,
                 'rank' => $player->rankProgress(),
                 'acceptsInvites' => $player->accepts_invites,
-                'inMatch' => $inMatch->contains($player->id),
+                'inMatch' => $inMatch->has($player->id),
+                'duelId' => $inMatch->get($player->id),
             ]),
             'filters' => ['search' => $search, 'available' => $availableOnly],
             'onlineCount' => self::onlineCount(),
@@ -88,7 +89,7 @@ class OnlinePlayersController extends Controller
     }
 
     /**
-     * Which of these players are in an unfinished duel.
+     * The unfinished duel each of these players is in, keyed by player id.
      *
      * @param  Collection<int, int>  $ids
      * @return Collection<int, int>
@@ -99,12 +100,18 @@ class OnlinePlayersController extends Controller
             return collect();
         }
 
-        return Duel::query()
+        $duels = Duel::query()
             ->whereNull('finished_at')
             ->where(fn ($query) => $query->whereIn('player_one_id', $ids)->orWhereIn('player_two_id', $ids))
-            ->get(['player_one_id', 'player_two_id'])
-            ->flatMap(fn (Duel $duel) => [$duel->player_one_id, $duel->player_two_id])
-            ->intersect($ids)
-            ->values();
+            ->get(['id', 'player_one_id', 'player_two_id']);
+
+        $byPlayer = collect();
+
+        foreach ($duels as $duel) {
+            $byPlayer[$duel->player_one_id] = $duel->id;
+            $byPlayer[$duel->player_two_id] = $duel->id;
+        }
+
+        return $byPlayer->only($ids->all());
     }
 }

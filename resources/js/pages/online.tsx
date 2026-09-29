@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { BellOff, Flag, Search, Swords, UserPlus } from 'lucide-react';
+import { BellOff, Eye, Flag, Search, Swords, UserPlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { InviteToggle } from '@/components/tetris/invite-toggle';
 import { RankBadge } from '@/components/tetris/rank-badge';
@@ -22,6 +22,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { dashboard } from '@/routes';
+import { watch as watchDuel } from '@/routes/duels';
 import { index as onlineIndex } from '@/routes/online';
 import { invite, show as showPlayer } from '@/routes/players';
 
@@ -32,6 +33,8 @@ type OnlinePlayer = {
     rank: RankProgress;
     acceptsInvites: boolean;
     inMatch: boolean;
+    /** Their live duel, when they're in one. */
+    duelId: number | null;
 };
 
 type Props = {
@@ -275,8 +278,14 @@ function PlayerAction({
     canInvite: boolean;
     onInvite: (mode: 'battle' | 'race') => void;
 }) {
-    if (player.inMatch) {
-        return <Status>In a match</Status>;
+    if (player.duelId !== null) {
+        return (
+            <Button variant="outline" size="sm" className="w-24" asChild>
+                <Link href={watchDuel(player.duelId)}>
+                    <Eye /> Watch
+                </Link>
+            </Button>
+        );
     }
 
     if (!player.acceptsInvites) {

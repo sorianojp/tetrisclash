@@ -1,14 +1,24 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { echo } from '@laravel/echo-react';
-import { Flag, Swords, WifiOff } from 'lucide-react';
+import { Eye, Flag, Film, WifiOff } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ClearCallout, describeClear } from '@/components/tetris/clear-callout';
 import type { Callout } from '@/components/tetris/clear-callout';
+import {
+    EMOTES,
+    EmoteBar,
+    EmoteBubble,
+    emoteIndex,
+    useEmoteGate,
+    useEmoteMute,
+    useShownEmote,
+} from '@/components/tetris/emotes';
 import { FieldOverlay } from '@/components/tetris/field-overlay';
 import { OpponentField } from '@/components/tetris/opponent-field';
 import type { OpponentView } from '@/components/tetris/opponent-field';
-import { RankBadge, RankProgressBar } from '@/components/tetris/rank-badge';
+import { PlayerPlate } from '@/components/tetris/player-plate';
+import { RankProgressBar } from '@/components/tetris/rank-badge';
 import type { RankProgress } from '@/components/tetris/rank-badge';
 import { ShareResult } from '@/components/tetris/share-result';
 import { VersusIntro } from '@/components/tetris/versus-intro';
@@ -18,9 +28,12 @@ import { sendJson } from '@/lib/api';
 import { formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { forfeit, heartbeat, ko } from '@/routes/duels';
+import { forfeit, heartbeat, ko, replay as duelReplay } from '@/routes/duels';
+import { store as storeReplay } from '@/routes/duels/replay';
+import { show as showTournament } from '@/routes/tournaments';
 import { launchAttack, pointIn } from '@/tetris/projectiles';
 import { PLAYER_LAYOUT } from '@/tetris/render';
+import { ReplayRecorder, encodeReplay } from '@/tetris/replay';
 import type { ShareCardData } from '@/tetris/share-card';
 import { useCellSize, useTetrisGame } from '@/tetris/use-tetris-game';
 
@@ -39,6 +52,7 @@ type DuelState = {
         | 'forfeit'
         | 'disconnect'
         | 'finish'
+        | 'abandoned'
         | null;
     ratingChange: number | null;
     /** XP each player earned, keyed by user id; null until the duel is settled. */
@@ -58,6 +72,8 @@ type Props = {
     serverNow: number;
     kosToWin: number;
     raceLines: number;
+    /** Set when this duel is a bracket match. */
+    tournament: { id: number; name: string; round: string } | null;
 };
 
 type Member = { id: number; name: string };
@@ -68,7 +84,7 @@ type Member = { id: number; name: string };
  */
 type Presence = 'connecting' | 'waiting' | 'online' | 'left';
 /** s: board snapshot, p: pending garbage, l: lines sent, c: lines cleared. */
-type BoardWhisper = { s: string; p: number; l: number; c?: number };
+export type BoardWhisper = { s: string; p: number; l: number; c?: number };
 
 /** The last part of the pre-match countdown, shown on the board; the versus intro plays before it. */
 const BOARD_COUNTDOWN_MS = 3000;
@@ -104,6 +120,7 @@ export default function Duel({
     serverNow,
     kosToWin,
     raceLines,
+    tournament,
 }: Props) {
     const [clockOffset] = useState(() => serverNow - Date.now());
     const [clock, setClock] = useState(() => Date.now() + clockOffset);
@@ -131,9 +148,23 @@ export default function Duel({
     const channelRef = useRef<ReturnType<
         ReturnType<typeof echo>['join']
     > | null>(null);
+    /** Spectators' channel: we stream our board and emotes there, and count who's watching. */
+    const watchRef = useRef<ReturnType<ReturnType<typeof echo>['join']> | null>(
+        null,
+    );
+    const [spectators, setSpectators] = useState(0);
+    const recorder = useRef(new ReplayRecorder());
+    const finishedRef = useRef(duel.finished);
     const opponentBoxRef = useRef<HTMLDivElement>(null);
     const [rankAtStart] = useState(me.rank.rank);
     const cell = useCellSize(270, 28);
+    const [myEmote, showMyEmote] = useShownEmote();
+    const [theirEmote, showTheirEmote] = useShownEmote();
+    const [emotesMuted, toggleEmotesMuted] = useEmoteMute();
+    const canSendEmote = useEmoteGate();
+    const acceptEmote = useEmoteGate();
+    const emotesMutedRef = useRef(emotesMuted);
+    emotesMutedRef.current = emotesMuted;
 
     const phase = state.finished
         ? 'finished'
@@ -282,11 +313,47 @@ export default function Duel({
                 incomingTotal.current += incoming;
                 gameRef.current?.receiveGarbage(incoming);
                 fireAttack(incoming, 'incoming');
+            })
+            .listenForWhisper('emote', ({ e }: { e: unknown }) => {
+                const index = emoteIndex(e);
+
+                if (
+                    index !== null &&
+                    !emotesMutedRef.current &&
+                    acceptEmote()
+                ) {
+                    showTheirEmote(index);
+                }
+            });
+
+        const watchName = `watch.duel.${duel.id}`;
+        const watchers = new Set<number>();
+        const players = [me.id, opponent.id];
+        const count = () => setSpectators(watchers.size);
+        watchRef.current = echo()
+            .join(watchName)
+            .here((members: Member[]) => {
+                members
+                    .filter((m) => !players.includes(m.id))
+                    .forEach((m) => watchers.add(m.id));
+                count();
+            })
+            .joining((member: Member) => {
+                if (!players.includes(member.id)) {
+                    watchers.add(member.id);
+                    count();
+                }
+            })
+            .leaving((member: Member) => {
+                watchers.delete(member.id);
+                count();
             });
 
         return () => {
             channelRef.current = null;
+            watchRef.current = null;
             echo().leave(name);
+            echo().leave(watchName);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [duel.id, opponent.id]);
@@ -315,12 +382,26 @@ export default function Duel({
 
             if (key !== last || Date.now() - lastSentAt > 1000) {
                 channel.whisper('board', board);
+                watchRef.current?.whisper('board', { ...board, u: me.id });
                 last = key;
                 lastSentAt = Date.now();
+            }
+
+            const elapsed = Date.now() + clockOffset - startsAt;
+
+            if (elapsed >= 0 && !finishedRef.current) {
+                recorder.current.capture(
+                    elapsed,
+                    board.s,
+                    board.p,
+                    board.l,
+                    board.c ?? 0,
+                );
             }
         }, BOARD_SYNC_MS);
 
         return () => clearInterval(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [gameRef]);
 
     // Clock + HUD refresh. The clock freezes once the result is in.
@@ -370,12 +451,54 @@ export default function Duel({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [timeUp, state.finished, duel.id]);
 
+    // Once it's over, upload our side of the replay (the final board included).
+    useEffect(() => {
+        if (!state.finished || finishedRef.current) {
+            return;
+        }
+
+        finishedRef.current = true;
+        void encodeReplay(recorder.current.frames)
+            .then((data) => data && sendJson(storeReplay(duel.id), { data }))
+            .catch(() => {});
+    }, [state.finished, duel.id]);
+
     // Once a ranked duel settles, pull our updated rank so the result can show XP and rank-ups.
     useEffect(() => {
         if (state.finished && state.ranked) {
             router.reload({ only: ['me'] });
         }
     }, [state.finished, state.ranked]);
+
+    const sendEmote = (index: number) => {
+        if (!canSendEmote()) {
+            return;
+        }
+
+        channelRef.current?.whisper('emote', { e: index });
+        watchRef.current?.whisper('emote', { e: index, u: me.id });
+        showMyEmote(index);
+    };
+
+    // Keys 1–6 send emotes; the game itself doesn't use the number row.
+    useEffect(() => {
+        const onKey = (event: KeyboardEvent) => {
+            const index = Number(event.code.replace('Digit', '')) - 1;
+
+            if (
+                event.code.startsWith('Digit') &&
+                index >= 0 &&
+                index < EMOTES.length &&
+                !event.repeat &&
+                !(event.target instanceof HTMLInputElement)
+            ) {
+                sendEmote(index);
+            }
+        };
+        window.addEventListener('keydown', onKey);
+
+        return () => window.removeEventListener('keydown', onKey);
+    });
 
     const surrender = () => {
         if (!confirmForfeit) {
@@ -390,8 +513,9 @@ export default function Duel({
 
     const myKos = state.kos[me.id] ?? 0;
     const theirKos = state.kos[opponent.id] ?? 0;
-    const modeLabel =
-        MODE_LABEL[duel.mode][duel.ranked ? 'ranked' : 'friendly'];
+    const modeLabel = tournament
+        ? `${tournament.name} · ${tournament.round}`
+        : MODE_LABEL[duel.mode][duel.ranked ? 'ranked' : 'friendly'];
     const rankedUpNow = me.rank.rank > rankAtStart;
 
     const shareText = () => {
@@ -496,12 +620,14 @@ export default function Duel({
                             {formatTime(remaining, false)}
                         </div>
                         <span className="text-[11px] font-semibold tracking-wider whitespace-nowrap text-muted-foreground uppercase">
-                            {
-                                MODE_LABEL[duel.mode][
-                                    duel.ranked ? 'ranked' : 'friendly'
-                                ]
-                            }
+                            {modeLabel}
                         </span>
+                        {spectators > 0 && (
+                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Eye className="size-3.5" /> {spectators}{' '}
+                                watching
+                            </span>
+                        )}
                     </div>
                     <PlayerPlate
                         player={opponent}
@@ -519,6 +645,7 @@ export default function Duel({
                     <div className="relative tetris-stage rounded-xl p-3 shadow-xl ring-1 ring-indigo-500/20">
                         <canvas ref={canvasRef} className="block" />
                         <ClearCallout callout={callout} />
+                        <EmoteBubble emote={myEmote} />
 
                         {phase === 'countdown' && (
                             <FieldOverlay>
@@ -564,6 +691,7 @@ export default function Duel({
                         {phase === 'finished' && (
                             <FieldOverlay>
                                 <Result
+                                    tournamentId={tournament?.id ?? null}
                                     state={state}
                                     me={me}
                                     opponent={opponent}
@@ -590,6 +718,7 @@ export default function Duel({
                                 view={opponentView}
                                 cell={opponentCell}
                             />
+                            <EmoteBubble emote={theirEmote} />
                             {myKos > 0 && (
                                 <div
                                     key={myKos}
@@ -619,6 +748,14 @@ export default function Duel({
                             )}
                         </div>
 
+                        <div className="max-w-56">
+                            <EmoteBar
+                                onSend={sendEmote}
+                                muted={emotesMuted}
+                                onToggleMute={toggleEmotesMuted}
+                            />
+                        </div>
+
                         {phase !== 'finished' && (
                             <Button
                                 variant={
@@ -642,11 +779,7 @@ export default function Duel({
                 <VersusIntro
                     me={me}
                     opponent={opponent}
-                    title={
-                        MODE_LABEL[duel.mode][
-                            duel.ranked ? 'ranked' : 'friendly'
-                        ]
-                    }
+                    title={modeLabel}
                     rules={
                         isRace
                             ? `First to ${raceLines} lines wins · ${minutes} minutes`
@@ -675,94 +808,6 @@ Duel.layout = {
     ],
 };
 
-function PlayerPlate({
-    player,
-    mode,
-    kos,
-    kosToWin,
-    linesSent,
-    lines,
-    raceLines,
-    align = 'left',
-}: {
-    player: Player;
-    mode: DuelState['mode'];
-    kos: number;
-    kosToWin: number;
-    linesSent: number;
-    lines: number;
-    raceLines: number;
-    align?: 'left' | 'right';
-}) {
-    return (
-        <div
-            className={cn(
-                'flex min-w-0 flex-col gap-1',
-                align === 'right' && 'items-end text-right',
-            )}
-        >
-            <div className="flex max-w-full items-baseline gap-2">
-                <span className="truncate font-bold">{player.name}</span>
-                <span className="text-xs text-muted-foreground tabular-nums">
-                    {player.rating}
-                </span>
-            </div>
-            <RankBadge progress={player.rank} className="max-w-full" />
-            {mode === 'race' ? (
-                <div
-                    className={cn(
-                        'flex w-full max-w-48 items-center gap-2 text-xs',
-                        align === 'right' && 'flex-row-reverse',
-                    )}
-                >
-                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-                        <div
-                            className={cn(
-                                'h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 transition-[width]',
-                                align === 'right' && 'ml-auto',
-                            )}
-                            style={{
-                                width: `${Math.min(100, (lines / raceLines) * 100)}%`,
-                            }}
-                        />
-                    </div>
-                    <span className="text-muted-foreground tabular-nums">
-                        {Math.min(lines, raceLines)}/{raceLines}
-                    </span>
-                </div>
-            ) : (
-                <div
-                    className={cn(
-                        'flex items-center gap-3 text-xs',
-                        align === 'right' && 'flex-row-reverse',
-                    )}
-                >
-                    <div
-                        className="flex gap-1"
-                        aria-label={`${kos} of ${kosToWin} KOs`}
-                    >
-                        {Array.from({ length: kosToWin }, (_, i) => (
-                            <span
-                                key={i}
-                                className={cn(
-                                    'size-3 rotate-45 rounded-[2px] border',
-                                    i < kos
-                                        ? 'border-amber-500 bg-amber-400'
-                                        : 'border-muted-foreground/40',
-                                )}
-                            />
-                        ))}
-                    </div>
-                    <span className="text-muted-foreground tabular-nums">
-                        <Swords className="mr-1 inline size-3" />
-                        {linesSent} sent
-                    </span>
-                </div>
-            )}
-        </div>
-    );
-}
-
 /** Who won, from this player's side, and a short reason why. */
 function describeOutcome(
     state: DuelState,
@@ -789,12 +834,14 @@ function describeOutcome(
             outcome === 'win'
                 ? `${opponent.name} disconnected`
                 : 'you disconnected',
+        abandoned: 'neither player showed up',
     }[state.finishReason ?? 'time'];
 
     return { outcome, reason };
 }
 
 function Result({
+    tournamentId,
     state,
     me,
     opponent,
@@ -802,6 +849,7 @@ function Result({
     rankedUp,
     share,
 }: {
+    tournamentId: number | null;
     state: DuelState;
     me: Player;
     opponent: Player;
@@ -829,7 +877,7 @@ function Result({
                       : 'DRAW'}
             </span>
             <span className="text-sm text-indigo-200">{reason}</span>
-            {!state.ranked && (
+            {!state.ranked && !tournamentId && (
                 <span className="text-xs text-indigo-200/80">
                     Friendly match: no rating or XP
                 </span>
@@ -870,8 +918,20 @@ function Result({
                         Play again
                     </Button>
                 )}
+                {tournamentId !== null && (
+                    <Button asChild>
+                        <Link href={showTournament(tournamentId)}>
+                            Back to bracket
+                        </Link>
+                    </Button>
+                )}
                 <Button variant="secondary" asChild>
                     <Link href={dashboard()}>Lobby</Link>
+                </Button>
+                <Button variant="secondary" asChild>
+                    <Link href={duelReplay(state.id)}>
+                        <Film /> Replay
+                    </Link>
                 </Button>
                 {share}
             </div>

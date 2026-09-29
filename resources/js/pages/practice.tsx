@@ -26,6 +26,7 @@ import {
     formatRecord,
 } from '@/tetris/practice-modes';
 import type { PracticeMode, PracticeRecords } from '@/tetris/practice-modes';
+import { ReplayRecorder, encodeReplay } from '@/tetris/replay';
 import type { ShareCardData } from '@/tetris/share-card';
 import { useCellSize, useTetrisGame } from '@/tetris/use-tetris-game';
 
@@ -106,6 +107,23 @@ export default function Practice({
     const [records, setRecords] = useState(initialRecords);
     const [callout, setCallout] = useState<Callout | null>(null);
     const nextAttackAt = useRef(SURVIVAL_FIRST_ATTACK_MS);
+    const recorder = useRef(new ReplayRecorder());
+
+    /** Record the board as it stands now (forced for the final frame). */
+    const record = (force = false) => {
+        const game = gameRef.current;
+
+        if (game) {
+            recorder.current.capture(
+                game.elapsedMs,
+                game.snapshot(),
+                game.pendingGarbageTotal,
+                game.stats.linesSent,
+                game.stats.lines,
+                force,
+            );
+        }
+    };
     const cell = useCellSize(190);
 
     const finish = (outcome: Outcome) => {
@@ -125,8 +143,15 @@ export default function Practice({
                 setRecords({ ...records, [mode]: value });
             }
 
-            // Any counted run can move us up this week's board.
-            sendJson(recordsRoute(), { mode, value })
+            record(true);
+
+            // Any counted run can move us up this week's board. Its replay goes along, and is
+            // kept if the run is a best.
+            encodeReplay(recorder.current.frames)
+                .catch(() => null)
+                .then((replay) =>
+                    sendJson(recordsRoute(), { mode, value, replay }),
+                )
                 .then(() => router.reload({ only: ['leaderboards'] }))
                 .catch(() =>
                     toast.error(
@@ -185,6 +210,7 @@ export default function Practice({
         setPhase('countdown');
         setCountdownEndsAt(Date.now() + COUNTDOWN_MS);
         nextAttackAt.current = SURVIVAL_FIRST_ATTACK_MS;
+        recorder.current.reset();
     };
 
     // Countdown, Survival's garbage waves, then a HUD refresh loop while playing.
@@ -211,6 +237,10 @@ export default function Practice({
             ) {
                 game.receiveGarbage(survivalAttack(game.elapsedMs));
                 nextAttackAt.current += survivalGap(game.elapsedMs);
+            }
+
+            if (phase === 'playing') {
+                record();
             }
 
             setStats({

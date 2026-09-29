@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { reportClearAchievements } from './achievements';
 import { Effects } from './effects';
 import { Game } from './engine';
 import type { GameEvents, GameOptions } from './engine';
@@ -54,7 +55,10 @@ export function useTetrisGame({
             timeLimitMs,
             events: {
                 onAttack: (lines) => eventsRef.current?.onAttack?.(lines),
-                onClear: (info) => eventsRef.current?.onClear?.(info),
+                onClear: (info) => {
+                    reportClearAchievements(info);
+                    eventsRef.current?.onClear?.(info);
+                },
                 onLock: () => eventsRef.current?.onLock?.(),
                 onTopOut: () => eventsRef.current?.onTopOut?.(),
                 onTimeUp: () => eventsRef.current?.onTimeUp?.(),

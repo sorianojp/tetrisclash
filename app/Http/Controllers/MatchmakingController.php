@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\DuelFound;
 use App\Models\Duel;
+use App\Models\Tournament;
 use App\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
@@ -51,6 +52,15 @@ class MatchmakingController extends Controller
 
         if ($active = self::activeDuelFor($user)) {
             return response()->json(['duelId' => $active->id]);
+        }
+
+        // Bracket matches start on their own; don't let a ranked match get in the way.
+        if ($tournament = Tournament::query()->where('status', Tournament::STATUS_RUNNING)
+            ->whereHas('players', fn ($query) => $query->where('user_id', $user->id)->whereNull('eliminated_at'))
+            ->first()) {
+            $user->forceFill(['queued_at' => null, 'searching_since' => null])->save();
+
+            return response()->json(['inTournament' => $tournament->id]);
         }
 
         if ($user->currentEnergy() < 1) {
@@ -124,10 +134,6 @@ class MatchmakingController extends Controller
 
     public static function activeDuelFor(User $user): ?Duel
     {
-        return Duel::query()
-            ->whereNull('finished_at')
-            ->where(fn ($query) => $query->where('player_one_id', $user->id)->orWhere('player_two_id', $user->id))
-            ->latest('id')
-            ->first();
+        return Duel::activeFor($user);
     }
 }

@@ -1,5 +1,7 @@
-import { Head } from '@inertiajs/react';
-import { Swords, Timer, Trophy } from 'lucide-react';
+import { Head, Link } from '@inertiajs/react';
+import { Award, Eye, Swords, Timer, Trophy } from 'lucide-react';
+import { AchievementList } from '@/components/tetris/achievement-list';
+import type { AchievementStatus } from '@/components/tetris/achievement-list';
 import { DuelHistory } from '@/components/tetris/duel-history';
 import type { DuelSummary } from '@/components/tetris/duel-history';
 import { RankBadge, RankProgressBar } from '@/components/tetris/rank-badge';
@@ -13,6 +15,7 @@ import {
 } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
+import { watch as watchDuel } from '@/routes/duels';
 import {
     PRACTICE_MODES,
     RECORD_MODES,
@@ -33,6 +36,9 @@ type Props = {
     records: PracticeRecords;
     /** All-time leaderboard position per mode. */
     placements: Record<RecordMode, number | null>;
+    achievements: AchievementStatus[];
+    /** The duel they're playing right now, if any. */
+    liveDuelId: number | null;
     recentDuels: DuelSummary[];
 };
 
@@ -40,8 +46,12 @@ export default function Player({
     player,
     records,
     placements,
+    achievements,
     recentDuels,
+    liveDuelId,
 }: Props) {
+    const unlocked = achievements.filter((a) => a.unlockedAt !== null).length;
+
     const played = player.wins + player.losses;
     const winRate =
         played > 0 ? `${Math.round((player.wins / played) * 100)}%` : '—';
@@ -50,6 +60,20 @@ export default function Player({
         <>
             <Head title={player.name} />
             <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 p-4">
+                {liveDuelId !== null && (
+                    <Link
+                        href={watchDuel(liveDuelId)}
+                        className="flex items-center justify-between gap-3 rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm hover:bg-rose-500/15"
+                    >
+                        <span className="flex items-center gap-2 font-medium">
+                            <span className="size-2 animate-pulse rounded-full bg-rose-500" />
+                            {player.name} is in a match right now
+                        </span>
+                        <span className="flex items-center gap-1 font-semibold">
+                            <Eye className="size-4" /> Watch
+                        </span>
+                    </Link>
+                )}
                 <Card className="overflow-hidden">
                     <div className="flex flex-col gap-4 bg-gradient-to-br from-indigo-950 via-violet-900 to-fuchsia-900 p-6 text-white sm:flex-row sm:items-end sm:justify-between">
                         <div className="min-w-0">
@@ -145,6 +169,23 @@ export default function Player({
                         </CardContent>
                     </Card>
                 </div>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center justify-between gap-2">
+                            <span className="flex items-center gap-2">
+                                <Award className="size-4 text-amber-500" />{' '}
+                                Achievements
+                            </span>
+                            <span className="text-sm font-normal text-muted-foreground tabular-nums">
+                                {unlocked} / {achievements.length}
+                            </span>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <AchievementList achievements={achievements} />
+                    </CardContent>
+                </Card>
             </div>
         </>
     );

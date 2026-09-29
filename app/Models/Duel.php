@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Events\DuelUpdated;
+use App\Support\Achievements;
 use App\Support\Ranks;
 use Carbon\CarbonImmutable;
 use Database\Factories\DuelFactory;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -119,11 +121,18 @@ class Duel extends Model
     }
 
     /**
-     * Pair two players into a new duel that starts after a short countdown.
+     * Pair two players into a new duel that starts after a short countdown. A longer countdown
+     * (tournaments) pushes back the disconnect clock too, so players get the whole lead-in to arrive.
      */
-    public static function start(User $one, User $two, string $mode = self::MODE_BATTLE, bool $ranked = true): self
-    {
-        $startsAt = now()->addSeconds(self::COUNTDOWN_SECONDS);
+    public static function start(
+        User $one,
+        User $two,
+        string $mode = self::MODE_BATTLE,
+        bool $ranked = true,
+        int $countdownSeconds = self::COUNTDOWN_SECONDS,
+    ): self {
+        $startsAt = now()->addSeconds($countdownSeconds);
+        $arrivedBy = $startsAt->subSeconds(self::COUNTDOWN_SECONDS);
         $duration = $mode === self::MODE_RACE ? self::RACE_DURATION_SECONDS : self::DURATION_SECONDS;
 
         return self::create([
@@ -132,8 +141,8 @@ class Duel extends Model
             'seed' => random_int(1, 2_147_483_646),
             'mode' => $mode,
             'ranked' => $ranked,
-            'player_one_seen_at' => now(),
-            'player_two_seen_at' => now(),
+            'player_one_seen_at' => $arrivedBy,
+            'player_two_seen_at' => $arrivedBy,
             'starts_at' => $startsAt,
             'ends_at' => $startsAt->copy()->addSeconds($duration),
         ]);
@@ -158,6 +167,14 @@ class Duel extends Model
     public function playerTwo(): BelongsTo
     {
         return $this->belongsTo(User::class, 'player_two_id');
+    }
+
+    /**
+     * @return HasMany<Replay, $this>
+     */
+    public function replays(): HasMany
+    {
+        return $this->hasMany(Replay::class);
     }
 
     public function hasPlayer(User $user): bool
@@ -246,6 +263,38 @@ class Duel extends Model
         });
     }
 
+    /**
+     * Settle a duel nobody is reporting on: time ran out with no heartbeats to settle it, or
+     * both players are gone (then it's abandoned: no winner, no rating change). Run by the
+     * scheduler (duels:sweep).
+     */
+    public function sweep(): void
+    {
+        $this->mutate(function (Duel $duel) {
+            $gone = now()->subSeconds(self::DISCONNECT_SECONDS);
+            $oneGone = $duel->player_one_seen_at === null || $duel->player_one_seen_at->lt($gone);
+            $twoGone = $duel->player_two_seen_at === null || $duel->player_two_seen_at->lt($gone);
+
+            if ($oneGone && $twoGone) {
+                $duel->settle(null, 'abandoned');
+            } elseif (now()->gte($duel->ends_at->addSeconds(self::SETTLE_GRACE_SECONDS))) {
+                $duel->settle($duel->timeUpWinnerId(), 'time');
+            }
+        });
+    }
+
+    /**
+     * The duel a player is in right now, if any.
+     */
+    public static function activeFor(User $user): ?self
+    {
+        return self::query()
+            ->whereNull('finished_at')
+            ->where(fn ($query) => $query->where('player_one_id', $user->id)->orWhere('player_two_id', $user->id))
+            ->latest('id')
+            ->first();
+    }
+
     public function forfeit(User $user): void
     {
         $this->mutate(fn (Duel $duel) => $duel->settle($duel->opponentIdOf($user), 'forfeit'));
@@ -311,6 +360,11 @@ class Duel extends Model
         if ($duel->wasChanged(['player_one_kos', 'player_two_kos', 'finished_at'])) {
             DuelUpdated::dispatch($duel);
         }
+
+        if ($duel->wasChanged('finished_at')) {
+            Achievements::afterDuel($duel);
+            Tournament::duelFinished($duel);
+        }
     }
 
     /**
@@ -322,7 +376,8 @@ class Duel extends Model
         $this->finish_reason = $reason;
         $this->finished_at = now();
 
-        if (! $this->ranked) {
+        // Nobody played an abandoned duel, so it moves nothing.
+        if (! $this->ranked || $reason === 'abandoned') {
             return;
         }
 
@@ -368,12 +423,13 @@ class Duel extends Model
     /**
      * A player's latest finished duels, from their point of view.
      *
-     * @return Collection<int, array{id: int, mode: string, ranked: bool, opponentId: int, opponent: string, result: 'win'|'loss'|'draw', myKos: int, theirKos: int, myLines: int, theirLines: int, reason: string|null, ratingChange: int|null, finishedAt: string|null}>
+     * @return Collection<int, array{id: int, mode: string, ranked: bool, opponentId: int, opponent: string, result: 'win'|'loss'|'draw', myKos: int, theirKos: int, myLines: int, theirLines: int, reason: string|null, ratingChange: int|null, finishedAt: string|null, hasReplay: bool}>
      */
     public static function recentFor(User $user, int $limit = 8): Collection
     {
         return self::query()
             ->with(['playerOne:id,name', 'playerTwo:id,name'])
+            ->withExists('replays')
             ->whereNotNull('finished_at')
             ->where(fn ($query) => $query->where('player_one_id', $user->id)->orWhere('player_two_id', $user->id))
             ->latest('finished_at')
@@ -401,6 +457,7 @@ class Duel extends Model
                     'reason' => $duel->finish_reason,
                     'ratingChange' => $duel->rating_change,
                     'finishedAt' => $duel->finished_at?->diffForHumans(),
+                    'hasReplay' => (bool) $duel->getAttribute('replays_exists'),
                 ];
             });
     }

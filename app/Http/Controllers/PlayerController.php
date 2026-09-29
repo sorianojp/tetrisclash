@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Duel;
 use App\Models\User;
+use App\Support\Achievements;
 use App\Support\PracticeLeaderboards;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -11,7 +12,7 @@ use Inertia\Response;
 class PlayerController extends Controller
 {
     /**
-     * A player's public profile: rank, ranked record, practice bests (with leaderboard placings) and match history.
+     * A player's public profile: rank, ranked record, practice bests (with leaderboard placings), achievements and match history.
      */
     public function show(User $player): Response
     {
@@ -27,7 +28,9 @@ class PlayerController extends Controller
             ],
             'records' => $player->practiceRecords(),
             'placements' => PracticeLeaderboards::placements($player),
+            'achievements' => Achievements::forPlayer($player),
             'recentDuels' => Duel::recentFor($player, 15),
+            'liveDuelId' => MatchmakingController::activeDuelFor($player)?->id,
         ]);
     }
 }

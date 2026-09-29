@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AboutController;
+use App\Http\Controllers\AchievementController;
 use App\Http\Controllers\ChallengeController;
 use App\Http\Controllers\DuelController;
 use App\Http\Controllers\InviteController;
@@ -8,6 +9,8 @@ use App\Http\Controllers\LobbyController;
 use App\Http\Controllers\MatchmakingController;
 use App\Http\Controllers\OnlinePlayersController;
 use App\Http\Controllers\PlayerController;
+use App\Http\Controllers\ReplayController;
+use App\Http\Controllers\TournamentController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -25,6 +28,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('duels/{duel}/ko', [DuelController::class, 'knockOut'])->name('duels.ko');
     Route::post('duels/{duel}/heartbeat', [DuelController::class, 'heartbeat'])->name('duels.heartbeat');
     Route::post('duels/{duel}/forfeit', [DuelController::class, 'forfeit'])->name('duels.forfeit');
+    Route::get('duels/{duel}/watch', [DuelController::class, 'watch'])->name('duels.watch');
+    Route::get('duels/{duel}/replay', [ReplayController::class, 'showDuel'])->name('duels.replay');
+    Route::post('duels/{duel}/replay', [ReplayController::class, 'storeDuel'])->middleware('throttle:10,1')->name('duels.replay.store');
+    Route::get('practice/runs/{run}/replay', [ReplayController::class, 'showRun'])->name('practice.replay');
 
     Route::post('challenges', [ChallengeController::class, 'store'])->middleware('throttle:20,1')->name('challenges.store');
     Route::get('challenges/{challenge}', [ChallengeController::class, 'show'])->name('challenges.show');
@@ -39,6 +46,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('invites/preference', [InviteController::class, 'preference'])->name('invites.preference');
 
     Route::get('players/{player}', [PlayerController::class, 'show'])->name('players.show');
+
+    Route::get('tournaments', [TournamentController::class, 'index'])->name('tournaments.index');
+    Route::post('tournaments', [TournamentController::class, 'store'])->middleware('throttle:10,1')->name('tournaments.store');
+    Route::get('tournaments/{tournament}', [TournamentController::class, 'show'])->name('tournaments.show');
+    Route::post('tournaments/{tournament}/join', [TournamentController::class, 'join'])->name('tournaments.join');
+    Route::delete('tournaments/{tournament}/join', [TournamentController::class, 'leave'])->name('tournaments.leave');
+
+    Route::post('achievements', [AchievementController::class, 'store'])->middleware('throttle:30,1')->name('achievements.store');
 });
 
 require __DIR__.'/settings.php';

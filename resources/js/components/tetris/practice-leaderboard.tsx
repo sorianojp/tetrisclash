@@ -1,10 +1,12 @@
 import { Link, usePage } from '@inertiajs/react';
+import { Film } from 'lucide-react';
 import { useState } from 'react';
 import { RankBadge } from '@/components/tetris/rank-badge';
 import type { RankProgress } from '@/components/tetris/rank-badge';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { cn } from '@/lib/utils';
 import { show as showPlayer } from '@/routes/players';
+import { replay as runReplay } from '@/routes/practice';
 import { formatRecord } from '@/tetris/practice-modes';
 import type { RecordMode } from '@/tetris/practice-modes';
 
@@ -17,6 +19,8 @@ export type PracticeBoard = {
         /** Tied players share a position. */
         position: number;
         rank: RankProgress;
+        /** The recorded run behind this result, when there is one. */
+        replayId: number | null;
     }[];
     /** The viewer's standing, or null without a result on this board. */
     you: { position: number; value: number } | null;
@@ -94,6 +98,20 @@ export function PracticeLeaderboard({
                             <span className="font-semibold tabular-nums">
                                 {formatRecord(mode, entry.value)}
                             </span>
+                            {entry.replayId !== null ? (
+                                <Link
+                                    href={runReplay(entry.replayId)}
+                                    className="text-muted-foreground hover:text-foreground"
+                                    title="Watch replay"
+                                >
+                                    <Film className="size-4" />
+                                    <span className="sr-only">
+                                        Watch replay
+                                    </span>
+                                </Link>
+                            ) : (
+                                <span className="w-4" />
+                            )}
                         </li>
                     ))}
                 </ol>

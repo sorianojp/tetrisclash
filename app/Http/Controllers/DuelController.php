@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Duel;
+use App\Models\Tournament;
+use App\Models\TournamentMatch;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -33,6 +36,56 @@ class DuelController extends Controller
             'serverNow' => now()->getTimestampMs(),
             'kosToWin' => Duel::KOS_TO_WIN,
             'raceLines' => Duel::RACE_LINES,
+            'tournament' => self::tournamentOf($duel),
+        ]);
+    }
+
+    /**
+     * The bracket a duel belongs to, if it's a tournament match.
+     *
+     * @return array{id: int, name: string, round: string}|null
+     */
+    private static function tournamentOf(Duel $duel): ?array
+    {
+        $match = TournamentMatch::query()->with('tournament:id,name')->where('duel_id', $duel->id)->first();
+
+        return $match === null ? null : [
+            'id' => $match->tournament_id,
+            'name' => $match->tournament->name,
+            'round' => Tournament::roundName($match->round),
+        ];
+    }
+
+    /**
+     * Spectate a duel: both boards, live. Its players are sent to their own view.
+     */
+    public function watch(Request $request, Duel $duel): Response|RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        if ($duel->hasPlayer($user) && ! $duel->isFinished()) {
+            return redirect()->route('duels.show', $duel);
+        }
+
+        $players = User::query()->whereKey([$duel->player_one_id, $duel->player_two_id])->get()->keyBy('id');
+
+        $profile = fn (User $player) => [
+            'id' => $player->id,
+            'name' => $player->name,
+            'rating' => $player->rating,
+            'rank' => $player->rankProgress(),
+        ];
+
+        return Inertia::render('watch', [
+            'duel' => $duel->toClient(),
+            'players' => [$profile($players[$duel->player_one_id]), $profile($players[$duel->player_two_id])],
+            'startsAt' => $duel->starts_at->getTimestampMs(),
+            'endsAt' => $duel->ends_at->getTimestampMs(),
+            'serverNow' => now()->getTimestampMs(),
+            'kosToWin' => Duel::KOS_TO_WIN,
+            'raceLines' => Duel::RACE_LINES,
+            'tournament' => self::tournamentOf($duel),
         ]);
     }
 

@@ -52,6 +52,7 @@ import { store as storeChallenge } from '@/routes/challenges';
 import { show as showDuel } from '@/routes/duels';
 import { join, leave } from '@/routes/matchmaking';
 import { show as showPlayer } from '@/routes/players';
+import { show as showTournament } from '@/routes/tournaments';
 import {
     PRACTICE_MODES,
     RECORD_MODES,
@@ -129,10 +130,26 @@ export default function Lobby({
             queued?: boolean;
             range?: number | null;
             outOfEnergy?: boolean;
+            inTournament?: number;
         }>(join());
 
         if (response.duelId) {
             goToDuel(response.duelId);
+        } else if (response.inTournament) {
+            searchingRef.current = false;
+            setSearching(false);
+            toast.info(
+                "You're still in a tournament. Your next match starts on its own.",
+                {
+                    action: {
+                        label: 'Bracket',
+                        onClick: () =>
+                            router.visit(
+                                showTournament(response.inTournament!),
+                            ),
+                    },
+                },
+            );
         } else if (response.outOfEnergy) {
             searchingRef.current = false;
             setSearching(false);

@@ -46,6 +46,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property CarbonImmutable|null $last_seen_at
  * @property int|null $energy
  * @property CarbonImmutable|null $energy_updated_at
+ * @property string $piece_theme
+ * @property string $board_skin
  */
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
@@ -63,6 +65,8 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         'losses' => 0,
         'xp' => 0,
         'accepts_invites' => true,
+        'piece_theme' => 'classic',
+        'board_skin' => 'midnight',
     ];
 
     /**
@@ -90,6 +94,14 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function practiceRecords(): array
     {
         return array_map(fn (array $record) => $this->{$record['column']}, self::PRACTICE_RECORDS);
+    }
+
+    /**
+     * @return HasMany<Achievement, $this>
+     */
+    public function achievements(): HasMany
+    {
+        return $this->hasMany(Achievement::class);
     }
 
     /**

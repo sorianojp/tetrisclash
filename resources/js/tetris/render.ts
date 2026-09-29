@@ -10,11 +10,14 @@ import {
 } from './pieces';
 import type { PieceType } from './pieces';
 
-const FIELD_BG = '#0d1224';
-const PANEL_BG = '#141a33';
-const GRID = 'rgba(255,255,255,0.05)';
-const BORDER = '#2c3766';
-const LABEL = '#8d9bd6';
+/** Board colours of the active skin; applyGameTheme (themes.ts) swaps them. */
+export const SKIN = {
+    field: '#0d1224',
+    panel: '#141a33',
+    grid: 'rgba(255,255,255,0.05)',
+    border: '#2c3766',
+    label: '#8d9bd6',
+};
 const METER = '#f23a4b';
 
 /** Player field layout, measured in cells. */
@@ -95,10 +98,10 @@ function drawGrid(
     left: number,
     cell: number,
 ): void {
-    ctx.fillStyle = FIELD_BG;
+    ctx.fillStyle = SKIN.field;
     ctx.fillRect(left, 0, BOARD_WIDTH * cell, VISIBLE_ROWS * cell);
 
-    ctx.strokeStyle = GRID;
+    ctx.strokeStyle = SKIN.grid;
     ctx.lineWidth = 1;
     ctx.beginPath();
 
@@ -114,7 +117,7 @@ function drawGrid(
 
     ctx.stroke();
 
-    ctx.strokeStyle = BORDER;
+    ctx.strokeStyle = SKIN.border;
     ctx.lineWidth = 2;
     ctx.strokeRect(
         left - 1,
@@ -134,7 +137,7 @@ function drawMeter(
 ): void {
     const height = VISIBLE_ROWS * cell;
 
-    ctx.fillStyle = PANEL_BG;
+    ctx.fillStyle = SKIN.panel;
     ctx.fillRect(left, 0, width, height);
 
     if (pending > 0) {
@@ -185,12 +188,12 @@ function drawPanel(
     label: string,
     cell: number,
 ): void {
-    ctx.fillStyle = PANEL_BG;
+    ctx.fillStyle = SKIN.panel;
     ctx.fillRect(x, y, width, height);
-    ctx.strokeStyle = BORDER;
+    ctx.strokeStyle = SKIN.border;
     ctx.lineWidth = 2;
     ctx.strokeRect(x + 1, y + 1, width - 2, height - 2);
-    ctx.fillStyle = LABEL;
+    ctx.fillStyle = SKIN.label;
     ctx.font = `700 ${Math.round(cell * 0.5)}px ui-sans-serif, system-ui, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
