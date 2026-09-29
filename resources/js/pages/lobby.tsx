@@ -461,7 +461,7 @@ export default function Lobby({
                             {board !== 'ranked' ? (
                                 <PracticeLeaderboard
                                     mode={board}
-                                    board={practiceLeaderboards[board]}
+                                    boards={practiceLeaderboards[board]}
                                 />
                             ) : leaderboard.length === 0 ? (
                                 <p className="text-sm text-muted-foreground">

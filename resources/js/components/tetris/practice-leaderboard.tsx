@@ -1,71 +1,104 @@
 import { Link, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 import { RankBadge } from '@/components/tetris/rank-badge';
 import type { RankProgress } from '@/components/tetris/rank-badge';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { cn } from '@/lib/utils';
 import { show as showPlayer } from '@/routes/players';
 import { formatRecord } from '@/tetris/practice-modes';
 import type { RecordMode } from '@/tetris/practice-modes';
 
-/** One mode's board as sent by the server (App\Support\PracticeLeaderboards). */
+/** One board as sent by the server (App\Support\PracticeLeaderboards). */
 export type PracticeBoard = {
     entries: {
         id: number;
         name: string;
         value: number;
+        /** Tied players share a position. */
+        position: number;
         rank: RankProgress;
     }[];
-    /** The viewer's standing, or null without a record in this mode. */
+    /** The viewer's standing, or null without a result on this board. */
     you: { position: number; value: number } | null;
 };
 
-export type PracticeBoards = Record<RecordMode, PracticeBoard>;
+type Period = 'allTime' | 'weekly';
 
-/** Top personal bests for one practice mode. */
+export type PracticeBoards = Record<RecordMode, Record<Period, PracticeBoard>>;
+
+/** Top results for one practice mode, all-time or this week. */
 export function PracticeLeaderboard({
     mode,
-    board,
+    boards,
 }: {
     mode: RecordMode;
-    board: PracticeBoard;
+    boards: Record<Period, PracticeBoard>;
 }) {
     const { auth } = usePage().props;
+    const [period, setPeriod] = useState<Period>('allTime');
+    const board = boards[period];
     const youListed = board.entries.some((entry) => entry.id === auth.user.id);
 
-    if (board.entries.length === 0) {
-        return (
-            <p className="text-sm text-muted-foreground">
-                No records yet. Set the first one!
-            </p>
-        );
-    }
-
     return (
-        <div className="flex flex-col gap-2 text-sm">
-            <ol className="flex flex-col gap-1">
-                {board.entries.map((entry, i) => (
-                    <li
-                        key={entry.id}
-                        className={cn(
-                            'flex items-center gap-3 rounded-md px-2 py-1.5',
-                            entry.id === auth.user.id && 'bg-muted',
-                        )}
-                    >
-                        <span className="w-5 text-right font-mono text-muted-foreground">
-                            {i + 1}
-                        </span>
-                        <RankBadge progress={entry.rank} compact />
-                        <Link
-                            href={showPlayer(entry.id)}
-                            className="flex-1 truncate font-medium hover:underline"
+        <div className="flex flex-col gap-3 text-sm">
+            <div className="flex items-center justify-between gap-2">
+                <ToggleGroup
+                    type="single"
+                    variant="outline"
+                    size="sm"
+                    value={period}
+                    onValueChange={(value) =>
+                        value && setPeriod(value as Period)
+                    }
+                >
+                    <ToggleGroupItem value="allTime" className="px-3">
+                        All-time
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="weekly" className="px-3">
+                        This week
+                    </ToggleGroupItem>
+                </ToggleGroup>
+                {period === 'weekly' && (
+                    <span className="text-xs text-muted-foreground">
+                        Resets Monday 00:00 UTC
+                    </span>
+                )}
+            </div>
+
+            {board.entries.length === 0 ? (
+                <p className="text-muted-foreground">
+                    {period === 'weekly'
+                        ? 'No runs this week yet. Set the pace!'
+                        : 'No records yet. Set the first one!'}
+                </p>
+            ) : (
+                <ol className="flex flex-col gap-1">
+                    {board.entries.map((entry) => (
+                        <li
+                            key={entry.id}
+                            className={cn(
+                                'flex items-center gap-3 rounded-md px-2 py-1.5',
+                                entry.id === auth.user.id && 'bg-muted',
+                            )}
                         >
-                            {entry.name}
-                        </Link>
-                        <span className="font-semibold tabular-nums">
-                            {formatRecord(mode, entry.value)}
-                        </span>
-                    </li>
-                ))}
-            </ol>
+                            <span className="w-5 text-right font-mono text-muted-foreground">
+                                {entry.position}
+                            </span>
+                            <RankBadge progress={entry.rank} compact />
+                            <Link
+                                href={showPlayer(entry.id)}
+                                className="flex-1 truncate font-medium hover:underline"
+                            >
+                                {entry.name}
+                            </Link>
+                            <span className="font-semibold tabular-nums">
+                                {formatRecord(mode, entry.value)}
+                            </span>
+                        </li>
+                    ))}
+                </ol>
+            )}
+
             {board.you && !youListed && (
                 <div className="flex items-center gap-3 rounded-md border border-dashed px-2 py-1.5">
                     <span className="min-w-5 text-right font-mono text-muted-foreground">

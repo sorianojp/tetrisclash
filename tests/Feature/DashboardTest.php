@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\PracticeRun;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Inertia\Testing\AssertableInertia;
 
 test('guests are redirected to the login page', function () {
@@ -116,14 +118,14 @@ test('practice leaderboards rank personal bests in each mode\'s direction', func
     $this->actingAs($slow)
         ->get(route('practice'))
         ->assertInertia(fn (AssertableInertia $page) => $page
-            ->has('leaderboards.sprint.entries', 2)
-            ->where('leaderboards.sprint.entries.0.id', $fast->id)
-            ->where('leaderboards.sprint.entries.0.value', 40000)
-            ->where('leaderboards.sprint.you', ['position' => 2, 'value' => 80000])
-            ->where('leaderboards.ultra.entries.0.id', $slow->id)
-            ->where('leaderboards.ultra.you.position', 1)
-            ->has('leaderboards.dig.entries', 0)
-            ->where('leaderboards.dig.you', null));
+            ->has('leaderboards.sprint.allTime.entries', 2)
+            ->where('leaderboards.sprint.allTime.entries.0.id', $fast->id)
+            ->where('leaderboards.sprint.allTime.entries.0.value', 40000)
+            ->where('leaderboards.sprint.allTime.you', ['position' => 2, 'value' => 80000])
+            ->where('leaderboards.ultra.allTime.entries.0.id', $slow->id)
+            ->where('leaderboards.ultra.allTime.you.position', 1)
+            ->has('leaderboards.dig.allTime.entries', 0)
+            ->where('leaderboards.dig.allTime.you', null));
 });
 
 test('practice leaderboards show the top ten and the viewer\'s position beyond it', function () {
@@ -133,7 +135,61 @@ test('practice leaderboards show the top ten and the viewer\'s position beyond i
     $this->actingAs($viewer)
         ->get(route('dashboard'))
         ->assertInertia(fn (AssertableInertia $page) => $page
-            ->has('practiceLeaderboards.zen.entries', 10)
-            ->where('practiceLeaderboards.zen.entries.0.value', 100000)
-            ->where('practiceLeaderboards.zen.you', ['position' => 13, 'value' => 5]));
+            ->has('practiceLeaderboards.zen.allTime.entries', 10)
+            ->where('practiceLeaderboards.zen.allTime.entries.0.value', 100000)
+            ->where('practiceLeaderboards.zen.allTime.you', ['position' => 13, 'value' => 5]));
+});
+
+test('tied players share a leaderboard position', function () {
+    User::factory()->create(['best_ultra_score' => 5000]);
+    User::factory()->count(2)->create(['best_ultra_score' => 3000]);
+    $viewer = User::factory()->create(['best_ultra_score' => 1000]);
+
+    $this->actingAs($viewer)
+        ->get(route('practice'))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('leaderboards.ultra.allTime.entries.0.position', 1)
+            ->where('leaderboards.ultra.allTime.entries.1.position', 2)
+            ->where('leaderboards.ultra.allTime.entries.2.position', 2)
+            ->where('leaderboards.ultra.allTime.entries.3.position', 4));
+});
+
+test('every counted practice run is logged, not just new records', function () {
+    $user = User::factory()->create(['best_sprint_ms' => 50000]);
+
+    $this->actingAs($user)->postJson(route('practice.records'), ['mode' => 'sprint', 'value' => 70000])->assertNoContent();
+
+    expect($user->practiceRuns()->where('mode', 'sprint')->pluck('value')->all())->toBe([70000])
+        ->and($user->fresh()->best_sprint_ms)->toBe(50000);
+});
+
+test('weekly boards rank each player\'s best run since monday', function () {
+    $this->travelTo(CarbonImmutable::parse('2026-09-30 12:00', 'UTC')); // a Wednesday
+
+    [$alice, $bob, $viewer] = User::factory()->count(3)->create();
+    PracticeRun::factory()->for($alice)->create(['mode' => 'sprint', 'value' => 60000]);
+    PracticeRun::factory()->for($alice)->create(['mode' => 'sprint', 'value' => 45000]);
+    PracticeRun::factory()->for($bob)->create(['mode' => 'sprint', 'value' => 50000]);
+    // Last week's faster run doesn't count.
+    PracticeRun::factory()->for($viewer)->create(['mode' => 'sprint', 'value' => 20000, 'created_at' => '2026-09-27 23:59']);
+    PracticeRun::factory()->for($viewer)->create(['mode' => 'sprint', 'value' => 55000]);
+
+    $this->actingAs($viewer)
+        ->get(route('practice'))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('leaderboards.sprint.weekly.entries', 3)
+            ->where('leaderboards.sprint.weekly.entries.0.id', $alice->id)
+            ->where('leaderboards.sprint.weekly.entries.0.value', 45000)
+            ->where('leaderboards.sprint.weekly.entries.1.id', $bob->id)
+            ->where('leaderboards.sprint.weekly.you', ['position' => 3, 'value' => 55000])
+            ->has('leaderboards.ultra.weekly.entries', 0));
+
+    // Next Monday the board starts over.
+    $this->travelTo(CarbonImmutable::parse('2026-10-05 00:00', 'UTC'));
+
+    $this->actingAs($viewer)
+        ->get(route('practice'))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('leaderboards.sprint.weekly.entries', 0)
+            ->where('leaderboards.sprint.weekly.you', null));
 });

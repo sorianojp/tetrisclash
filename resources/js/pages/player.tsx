@@ -11,13 +11,14 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import {
     PRACTICE_MODES,
     RECORD_MODES,
     formatRecord,
 } from '@/tetris/practice-modes';
-import type { PracticeRecords } from '@/tetris/practice-modes';
+import type { PracticeRecords, RecordMode } from '@/tetris/practice-modes';
 
 type Props = {
     player: {
@@ -30,10 +31,17 @@ type Props = {
         rank: RankProgress;
     };
     records: PracticeRecords;
+    /** All-time leaderboard position per mode. */
+    placements: Record<RecordMode, number | null>;
     recentDuels: DuelSummary[];
 };
 
-export default function Player({ player, records, recentDuels }: Props) {
+export default function Player({
+    player,
+    records,
+    placements,
+    recentDuels,
+}: Props) {
     const played = player.wins + player.losses;
     const winRate =
         played > 0 ? `${Math.round((player.wins / played) * 100)}%` : '—';
@@ -94,7 +102,20 @@ export default function Player({ player, records, recentDuels }: Props) {
                                         <dt className="text-muted-foreground">
                                             {PRACTICE_MODES[mode].label}
                                         </dt>
-                                        <dd className="font-semibold tabular-nums">
+                                        <dd className="flex items-baseline gap-2 font-semibold tabular-nums">
+                                            {placements[mode] !== null && (
+                                                <span
+                                                    className={cn(
+                                                        'text-xs font-medium',
+                                                        placements[mode] <= 3
+                                                            ? 'text-amber-500'
+                                                            : 'text-muted-foreground',
+                                                    )}
+                                                    title={`#${placements[mode]} all-time in ${PRACTICE_MODES[mode].label}`}
+                                                >
+                                                    #{placements[mode]}
+                                                </span>
+                                            )}
                                             {records[mode] === null
                                                 ? '—'
                                                 : formatRecord(

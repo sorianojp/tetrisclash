@@ -2,6 +2,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { Crown, RotateCcw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { toast } from 'sonner';
 import { ClearCallout, describeClear } from '@/components/tetris/clear-callout';
 import type { Callout } from '@/components/tetris/clear-callout';
 import { ControlsLegend } from '@/components/tetris/controls-legend';
@@ -124,14 +125,14 @@ export default function Practice({
                 setRecords({ ...records, [mode]: value });
             }
 
-            const saved = sendJson(recordsRoute(), { mode, value });
-
-            // A new best may move us up the board.
-            if (newBest) {
-                void saved.then(() =>
-                    router.reload({ only: ['leaderboards'] }),
+            // Any counted run can move us up this week's board.
+            sendJson(recordsRoute(), { mode, value })
+                .then(() => router.reload({ only: ['leaderboards'] }))
+                .catch(() =>
+                    toast.error(
+                        "Couldn't save that result, so it won't count on the leaderboards.",
+                    ),
                 );
-            }
         }
 
         setPhase('done');
@@ -426,7 +427,7 @@ export default function Practice({
                             </h2>
                             <PracticeLeaderboard
                                 mode={mode}
-                                board={leaderboards[mode]}
+                                boards={leaderboards[mode]}
                             />
                         </div>
                         <div className="rounded-xl border p-4">

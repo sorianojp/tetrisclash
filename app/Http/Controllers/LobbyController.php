@@ -49,7 +49,8 @@ class LobbyController extends Controller
     }
 
     /**
-     * Save a practice result if it beats the player's record for that mode.
+     * Log a practice result for the weekly boards, and save it as the player's record
+     * for that mode if it beats it.
      */
     public function storeRecord(Request $request): Response
     {
@@ -64,6 +65,8 @@ class LobbyController extends Controller
         $value = (int) $request->validate([
             'value' => ['required', 'integer', 'min:'.$record['min'], 'max:'.$record['max']],
         ])['value'];
+
+        $user->practiceRuns()->create(['mode' => $mode, 'value' => $value]);
 
         $best = $user->{$record['column']};
         $improved = $best === null || ($record['lowerIsBetter'] ? $value < $best : $value > $best);
