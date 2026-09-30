@@ -42,6 +42,15 @@
         <meta name="twitter:card" content="summary">
         <meta name="twitter:title" content="{{ config('app.name') }}">
         <meta name="twitter:description" content="{{ $description }}">
+        {{-- The site name Google shows above results (it falls back to the bare domain). --}}
+        <script type="application/ld+json">{!! json_encode([
+            '@context' => 'https://schema.org',
+            '@type' => 'WebSite',
+            'name' => config('app.name'),
+            'alternateName' => 'TetrisClash',
+            'url' => rtrim(config('app.url'), '/').'/',
+            'description' => $description,
+        ], JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}</script>
 
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
