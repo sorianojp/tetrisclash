@@ -1,13 +1,16 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { Check, Lock } from 'lucide-react';
+import { Check, Lock, Play } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { RankBadge } from '@/components/tetris/rank-badge';
+import { SoundToggle } from '@/components/tetris/sound-toggle';
+import { Button } from '@/components/ui/button';
 import type { RankProgress } from '@/components/tetris/rank-badge';
 import { cn } from '@/lib/utils';
 import { edit as editThemes, update as updateThemes } from '@/routes/themes';
 import { drawBlock, prepareCanvas } from '@/tetris/render';
+import { soundPreviews } from '@/tetris/sound';
 import { BOARD_SKINS, PIECE_THEMES } from '@/tetris/themes';
 
 type Option = { id: string; name: string; rank: number; unlocked: boolean };
@@ -81,6 +84,27 @@ export default function Themes({
                     preview={(id) => ({ pieces: pieceTheme, board: id })}
                 />
                 <InputError message={errors.board_skin} />
+            </div>
+
+            <div className="space-y-6">
+                <Heading
+                    variant="small"
+                    title="Sounds"
+                    description="Turn sound on, then play any effect to hear it. Combo run plays a chain building up, then breaking."
+                />
+                <SoundToggle />
+                <div className="flex flex-wrap gap-2">
+                    {soundPreviews.map(({ label, play }) => (
+                        <Button
+                            key={label}
+                            variant="outline"
+                            size="sm"
+                            onClick={play}
+                        >
+                            <Play /> {label}
+                        </Button>
+                    ))}
+                </div>
             </div>
         </>
     );

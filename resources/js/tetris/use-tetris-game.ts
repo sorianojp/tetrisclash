@@ -49,7 +49,9 @@ export function useTetrisGame({
             window.matchMedia('(prefers-reduced-motion: reduce)').matches,
         );
         effectsRef.current = effects;
-        gameRef.current = new Game({
+        // The combo before the last lock, to hear a long chain break.
+        let lastCombo = -1;
+        const game: Game = new Game({
             seed,
             gravity,
             startingGarbage,
@@ -61,7 +63,14 @@ export function useTetrisGame({
                     reportClearAchievements(info);
                     eventsRef.current?.onClear?.(info);
                 },
-                onLock: () => eventsRef.current?.onLock?.(),
+                onLock: () => {
+                    if (game.combo === -1 && lastCombo >= 0) {
+                        sfx.comboBreak(lastCombo);
+                    }
+
+                    lastCombo = game.combo;
+                    eventsRef.current?.onLock?.();
+                },
                 onTopOut: () => {
                     sfx.ko();
                     eventsRef.current?.onTopOut?.();
@@ -79,6 +88,7 @@ export function useTetrisGame({
                 },
             },
         });
+        gameRef.current = game;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [seed]);
 
