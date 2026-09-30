@@ -30,6 +30,19 @@
             }
         </style>
 
+        {{-- Search results and link previews. Kept here rather than in the pages, because
+             crawlers read the HTML without running the app's JavaScript. --}}
+        @php($description = 'Free 1v1 online Tetris battles. Send garbage, score KOs, climb the ranks, and race your friends to 40 lines.')
+        <meta name="description" content="{{ $description }}">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="{{ config('app.name') }}">
+        <meta property="og:title" content="{{ config('app.name') }}">
+        <meta property="og:description" content="{{ $description }}">
+        <meta property="og:url" content="{{ url()->current() }}">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:title" content="{{ config('app.name') }}">
+        <meta name="twitter:description" content="{{ $description }}">
+
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
