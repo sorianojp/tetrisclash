@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\ReplayData;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -27,6 +28,26 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Hidden(['data'])]
 class Replay extends Model
 {
+    /**
+     * Save a player's side of a finished duel from their upload. The first upload sticks;
+     * false when the upload isn't a readable replay.
+     */
+    public static function storeDuelSide(Duel $duel, User $user, string $upload): bool
+    {
+        $parsed = ReplayData::parse($upload);
+
+        if ($parsed === null) {
+            return false;
+        }
+
+        self::query()->firstOrCreate(
+            ['duel_id' => $duel->id, 'user_id' => $user->id],
+            ['duration_ms' => $parsed['durationMs'], 'data' => $parsed['data']],
+        );
+
+        return true;
+    }
+
     /**
      * @return BelongsTo<User, $this>
      */

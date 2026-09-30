@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\DuelFound;
 use App\Events\InviteClosed;
 use Carbon\CarbonImmutable;
 use Database\Factories\ChallengeFactory;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -84,6 +86,54 @@ class Challenge extends Model
 
         if ($this->invitee_id !== null && ! $this->isExpired()) {
             InviteClosed::dispatch($this->invitee_id, $this->code, InviteClosed::CANCELLED);
+        }
+    }
+
+    /**
+     * Accept on behalf of a player and start the friendly duel. Null when it's too late
+     * (accepted, expired, or either player is already in a match).
+     */
+    public function accept(User $user): ?Duel
+    {
+        $duel = DB::transaction(function () use ($user) {
+            $challenge = self::query()->lockForUpdate()->findOrFail($this->id);
+
+            abort_unless($challenge->canBeAcceptedBy($user), 403, 'You cannot accept this challenge.');
+
+            if ($challenge->isAccepted() || $challenge->isExpired()) {
+                return null;
+            }
+
+            $challenger = User::query()->findOrFail($challenge->challenger_id);
+
+            if (Duel::activeFor($user) || Duel::activeFor($challenger)) {
+                return null;
+            }
+
+            User::query()->whereKey([$user->id, $challenger->id])->update(['queued_at' => null, 'searching_since' => null]);
+
+            $duel = Duel::start($challenger, $user, $challenge->mode, ranked: false);
+            $challenge->update(['duel_id' => $duel->id]);
+
+            return $duel;
+        });
+
+        if ($duel !== null) {
+            $this->duel_id = $duel->id;
+            DuelFound::dispatch($duel);
+        }
+
+        return $duel;
+    }
+
+    /**
+     * The invited player turns it down.
+     */
+    public function decline(): void
+    {
+        if (! $this->isAccepted()) {
+            $this->delete();
+            InviteClosed::dispatch($this->challenger_id, $this->code, InviteClosed::DECLINED);
         }
     }
 

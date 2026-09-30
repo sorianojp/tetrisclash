@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Events\DuelUpdated;
 use App\Support\Achievements;
+use App\Support\Bots;
 use App\Support\Ranks;
 use Carbon\CarbonImmutable;
 use Database\Factories\DuelFactory;
@@ -394,6 +395,13 @@ class Duel extends Model
 
         $one->rating = max(0, $one->rating + $change);
         $two->rating = max(0, $two->rating - $change);
+
+        // Bots stay below the top of the ladder, which belongs to real players.
+        foreach ([$one, $two] as $player) {
+            if ($player->isBot()) {
+                $player->rating = min($player->rating, Bots::maxRating());
+            }
+        }
 
         if ($winnerId !== null) {
             [$winner, $loser] = $winnerId === $one->id ? [$one, $two] : [$two, $one];

@@ -6,6 +6,7 @@ use App\Events\DuelFound;
 use App\Models\Duel;
 use App\Models\Tournament;
 use App\Models\User;
+use App\Support\Bots;
 use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -106,6 +107,8 @@ class MatchmakingController extends Controller
             return Duel::start($opponent, $user);
         });
 
+        $duel ??= $this->matchWithBot($user, self::secondsSince($searchingSince));
+
         if ($duel === null) {
             return response()->json(['queued' => true, 'range' => $myRange]);
         }
@@ -113,6 +116,27 @@ class MatchmakingController extends Controller
         DuelFound::dispatch($duel);
 
         return response()->json(['duelId' => $duel->id]);
+    }
+
+    /**
+     * Nobody real turned up in time: play a bot instead (see App\Support\Bots).
+     */
+    private function matchWithBot(User $user, int $waitedSeconds): ?Duel
+    {
+        $bot = Bots::opponentFor($user, $waitedSeconds);
+
+        if ($bot === null) {
+            return null;
+        }
+
+        return DB::transaction(function () use ($user, $bot) {
+            $user = User::query()->lockForUpdate()->findOrFail($user->id);
+            $user->forceFill(['queued_at' => null, 'searching_since' => null])->save();
+            $user->spendEnergy();
+
+            // Either side may be player one, as in any match.
+            return random_int(0, 1) === 1 ? Duel::start($bot, $user) : Duel::start($user, $bot);
+        });
     }
 
     /**

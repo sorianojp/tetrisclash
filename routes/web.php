@@ -4,6 +4,7 @@ use App\Http\Controllers\AboutController;
 use App\Http\Controllers\AchievementController;
 use App\Http\Controllers\ChallengeController;
 use App\Http\Controllers\DuelController;
+use App\Http\Controllers\Internal\BotRunnerController;
 use App\Http\Controllers\InviteController;
 use App\Http\Controllers\LobbyController;
 use App\Http\Controllers\MatchmakingController;
@@ -11,6 +12,8 @@ use App\Http\Controllers\OnlinePlayersController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\ReplayController;
 use App\Http\Controllers\TournamentController;
+use App\Http\Middleware\AuthenticateBotRunner;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -54,6 +57,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('tournaments/{tournament}/join', [TournamentController::class, 'leave'])->name('tournaments.leave');
 
     Route::post('achievements', [AchievementController::class, 'store'])->middleware('throttle:30,1')->name('achievements.store');
+});
+
+// The bot runner (bots/runner.ts) acts for bot accounts here, authenticated by its token.
+Route::bind('bot', fn (string $id) => User::query()->bots()->findOrFail($id));
+
+Route::prefix('internal/bots')->middleware(AuthenticateBotRunner::class)->name('internal.bots.')->group(function () {
+    Route::get('work', [BotRunnerController::class, 'work'])->name('work');
+    Route::post('{bot}/auth', [BotRunnerController::class, 'auth'])->name('auth');
+    Route::post('{bot}/duels/{duel}/heartbeat', [BotRunnerController::class, 'heartbeat'])->name('heartbeat');
+    Route::post('{bot}/duels/{duel}/ko', [BotRunnerController::class, 'knockOut'])->name('ko');
+    Route::post('{bot}/duels/{duel}/replay', [BotRunnerController::class, 'replay'])->name('replay');
+    Route::post('{bot}/seen', [BotRunnerController::class, 'seen'])->name('seen');
+    Route::post('{bot}/practice', [BotRunnerController::class, 'practice'])->name('practice');
+    Route::post('{bot}/achievements', [BotRunnerController::class, 'achievement'])->name('achievements');
+    Route::post('{bot}/invites/{challenge}/accept', [BotRunnerController::class, 'acceptInvite'])->name('invites.accept');
+    Route::post('{bot}/invites/{challenge}/decline', [BotRunnerController::class, 'declineInvite'])->name('invites.decline');
 });
 
 require __DIR__.'/settings.php';

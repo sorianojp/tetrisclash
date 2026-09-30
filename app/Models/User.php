@@ -48,9 +48,10 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property CarbonImmutable|null $energy_updated_at
  * @property string $piece_theme
  * @property string $board_skin
+ * @property string|null $bot_key
  */
 #[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
+#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'bot_key'])]
 class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
@@ -94,6 +95,22 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function practiceRecords(): array
     {
         return array_map(fn (array $record) => $this->{$record['column']}, self::PRACTICE_RECORDS);
+    }
+
+    /**
+     * A computer player (see App\Support\Bots). Only the server knows.
+     */
+    public function isBot(): bool
+    {
+        return $this->bot_key !== null;
+    }
+
+    /**
+     * @param  Builder<User>  $query
+     */
+    public function scopeBots(Builder $query): void
+    {
+        $query->whereNotNull('bot_key');
     }
 
     /**

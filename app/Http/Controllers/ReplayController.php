@@ -25,16 +25,11 @@ class ReplayController extends Controller
         abort_unless($duel->hasPlayer($user), 403);
         abort_unless($duel->isFinished(), 409);
 
-        $parsed = ReplayData::parse($request->validate([
+        $upload = $request->validate([
             'data' => ['required', 'string', 'max:'.ReplayData::MAX_UPLOAD_BYTES],
-        ])['data']);
+        ])['data'];
 
-        abort_if($parsed === null, 422, 'That replay could not be read.');
-
-        Replay::query()->firstOrCreate(
-            ['duel_id' => $duel->id, 'user_id' => $user->id],
-            ['duration_ms' => $parsed['durationMs'], 'data' => $parsed['data']],
-        );
+        abort_unless(Replay::storeDuelSide($duel, $user, $upload), 422, 'That replay could not be read.');
 
         return response()->noContent();
     }

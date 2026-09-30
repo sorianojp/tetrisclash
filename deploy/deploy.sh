@@ -22,6 +22,7 @@ npm ci
 npm run build
 
 php artisan migrate --force
+php artisan bots:install
 php artisan optimize
 
 # Files created above belong to root; PHP-FPM, Reverb and the queue run as www-data.
@@ -30,5 +31,7 @@ chown -R www-data:www-data storage bootstrap/cache
 # Pick up new code in the long-running processes.
 php artisan reverb:restart
 php artisan queue:restart
+# The bot runner holds the game engine in memory; restart it too (if it's set up).
+supervisorctl restart tetrisclash-bots >/dev/null 2>&1 || true
 
 php artisan up

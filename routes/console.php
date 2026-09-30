@@ -2,6 +2,7 @@
 
 use App\Models\Duel;
 use App\Models\Tournament;
+use App\Support\Bots;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -27,3 +28,20 @@ Artisan::command('duels:sweep', function () {
 })->purpose('Settle abandoned or timed-out duels and start waiting tournament matches');
 
 Schedule::command('duels:sweep')->everyMinute();
+
+Artisan::command('bots:install', function () {
+    $created = Bots::install();
+    $this->info("Bots ready ({$created} new).");
+})->purpose('Create the bot accounts (safe to run again)');
+
+Artisan::command('bots:tick', function () {
+    if (! Bots::enabled()) {
+        return;
+    }
+
+    Bots::refreshPresence();
+    Bots::pairUp();
+    Bots::fillTournaments();
+})->purpose('Keep bots online on their schedules, pair them up now and then, and fill waiting tournaments');
+
+Schedule::command('bots:tick')->everyMinute();

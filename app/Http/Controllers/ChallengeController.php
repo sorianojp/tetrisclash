@@ -2,15 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\DuelFound;
-use App\Events\InviteClosed;
 use App\Models\Challenge;
 use App\Models\Duel;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -88,36 +85,13 @@ class ChallengeController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        $duel = DB::transaction(function () use ($user, $challenge) {
-            $challenge = Challenge::query()->lockForUpdate()->findOrFail($challenge->id);
-
-            abort_unless($challenge->canBeAcceptedBy($user), 403, 'You cannot accept this challenge.');
-
-            if ($challenge->isAccepted() || $challenge->isExpired()) {
-                return null;
-            }
-
-            $challenger = User::query()->findOrFail($challenge->challenger_id);
-
-            if (MatchmakingController::activeDuelFor($user) || MatchmakingController::activeDuelFor($challenger)) {
-                return null;
-            }
-
-            User::query()->whereKey([$user->id, $challenger->id])->update(['queued_at' => null, 'searching_since' => null]);
-
-            $duel = Duel::start($challenger, $user, $challenge->mode, ranked: false);
-            $challenge->update(['duel_id' => $duel->id]);
-
-            return $duel;
-        });
+        $duel = $challenge->accept($user);
 
         if ($duel === null) {
             Inertia::flash('toast', ['type' => 'error', 'message' => __('This challenge can no longer be accepted.')]);
 
             return to_route('challenges.show', $challenge);
         }
-
-        DuelFound::dispatch($duel);
 
         return to_route('duels.show', $duel);
     }
@@ -129,10 +103,7 @@ class ChallengeController extends Controller
     {
         abort_unless($challenge->isInvite() && $challenge->invitee_id === $request->user()?->id, 403);
 
-        if (! $challenge->isAccepted()) {
-            $challenge->delete();
-            InviteClosed::dispatch($challenge->challenger_id, $challenge->code, InviteClosed::DECLINED);
-        }
+        $challenge->decline();
 
         return response()->noContent();
     }

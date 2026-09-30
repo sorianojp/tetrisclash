@@ -17,6 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+        // The bot runner authenticates with a token, not a session.
+        $middleware->validateCsrfTokens(except: ['internal/bots/*']);
 
         $middleware->web(append: [
             HandleAppearance::class,
