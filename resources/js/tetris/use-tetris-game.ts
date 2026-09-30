@@ -5,6 +5,7 @@ import { Game } from './engine';
 import type { GameEvents, GameOptions } from './engine';
 import { InputController } from './input';
 import { PLAYER_LAYOUT, drawPlayer, prepareCanvas } from './render';
+import { sfx } from './sound';
 
 type Options = {
     seed: number;
@@ -56,13 +57,23 @@ export function useTetrisGame({
             events: {
                 onAttack: (lines) => eventsRef.current?.onAttack?.(lines),
                 onClear: (info) => {
+                    sfx.clear(info);
                     reportClearAchievements(info);
                     eventsRef.current?.onClear?.(info);
                 },
                 onLock: () => eventsRef.current?.onLock?.(),
-                onTopOut: () => eventsRef.current?.onTopOut?.(),
+                onTopOut: () => {
+                    sfx.ko();
+                    eventsRef.current?.onTopOut?.();
+                },
                 onTimeUp: () => eventsRef.current?.onTimeUp?.(),
                 onVisual: (event) => {
+                    if (event.kind === 'hardDrop') {
+                        sfx.hardDrop();
+                    } else if (event.kind === 'incoming') {
+                        sfx.incoming(event.lines);
+                    }
+
                     effects.handle(event);
                     eventsRef.current?.onVisual?.(event);
                 },

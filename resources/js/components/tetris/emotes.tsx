@@ -1,4 +1,4 @@
-import { Volume2, VolumeX } from 'lucide-react';
+import { MessageCircle, MessageCircleOff } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -144,7 +144,7 @@ export function EmoteBar({
                     muted ? "Show opponent's emotes" : "Hide opponent's emotes"
                 }
             >
-                {muted ? <VolumeX /> : <Volume2 />}
+                {muted ? <MessageCircleOff /> : <MessageCircle />}
                 <span className="sr-only">
                     {muted ? 'Unmute emotes' : 'Mute emotes'}
                 </span>

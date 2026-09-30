@@ -12,11 +12,13 @@ import {
 import { OpponentField } from '@/components/tetris/opponent-field';
 import type { OpponentView } from '@/components/tetris/opponent-field';
 import { PlayerPlate } from '@/components/tetris/player-plate';
+import { SoundToggle } from '@/components/tetris/sound-toggle';
 import type { RankProgress } from '@/components/tetris/rank-badge';
 import { Button } from '@/components/ui/button';
 import { formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
+import { sfx } from '@/tetris/sound';
 import { replay as duelReplay } from '@/routes/duels';
 import { useCellSize } from '@/tetris/use-tetris-game';
 
@@ -142,6 +144,7 @@ export default function Watch({
 
                     lastEmote[u] = now;
                     (u === one.id ? showEmoteOne : showEmoteTwo)(index);
+                    sfx.emote();
                 },
             );
 
@@ -210,6 +213,7 @@ export default function Watch({
                         >
                             {formatTime(remaining, false)}
                         </div>
+                        <SoundToggle />
                         <span className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Eye className="size-3.5" /> Spectating
                             {spectators > 1 && ` · ${spectators} watching`}

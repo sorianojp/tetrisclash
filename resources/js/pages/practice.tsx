@@ -10,6 +10,7 @@ import { FieldOverlay } from '@/components/tetris/field-overlay';
 import { PracticeLeaderboard } from '@/components/tetris/practice-leaderboard';
 import type { PracticeBoards } from '@/components/tetris/practice-leaderboard';
 import { ShareResult } from '@/components/tetris/share-result';
+import { SoundToggle } from '@/components/tetris/sound-toggle';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { sendJson } from '@/lib/api';
@@ -27,6 +28,7 @@ import {
 } from '@/tetris/practice-modes';
 import type { PracticeMode, PracticeRecords } from '@/tetris/practice-modes';
 import { ReplayRecorder, encodeReplay } from '@/tetris/replay';
+import { sfx } from '@/tetris/sound';
 import type { ShareCardData } from '@/tetris/share-card';
 import { useCellSize, useTetrisGame } from '@/tetris/use-tetris-game';
 
@@ -162,6 +164,11 @@ export default function Practice({
 
         setPhase('done');
         setResult({ outcome, timeMs, score, newBest });
+
+        // Topping out already crashed; finishing (or a new best) gets a fanfare.
+        if (newBest || outcome !== 'toppedOut') {
+            sfx.win();
+        }
     };
 
     const { canvasRef, gameRef } = useTetrisGame({
@@ -318,6 +325,24 @@ export default function Practice({
     };
 
     const countdown = Math.ceil((countdownEndsAt - now) / 800);
+
+    // Beep on 3, 2, 1, then GO.
+    const beep = phase === 'countdown' ? countdown : null;
+    const lastPhase = useRef(phase);
+
+    useEffect(() => {
+        if (beep !== null && beep > 0) {
+            sfx.countdown();
+        }
+    }, [beep]);
+
+    useEffect(() => {
+        if (lastPhase.current === 'countdown' && phase === 'playing') {
+            sfx.go();
+        }
+
+        lastPhase.current = phase;
+    }, [phase]);
     const pps =
         stats.timeMs > 0
             ? (stats.pieces / (stats.timeMs / 1000)).toFixed(2)
@@ -393,12 +418,15 @@ export default function Practice({
                             {MODES[mode].goal}
                         </p>
                     </div>
-                    <Button variant="outline" onClick={() => restart()}>
-                        <RotateCcw /> Restart{' '}
-                        <kbd className="ml-1 text-xs text-muted-foreground">
-                            R
-                        </kbd>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <SoundToggle />
+                        <Button variant="outline" onClick={() => restart()}>
+                            <RotateCcw /> Restart{' '}
+                            <kbd className="ml-1 text-xs text-muted-foreground">
+                                R
+                            </kbd>
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="flex w-full max-w-5xl flex-col items-center gap-6 lg:flex-row lg:items-start lg:justify-center">

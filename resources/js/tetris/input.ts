@@ -1,4 +1,5 @@
 import type { Game } from './engine';
+import { sfx } from './sound';
 
 export type Action =
     | 'left'
@@ -71,13 +72,26 @@ export class InputController {
                 game?.hardDrop();
                 break;
             case 'rotateCW':
-                game?.rotate(1);
+                if (game?.rotate(1)) {
+                    sfx.rotate();
+                }
+
                 break;
             case 'rotateCCW':
-                game?.rotate(-1);
+                if (game?.rotate(-1)) {
+                    sfx.rotate();
+                }
+
                 break;
             case 'hold':
-                game?.holdPiece();
+                if (game && !game.holdUsed) {
+                    game.holdPiece();
+
+                    if (game.holdUsed) {
+                        sfx.hold();
+                    }
+                }
+
                 break;
         }
     }
@@ -120,6 +134,8 @@ export class InputController {
                 this.arrTimer = 0;
                 break;
             }
+
+            sfx.move();
         }
     }
 
@@ -148,8 +164,8 @@ export class InputController {
         this.dasTimer = 0;
         this.arrTimer = 0;
 
-        if (direction !== 0 && this.enabled) {
-            this.game()?.move(direction);
+        if (direction !== 0 && this.enabled && this.game()?.move(direction)) {
+            sfx.move();
         }
     }
 }

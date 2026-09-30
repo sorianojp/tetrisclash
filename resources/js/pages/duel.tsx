@@ -21,6 +21,7 @@ import { PlayerPlate } from '@/components/tetris/player-plate';
 import { RankProgressBar } from '@/components/tetris/rank-badge';
 import type { RankProgress } from '@/components/tetris/rank-badge';
 import { ShareResult } from '@/components/tetris/share-result';
+import { SoundToggle } from '@/components/tetris/sound-toggle';
 import { VersusIntro } from '@/components/tetris/versus-intro';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -34,6 +35,7 @@ import { show as showTournament } from '@/routes/tournaments';
 import { launchAttack, pointIn } from '@/tetris/projectiles';
 import { PLAYER_LAYOUT } from '@/tetris/render';
 import { ReplayRecorder, encodeReplay } from '@/tetris/replay';
+import { sfx } from '@/tetris/sound';
 import type { ShareCardData } from '@/tetris/share-card';
 import { useCellSize, useTetrisGame } from '@/tetris/use-tetris-game';
 
@@ -200,6 +202,7 @@ export default function Duel({
 
                 channelRef.current?.whisper('attack', { lines });
                 fireAttack(lines, 'outgoing');
+                sfx.attack(lines);
             },
             onClear: (info) => {
                 setCallout({
@@ -325,6 +328,7 @@ export default function Duel({
                     acceptEmote()
                 ) {
                     showTheirEmote(index);
+                    sfx.emote();
                 }
             });
 
@@ -472,6 +476,25 @@ export default function Duel({
             .catch(() => {});
     }, [state.finished, duel.id]);
 
+    // The result jingle, once, when the match ends while we're watching it (not on a reload).
+    const wasFinished = useRef(duel.finished);
+
+    useEffect(() => {
+        if (!state.finished || wasFinished.current) {
+            return;
+        }
+
+        wasFinished.current = true;
+
+        if (state.winnerId === null) {
+            sfx.draw();
+        } else if (state.winnerId === me.id) {
+            sfx.win();
+        } else {
+            sfx.lose();
+        }
+    }, [state.finished, state.winnerId, me.id]);
+
     // Once a ranked duel settles, pull our updated rank so the result can show XP and rank-ups.
     useEffect(() => {
         if (state.finished && state.ranked) {
@@ -598,6 +621,24 @@ export default function Duel({
 
     const remaining = Math.max(0, endsAt - Math.max(clock, startsAt));
     const countdown = Math.ceil((startsAt - clock) / 1000);
+
+    // Beep on 3, 2, 1, then GO.
+    const beep = phase === 'countdown' && countdown <= 3 ? countdown : null;
+    const lastPhase = useRef(phase);
+
+    useEffect(() => {
+        if (beep !== null && beep > 0) {
+            sfx.countdown();
+        }
+    }, [beep]);
+
+    useEffect(() => {
+        if (lastPhase.current === 'countdown' && phase === 'playing') {
+            sfx.go();
+        }
+
+        lastPhase.current = phase;
+    }, [phase]);
     // Skipped on a late (re)load, once its slot in the countdown has passed.
     const introLeft = startsAt - BOARD_COUNTDOWN_MS - clock;
     const minutes = Math.round((endsAt - startsAt) / 60_000);
@@ -757,6 +798,7 @@ export default function Duel({
                             )}
                         </div>
 
+                        <SoundToggle />
                         <div className="max-w-56">
                             <EmoteBar
                                 onSend={sendEmote}
