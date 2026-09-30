@@ -22,9 +22,12 @@ import { RankProgressBar } from '@/components/tetris/rank-badge';
 import type { RankProgress } from '@/components/tetris/rank-badge';
 import { ShareResult } from '@/components/tetris/share-result';
 import { SoundToggle } from '@/components/tetris/sound-toggle';
+import { TouchControls } from '@/components/tetris/touch-controls';
 import { VersusIntro } from '@/components/tetris/versus-intro';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useTouchDevice } from '@/hooks/use-touch-device';
 import { sendJson } from '@/lib/api';
 import { formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -161,7 +164,10 @@ export default function Duel({
     const finishedRef = useRef(duel.finished);
     const opponentBoxRef = useRef<HTMLDivElement>(null);
     const [rankAtStart] = useState(me.rank.rank);
-    const cell = useCellSize(270, 28);
+    const touch = useTouchDevice();
+    const narrow = useIsMobile();
+    // Phones fit both boards side by side (the opponent's much smaller) above the touch controls.
+    const cell = useCellSize(touch ? 440 : 270, 28, narrow ? 27 : 22);
     const [myEmote, showMyEmote] = useShownEmote();
     const [theirEmote, showTheirEmote] = useShownEmote();
     const [emotesMuted, toggleEmotesMuted] = useEmoteMute();
@@ -187,7 +193,7 @@ export default function Duel({
                 : next,
         );
 
-    const { canvasRef, gameRef } = useTetrisGame({
+    const { canvasRef, gameRef, controls } = useTetrisGame({
         seed,
         cell,
         running: phase === 'playing' && !knockedOut,
@@ -642,7 +648,34 @@ export default function Duel({
     // Skipped on a late (re)load, once its slot in the countdown has passed.
     const introLeft = startsAt - BOARD_COUNTDOWN_MS - clock;
     const minutes = Math.round((endsAt - startsAt) / 60_000);
-    const opponentCell = Math.max(10, Math.round(cell * 0.62));
+    const opponentCell = narrow
+        ? Math.max(4, Math.round(cell * 0.4))
+        : Math.max(10, Math.round(cell * 0.62));
+
+    /** Sound, emotes and forfeit: beside the boards on desktop, below them on phones. */
+    const matchActions = (
+        <>
+            <EmoteBar
+                onSend={sendEmote}
+                muted={emotesMuted}
+                onToggleMute={toggleEmotesMuted}
+            />
+            <div className="flex items-center gap-2">
+                <SoundToggle />
+                {phase !== 'finished' && (
+                    <Button
+                        variant={confirmForfeit ? 'destructive' : 'ghost'}
+                        size="sm"
+                        onClick={surrender}
+                        className="text-muted-foreground"
+                    >
+                        <Flag />{' '}
+                        {confirmForfeit ? 'Tap again to forfeit' : 'Forfeit'}
+                    </Button>
+                )}
+            </div>
+        </>
+    );
 
     return (
         <>
@@ -691,8 +724,8 @@ export default function Duel({
                     />
                 </header>
 
-                <div className="flex flex-wrap items-start justify-center gap-6">
-                    <div className="relative tetris-stage rounded-xl p-3 shadow-xl ring-1 ring-indigo-500/20">
+                <div className="flex items-start justify-center gap-2 md:gap-6">
+                    <div className="relative tetris-stage rounded-xl p-1.5 shadow-xl ring-1 ring-indigo-500/20 md:p-3">
                         <canvas ref={canvasRef} className="block" />
                         <ClearCallout callout={callout} />
                         <EmoteBubble emote={myEmote} />
@@ -762,7 +795,7 @@ export default function Duel({
                     <div className="flex flex-col items-center gap-2">
                         <div
                             ref={opponentBoxRef}
-                            className="relative tetris-stage rounded-xl p-2 ring-1 ring-indigo-500/20"
+                            className="relative tetris-stage rounded-lg p-1 ring-1 ring-indigo-500/20 md:rounded-xl md:p-2"
                         >
                             <OpponentField
                                 view={opponentView}
@@ -780,7 +813,7 @@ export default function Duel({
                                 </div>
                             )}
                             {presence !== 'online' && phase !== 'finished' && (
-                                <div className="absolute inset-x-2 top-2 flex items-center justify-center gap-1.5 rounded-md bg-black/70 px-2 py-1 text-xs text-amber-200">
+                                <div className="absolute inset-x-1 top-1 flex items-center justify-center gap-1.5 rounded-md bg-black/70 px-1 py-1 text-[10px] leading-tight text-amber-200 md:inset-x-2 md:top-2 md:px-2 md:text-xs">
                                     {presence === 'left' ? (
                                         <>
                                             <WifiOff className="size-3.5" />{' '}
@@ -798,31 +831,19 @@ export default function Duel({
                             )}
                         </div>
 
-                        <SoundToggle />
-                        <div className="max-w-56">
-                            <EmoteBar
-                                onSend={sendEmote}
-                                muted={emotesMuted}
-                                onToggleMute={toggleEmotesMuted}
-                            />
+                        <div className="hidden w-64 flex-col items-center gap-2 md:flex">
+                            {matchActions}
                         </div>
-
-                        {phase !== 'finished' && (
-                            <Button
-                                variant={
-                                    confirmForfeit ? 'destructive' : 'ghost'
-                                }
-                                size="sm"
-                                onClick={surrender}
-                                className="text-muted-foreground"
-                            >
-                                <Flag />{' '}
-                                {confirmForfeit
-                                    ? 'Click again to forfeit'
-                                    : 'Forfeit'}
-                            </Button>
-                        )}
                     </div>
+                </div>
+
+                {touch && phase !== 'finished' && (
+                    <TouchControls controls={controls} />
+                )}
+
+                {/* On phones the opponent's board is narrow, so these go below. */}
+                <div className="flex w-full flex-col items-center gap-2 md:hidden">
+                    {matchActions}
                 </div>
             </div>
 

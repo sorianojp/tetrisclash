@@ -36,7 +36,10 @@ export function PlayerPlate({
                     {player.rating}
                 </span>
             </div>
-            <RankBadge progress={player.rank} className="max-w-full" />
+            <RankBadge
+                progress={player.rank}
+                className={cn('max-w-full', align === 'left' && 'self-start')}
+            />
             {mode === 'race' ? (
                 <div
                     className={cn(

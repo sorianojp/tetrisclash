@@ -102,14 +102,14 @@ export default function Player({
                         />
                         <Stat
                             icon={<Swords className="size-4" />}
-                            label="Ranked record"
-                            value={`${player.wins}W – ${player.losses}L`}
+                            label="Record"
+                            value={`${player.wins}–${player.losses}`}
                         />
                         <Stat label="Win rate" value={winRate} />
                     </CardContent>
                 </Card>
 
-                <div className="grid gap-4 md:grid-cols-[1fr_2fr]">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_2fr]">
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
@@ -213,7 +213,9 @@ function Stat({
                 {icon}
                 {label}
             </div>
-            <div className="mt-1 text-xl font-bold tabular-nums">{value}</div>
+            <div className="mt-1 text-lg font-bold whitespace-nowrap tabular-nums sm:text-xl">
+                {value}
+            </div>
         </div>
     );
 }

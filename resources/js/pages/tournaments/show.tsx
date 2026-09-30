@@ -178,7 +178,7 @@ export default function TournamentShow({
                         </CardContent>
                     </Card>
                 ) : (
-                    <div className="grid gap-4 overflow-x-auto md:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                         {rounds.map((round) => (
                             <section
                                 key={round.name}

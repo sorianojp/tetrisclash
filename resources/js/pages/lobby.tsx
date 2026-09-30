@@ -244,10 +244,10 @@ export default function Lobby({
                     </div>
                 )}
 
-                <div className="grid gap-4 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                     <div className="flex flex-col gap-4 lg:col-span-2">
-                        <Card className="overflow-hidden">
-                            <div className="relative bg-gradient-to-br from-indigo-950 via-violet-900 to-fuchsia-900 p-6 text-white sm:p-8">
+                        <Card className="h-full gap-0 overflow-hidden py-0">
+                            <div className="relative h-full bg-gradient-to-br from-indigo-950 via-violet-900 to-fuchsia-900 p-6 text-white sm:p-8">
                                 <TetrominoBackdrop />
                                 <div className="relative flex flex-col gap-4">
                                     <div>
@@ -368,11 +368,11 @@ export default function Lobby({
                                         nextInMs={liveEnergyNow.nextInMs}
                                         intervalMs={energy.intervalMs}
                                     />
+
+                                    <OnlineNow initialCount={onlineCount} />
                                 </div>
                             </div>
                         </Card>
-
-                        <OnlineNow initialCount={onlineCount} />
                     </div>
 
                     <Card>
@@ -406,7 +406,7 @@ export default function Lobby({
                             <Stat
                                 icon={<Swords className="size-4" />}
                                 label="Record"
-                                value={`${stats.wins}W – ${stats.losses}L`}
+                                value={`${stats.wins}–${stats.losses}`}
                             />
                             <Stat
                                 label="Win rate"
@@ -441,7 +441,7 @@ export default function Lobby({
                     </Card>
                 </div>
 
-                <div className="grid gap-4 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center justify-between gap-2">
@@ -566,7 +566,9 @@ function Stat({
                 {icon}
                 {label}
             </div>
-            <div className="mt-1 text-xl font-bold tabular-nums">{value}</div>
+            <div className="mt-1 text-lg font-bold whitespace-nowrap tabular-nums sm:text-xl">
+                {value}
+            </div>
         </div>
     );
 }

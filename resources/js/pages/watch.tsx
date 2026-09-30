@@ -21,6 +21,7 @@ import { dashboard } from '@/routes';
 import { sfx } from '@/tetris/sound';
 import { replay as duelReplay } from '@/routes/duels';
 import { useCellSize } from '@/tetris/use-tetris-game';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type DuelState = {
     id: number;
@@ -85,7 +86,9 @@ export default function Watch({
     const [muted] = useEmoteMute();
     const mutedRef = useRef(muted);
     mutedRef.current = muted;
-    const cell = useCellSize(250, 26);
+    const narrow = useIsMobile();
+    // Phones: both boards side by side, each about half the width.
+    const cell = useCellSize(250, 26, narrow ? 24 : 22);
 
     useEffect(() => {
         const name = `watch.duel.${duel.id}`;
@@ -175,7 +178,7 @@ export default function Watch({
         ? 0
         : Math.max(0, endsAt - Math.max(clock, startsAt));
     const countdown = Math.ceil((startsAt - clock) / 1000);
-    const opponentCell = Math.max(12, Math.round(cell * 0.9));
+    const opponentCell = narrow ? cell : Math.max(12, Math.round(cell * 0.9));
     const title = `${one.name} vs ${two.name}`;
     const winner = players.find((p) => p.id === state.winnerId);
 
@@ -213,7 +216,6 @@ export default function Watch({
                         >
                             {formatTime(remaining, false)}
                         </div>
-                        <SoundToggle />
                         <span className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Eye className="size-3.5" /> Spectating
                             {spectators > 1 && ` · ${spectators} watching`}
@@ -240,7 +242,9 @@ export default function Watch({
                     </div>
                 )}
 
-                <div className="flex flex-wrap items-start justify-center gap-6">
+                <SoundToggle />
+
+                <div className="flex items-start justify-center gap-3 md:gap-6">
                     {[
                         { player: one, view: viewOne, emote: emoteOne },
                         { player: two, view: viewTwo, emote: emoteTwo },

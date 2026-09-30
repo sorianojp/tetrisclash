@@ -11,10 +11,14 @@ import { PracticeLeaderboard } from '@/components/tetris/practice-leaderboard';
 import type { PracticeBoards } from '@/components/tetris/practice-leaderboard';
 import { ShareResult } from '@/components/tetris/share-result';
 import { SoundToggle } from '@/components/tetris/sound-toggle';
+import { TouchControls } from '@/components/tetris/touch-controls';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useTouchDevice } from '@/hooks/use-touch-device';
 import { sendJson } from '@/lib/api';
 import { formatTime } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import { dashboard, practice } from '@/routes';
 import { records as recordsRoute } from '@/routes/practice';
 import type { GameStats } from '@/tetris/engine';
@@ -126,7 +130,10 @@ export default function Practice({
             );
         }
     };
-    const cell = useCellSize(190);
+    const touch = useTouchDevice();
+    const narrow = useIsMobile();
+    // Phones leave room for the stats strip above and the touch controls below.
+    const cell = useCellSize(touch ? 470 : 190);
 
     const finish = (outcome: Outcome) => {
         const game = gameRef.current;
@@ -171,7 +178,7 @@ export default function Practice({
         }
     };
 
-    const { canvasRef, gameRef } = useTetrisGame({
+    const { canvasRef, gameRef, controls } = useTetrisGame({
         seed,
         cell,
         running: phase === 'playing',
@@ -429,54 +436,78 @@ export default function Practice({
                     </div>
                 </div>
 
+                {/* Phones: the key numbers above the board, since the full panel is below the fold. */}
+                {narrow && (
+                    <div className="grid w-full max-w-md grid-cols-3 gap-2">
+                        {hud[mode].slice(0, 3).map(([label, value]) => (
+                            <HudStat
+                                key={label}
+                                label={label}
+                                value={value}
+                                compact
+                            />
+                        ))}
+                    </div>
+                )}
+
                 <div className="flex w-full max-w-5xl flex-col items-center gap-6 lg:flex-row lg:items-start lg:justify-center">
-                    <div className="relative tetris-stage rounded-xl p-3 shadow-xl ring-1 ring-indigo-500/20">
-                        <canvas ref={canvasRef} className="block" />
-                        <ClearCallout callout={callout} />
+                    <div className="flex w-full flex-col items-center gap-4 lg:w-auto">
+                        <div className="relative tetris-stage rounded-xl p-1.5 shadow-xl ring-1 ring-indigo-500/20 md:p-3">
+                            <canvas ref={canvasRef} className="block" />
+                            <ClearCallout callout={callout} />
 
-                        {phase === 'countdown' && countdown > 0 && (
-                            <FieldOverlay>
-                                <div className="flex flex-col items-center gap-2 text-center text-white">
-                                    <span
-                                        key={countdown}
-                                        className="animate-callout text-7xl font-black"
-                                    >
-                                        {countdown}
-                                    </span>
-                                    <span className="text-sm font-semibold tracking-widest uppercase">
-                                        {MODES[mode].label}
-                                    </span>
-                                </div>
-                            </FieldOverlay>
-                        )}
+                            {phase === 'countdown' && countdown > 0 && (
+                                <FieldOverlay>
+                                    <div className="flex flex-col items-center gap-2 text-center text-white">
+                                        <span
+                                            key={countdown}
+                                            className="animate-callout text-7xl font-black"
+                                        >
+                                            {countdown}
+                                        </span>
+                                        <span className="text-sm font-semibold tracking-widest uppercase">
+                                            {MODES[mode].label}
+                                        </span>
+                                    </div>
+                                </FieldOverlay>
+                            )}
 
-                        {phase === 'done' && result && (
-                            <FieldOverlay>
-                                <ResultCard
-                                    mode={mode}
-                                    result={result}
-                                    onRestart={() => restart()}
-                                    share={
-                                        <ShareResult
-                                            getCard={() => shareCard(result)}
-                                            filename={`tetris-clash-${mode}.png`}
-                                            text={shareText(result)}
-                                        />
-                                    }
-                                />
-                            </FieldOverlay>
-                        )}
+                            {phase === 'done' && result && (
+                                <FieldOverlay>
+                                    <ResultCard
+                                        mode={mode}
+                                        result={result}
+                                        onRestart={() => restart()}
+                                        share={
+                                            <ShareResult
+                                                getCard={() =>
+                                                    shareCard(result)
+                                                }
+                                                filename={`tetris-clash-${mode}.png`}
+                                                text={shareText(result)}
+                                            />
+                                        }
+                                    />
+                                </FieldOverlay>
+                            )}
+                        </div>
+
+                        {touch && <TouchControls controls={controls} />}
                     </div>
 
                     <aside className="flex w-full max-w-xs flex-col gap-4">
-                        <div className="grid grid-cols-2 gap-2">
-                            {hud[mode].map(([label, value]) => (
-                                <HudStat
-                                    key={label}
-                                    label={label}
-                                    value={value}
-                                />
-                            ))}
+                        {/* An odd last tile (Best) spans the row instead of sitting alone. */}
+                        <div className="grid grid-cols-2 gap-2 [&>*:last-child:nth-child(odd)]:col-span-2">
+                            {/* On phones the first three are in the strip above the board. */}
+                            {hud[mode]
+                                .slice(narrow ? 3 : 0)
+                                .map(([label, value]) => (
+                                    <HudStat
+                                        key={label}
+                                        label={label}
+                                        value={value}
+                                    />
+                                ))}
                         </div>
                         <div className="rounded-xl border p-4">
                             <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold">
@@ -564,13 +595,33 @@ function ResultCard({
     );
 }
 
-function HudStat({ label, value }: { label: string; value: string | number }) {
+function HudStat({
+    label,
+    value,
+    compact = false,
+}: {
+    label: string;
+    value: string | number;
+    compact?: boolean;
+}) {
     return (
-        <div className="rounded-lg border px-3 py-2">
-            <div className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+        <div
+            className={cn(
+                'rounded-lg border',
+                compact ? 'px-2 py-1' : 'px-3 py-2',
+            )}
+        >
+            <div className="truncate text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
                 {label}
             </div>
-            <div className="text-lg font-bold tabular-nums">{value}</div>
+            <div
+                className={cn(
+                    'font-bold tabular-nums',
+                    compact ? 'text-base' : 'text-lg',
+                )}
+            >
+                {value}
+            </div>
         </div>
     );
 }

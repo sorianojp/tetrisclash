@@ -54,7 +54,22 @@ export class InputController {
 
         event.preventDefault();
 
-        if (event.repeat || !this.enabled) {
+        if (!event.repeat) {
+            this.press(action);
+        }
+    }
+
+    keyUp(event: KeyboardEvent): void {
+        const action = KEY_BINDINGS[event.code];
+
+        if (action) {
+            this.release(action);
+        }
+    }
+
+    /** An action starts: a key went down, or an on-screen button was touched. */
+    press(action: Action): void {
+        if (!this.enabled) {
             return;
         }
 
@@ -96,9 +111,8 @@ export class InputController {
         }
     }
 
-    keyUp(event: KeyboardEvent): void {
-        const action = KEY_BINDINGS[event.code];
-
+    /** An action ends: key or button let go. Only held actions (moves, soft drop) care. */
+    release(action: Action): void {
         if (action === 'left' || action === 'right') {
             this.releaseDirection(action === 'left' ? -1 : 1);
         } else if (action === 'softDrop') {

@@ -4,6 +4,7 @@ import { Effects } from './effects';
 import { Game } from './engine';
 import type { GameEvents, GameOptions } from './engine';
 import { InputController } from './input';
+import type { Action } from './input';
 import { PLAYER_LAYOUT, drawPlayer, prepareCanvas } from './render';
 import { sfx } from './sound';
 
@@ -36,6 +37,7 @@ export function useTetrisGame({
     const effectsRef = useRef<Effects | null>(null);
     const eventsRef = useRef(events);
     const runningRef = useRef(running);
+    const inputRef = useRef<InputController | null>(null);
 
     useLayoutEffect(() => {
         eventsRef.current = events;
@@ -94,6 +96,7 @@ export function useTetrisGame({
 
     useEffect(() => {
         const input = new InputController(() => gameRef.current);
+        inputRef.current = input;
         const onKeyDown = (event: KeyboardEvent) => {
             if (
                 event.target instanceof HTMLInputElement ||
@@ -154,20 +157,38 @@ export function useTetrisGame({
         };
     }, [cell]);
 
-    return { canvasRef, gameRef };
+    /** For on-screen controls: the same actions the keyboard triggers. */
+    const controls = {
+        press: (action: Action) => {
+            const input = inputRef.current;
+
+            if (input) {
+                input.enabled = runningRef.current;
+                input.press(action);
+            }
+        },
+        release: (action: Action) => inputRef.current?.release(action),
+    };
+
+    return { canvasRef, gameRef, controls };
 }
 
 /** Pick a cell size that fits the board in the viewport. */
-export function useCellSize(reservedHeight: number, max = 30): number {
+export function useCellSize(
+    reservedHeight: number,
+    max = 30,
+    /** How many cells wide the whole layout is (22 fits one player's field). */
+    widthCells = 22,
+): number {
     const measure = () =>
         typeof window === 'undefined'
             ? max
             : Math.max(
-                  14,
+                  10,
                   Math.min(
                       max,
                       Math.floor((window.innerHeight - reservedHeight) / 20),
-                      Math.floor((window.innerWidth - 48) / 22),
+                      Math.floor((window.innerWidth - 48) / widthCells),
                   ),
               );
     const [cell, setCell] = useState(measure);
@@ -178,7 +199,7 @@ export function useCellSize(reservedHeight: number, max = 30): number {
 
         return () => window.removeEventListener('resize', onResize);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [reservedHeight, max]);
+    }, [reservedHeight, max, widthCells]);
 
     return cell;
 }

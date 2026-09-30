@@ -1,3 +1,5 @@
+import { useTouchDevice } from '@/hooks/use-touch-device';
+
 const CONTROLS: [keys: string[], action: string][] = [
     [['←', '→'], 'Move'],
     [['↓'], 'Soft drop'],
@@ -8,6 +10,19 @@ const CONTROLS: [keys: string[], action: string][] = [
 ];
 
 export function ControlsLegend() {
+    const touch = useTouchDevice();
+
+    if (touch) {
+        return (
+            <p className="text-sm text-muted-foreground">
+                Play with the on-screen buttons under the board: arrows to move,
+                the rotate buttons to spin, <strong>DROP</strong> to slam a
+                piece down, and <strong>HOLD</strong> to save one for later.
+                Hold left or right to slide.
+            </p>
+        );
+    }
+
     return (
         <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
             {CONTROLS.map(([keys, action]) => (
