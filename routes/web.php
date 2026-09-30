@@ -2,6 +2,12 @@
 
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\AchievementController;
+use App\Http\Controllers\Admin\BotController as AdminBotController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\DuelController as AdminDuelController;
+use App\Http\Controllers\Admin\PracticeController as AdminPracticeController;
+use App\Http\Controllers\Admin\TournamentController as AdminTournamentController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\ChallengeController;
 use App\Http\Controllers\DuelController;
 use App\Http\Controllers\Internal\BotRunnerController;
@@ -57,6 +63,35 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('tournaments/{tournament}/join', [TournamentController::class, 'leave'])->name('tournaments.leave');
 
     Route::post('achievements', [AchievementController::class, 'store'])->middleware('throttle:30,1')->name('achievements.store');
+});
+
+// Admin tools. Admin is granted from the console: php artisan user:make-admin {email}
+Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', AdminDashboardController::class)->name('dashboard');
+
+    Route::get('users', [AdminUserController::class, 'index'])->name('users.index');
+    Route::get('users/{user}', [AdminUserController::class, 'show'])->name('users.show');
+    Route::post('users/{user}/ban', [AdminUserController::class, 'ban'])->name('users.ban');
+    Route::delete('users/{user}/ban', [AdminUserController::class, 'unban'])->name('users.unban');
+    Route::patch('users/{user}/stats', [AdminUserController::class, 'updateStats'])->name('users.stats');
+    Route::patch('users/{user}/energy', [AdminUserController::class, 'updateEnergy'])->name('users.energy');
+    Route::post('users/{user}/achievements', [AdminUserController::class, 'grantAchievement'])->name('users.achievements.store');
+    Route::delete('users/{user}/achievements/{key}', [AdminUserController::class, 'revokeAchievement'])->name('users.achievements.destroy');
+    Route::delete('users/{user}/records/{mode}', [AdminUserController::class, 'resetRecord'])->name('users.records.destroy');
+
+    Route::get('practice', [AdminPracticeController::class, 'index'])->name('practice.index');
+    Route::delete('practice/runs/{run}', [AdminPracticeController::class, 'destroy'])->name('practice.runs.destroy');
+
+    Route::get('tournaments', [AdminTournamentController::class, 'index'])->name('tournaments.index');
+    Route::delete('tournaments/{tournament}', [AdminTournamentController::class, 'destroy'])->name('tournaments.destroy');
+    Route::delete('tournaments/{tournament}/players/{user}', [AdminTournamentController::class, 'removePlayer'])->name('tournaments.players.destroy');
+    Route::post('tournaments/{tournament}/matches/{match}/advance', [AdminTournamentController::class, 'advance'])->name('tournaments.matches.advance');
+
+    Route::get('duels', [AdminDuelController::class, 'index'])->name('duels.index');
+    Route::post('duels/{duel}/cancel', [AdminDuelController::class, 'cancel'])->name('duels.cancel');
+
+    Route::get('bots', [AdminBotController::class, 'index'])->name('bots.index');
+    Route::patch('bots/{bot}', [AdminBotController::class, 'update'])->name('bots.update');
 });
 
 // The bot runner (bots/runner.ts) acts for bot accounts here, authenticated by its token.

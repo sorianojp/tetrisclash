@@ -69,6 +69,7 @@ class LobbyController extends Controller
     private function leaderboard(): Collection
     {
         return User::query()
+            ->notBanned()
             ->where(fn ($query) => $query->where('wins', '>', 0)->orWhere('losses', '>', 0))
             ->orderByDesc('rating')
             ->limit(10)

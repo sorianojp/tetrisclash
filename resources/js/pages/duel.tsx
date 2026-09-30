@@ -58,6 +58,7 @@ type DuelState = {
         | 'disconnect'
         | 'finish'
         | 'abandoned'
+        | 'cancelled'
         | null;
     ratingChange: number | null;
     /** XP each player earned, keyed by user id; null until the duel is settled. */
@@ -907,6 +908,7 @@ function describeOutcome(
                 ? `${opponent.name} disconnected`
                 : 'you disconnected',
         abandoned: 'neither player showed up',
+        cancelled: 'ended by an admin',
     }[state.finishReason ?? 'time'];
 
     return { outcome, reason };

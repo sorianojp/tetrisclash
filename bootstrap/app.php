@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\EnsureNotBanned;
+use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -20,7 +22,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // The bot runner authenticates with a token, not a session.
         $middleware->validateCsrfTokens(except: ['internal/bots/*']);
 
+        $middleware->alias(['admin' => EnsureUserIsAdmin::class]);
+
         $middleware->web(append: [
+            EnsureNotBanned::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,
             // Capped: every preloaded asset adds to the `Link` header, and past nginx's

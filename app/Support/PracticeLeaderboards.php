@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\DB;
 /**
  * Per-mode practice leaderboards: all-time (each player's personal best) and weekly
  * (each player's best run since Monday 00:00 UTC). Tied players share a position,
- * which is one more than the number of players strictly ahead of them. The top lists are
+ * which is one more than the number of players strictly ahead of them. Banned players are
+ * left off. The top lists are
  * cached for a few seconds and dropped whenever a result is saved.
  *
  * @phpstan-type Entry array{id: int, name: string, value: int, position: int, rank: array{rank: int, title: string, xp: int, xpIntoRank: int, xpForNext: int|null}, replayId: int|null}
@@ -138,6 +139,7 @@ final class PracticeLeaderboards
         $column = $record['column'];
 
         $top = User::query()
+            ->notBanned()
             ->whereNotNull($column)
             ->orderBy($column, $record['lowerIsBetter'] ? 'asc' : 'desc')
             ->orderBy('id')
@@ -195,6 +197,7 @@ final class PracticeLeaderboards
         return PracticeRun::query()
             ->where('mode', $mode)
             ->where('created_at', '>=', self::weekStart())
+            ->whereNotIn('user_id', User::query()->whereNotNull('banned_at')->select('id'))
             ->groupBy('user_id')
             ->selectRaw("user_id, {$aggregate}(value) as best");
     }
@@ -205,6 +208,7 @@ final class PracticeLeaderboards
     private static function allTimePosition(array $record, int $value): int
     {
         return User::query()
+            ->notBanned()
             ->where($record['column'], $record['lowerIsBetter'] ? '<' : '>', $value)
             ->count() + 1;
     }

@@ -2,6 +2,7 @@
 
 use App\Models\Duel;
 use App\Models\Tournament;
+use App\Models\User;
 use App\Support\Bots;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -45,3 +46,18 @@ Artisan::command('bots:tick', function () {
 })->purpose('Keep bots online on their schedules, pair them up now and then, and fill waiting tournaments');
 
 Schedule::command('bots:tick')->everyMinute();
+
+Artisan::command('user:make-admin {email} {--revoke : Take admin away instead}', function (string $email) {
+    $user = User::query()->where('email', $email)->first();
+
+    if ($user === null) {
+        $this->error("No user with the email {$email}.");
+
+        return 1;
+    }
+
+    $user->forceFill(['is_admin' => ! $this->option('revoke')])->save();
+    $this->info($user->is_admin ? "{$user->name} is now an admin." : "{$user->name} is no longer an admin.");
+
+    return 0;
+})->purpose('Grant (or with --revoke, remove) admin access; it can only be changed here, never from the app');

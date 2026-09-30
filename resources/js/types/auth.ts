@@ -8,6 +8,7 @@ export type User = {
     accepts_invites: boolean;
     piece_theme?: string;
     board_skin?: string;
+    is_admin?: boolean;
     created_at: string;
     updated_at: string;
     [key: string]: unknown;

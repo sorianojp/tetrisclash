@@ -186,6 +186,56 @@ class Tournament extends Model
     }
 
     /**
+     * Called off by an admin: the tournament is removed and any bracket duel still being
+     * played is cancelled (nothing moves, since tournament duels are friendly anyway).
+     */
+    public function cancel(): void
+    {
+        $liveDuels = Duel::query()
+            ->whereNull('finished_at')
+            ->whereIn('id', $this->matches()->whereNotNull('duel_id')->select('duel_id'))
+            ->get();
+
+        $this->delete();
+
+        $liveDuels->each(fn (Duel $duel) => $duel->cancel());
+    }
+
+    /**
+     * An admin settles a stuck bracket match for one of its players. A duel still in progress
+     * is forfeited by the other player, which moves the bracket on as usual.
+     */
+    public function forceAdvance(TournamentMatch $match, int $winnerId): void
+    {
+        if ($match->tournament_id !== $this->id || $match->winner_id !== null
+            || ! in_array($winnerId, [$match->player_one_id, $match->player_two_id], true)
+            || $match->player_one_id === null || $match->player_two_id === null) {
+            throw ValidationException::withMessages(['tournament' => __('That match cannot be decided.')]);
+        }
+
+        $loserId = $winnerId === $match->player_one_id ? $match->player_two_id : $match->player_one_id;
+        $duel = $match->duel_id === null ? null : Duel::query()->find($match->duel_id);
+
+        if ($duel !== null && ! $duel->isFinished()) {
+            $duel->forfeit(User::query()->findOrFail($loserId));
+
+            return;
+        }
+
+        DB::transaction(function () use ($match, $winnerId) {
+            $tournament = self::query()->lockForUpdate()->findOrFail($this->id);
+            $match = TournamentMatch::query()->lockForUpdate()->findOrFail($match->id);
+
+            if ($match->winner_id === null) {
+                $tournament->advance($match, $winnerId);
+            }
+        });
+
+        $this->refresh();
+        $this->startReadyMatches();
+    }
+
+    /**
      * Once a tournament duel settles: its winner advances (a draw goes to the higher seed),
      * the loser is out, and any match that's now ready begins.
      */
