@@ -94,15 +94,15 @@ final class Achievements
      */
     public static function afterDuel(Duel $duel): void
     {
-        $playedCounts = Duel::query()
-            ->whereNotNull('finished_at')
-            ->where(fn ($query) => $query->whereIn('player_one_id', [$duel->player_one_id, $duel->player_two_id])
-                ->orWhereIn('player_two_id', [$duel->player_one_id, $duel->player_two_id]))
-            ->get(['player_one_id', 'player_two_id'])
-            ->flatMap(fn (Duel $played) => [$played->player_one_id, $played->player_two_id])
-            ->countBy();
+        // What both players already have, so nothing unlocked gets re-checked or re-written.
+        $unlocked = Achievement::query()
+            ->whereIn('user_id', [$duel->player_one_id, $duel->player_two_id])
+            ->get(['user_id', 'key'])
+            ->groupBy('user_id')
+            ->map(fn ($rows) => $rows->pluck('key')->all());
 
         foreach (User::query()->whereKey([$duel->player_one_id, $duel->player_two_id])->get() as $player) {
+            $has = $unlocked->get($player->id, []);
             $won = $duel->winner_id === $player->id;
             $keys = [];
 
@@ -118,7 +118,7 @@ final class Achievements
                 $keys[] = 'wins_50';
             }
 
-            if ($playedCounts->get($player->id, 0) >= 100) {
+            if (! in_array('duels_100', $has, true) && self::matchesPlayed($player) >= 100) {
                 $keys[] = 'duels_100';
             }
 
@@ -141,8 +141,16 @@ final class Achievements
                 }
             }
 
-            self::award($player, ...$keys);
+            self::award($player, ...array_diff($keys, $has));
         }
+    }
+
+    private static function matchesPlayed(User $player): int
+    {
+        return Duel::query()
+            ->whereNotNull('finished_at')
+            ->where(fn ($query) => $query->where('player_one_id', $player->id)->orWhere('player_two_id', $player->id))
+            ->count();
     }
 
     /**

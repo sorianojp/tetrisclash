@@ -6,12 +6,14 @@ use App\Models\PracticeRun;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Per-mode practice leaderboards: all-time (each player's personal best) and weekly
  * (each player's best run since Monday 00:00 UTC). Tied players share a position,
- * which is one more than the number of players strictly ahead of them.
+ * which is one more than the number of players strictly ahead of them. The top lists are
+ * cached for a few seconds and dropped whenever a result is saved.
  *
  * @phpstan-type Entry array{id: int, name: string, value: int, position: int, rank: array{rank: int, title: string, xp: int, xpIntoRank: int, xpForNext: int|null}, replayId: int|null}
  * @phpstan-type Board array{entries: list<Entry>, you: array{position: int, value: int}|null}
@@ -21,6 +23,9 @@ final class PracticeLeaderboards
 {
     public const SIZE = 10;
 
+    /** The top-10 lists are shared by everyone, so they're cached briefly. */
+    public const CACHE_SECONDS = 30;
+
     /**
      * Every mode's all-time and weekly boards, plus where the viewer stands on each.
      *
@@ -28,16 +33,55 @@ final class PracticeLeaderboards
      */
     public static function all(User $viewer): array
     {
+        /** @var array<string, array{allTime: list<Entry>, weekly: list<Entry>}> $tops */
+        $tops = Cache::remember(self::cacheKey(), self::CACHE_SECONDS, fn () => self::tops());
+
+        // The viewer's weekly bests in every mode, in one query.
+        $weekly = PracticeRun::query()
+            ->where('user_id', $viewer->id)
+            ->where('created_at', '>=', self::weekStart())
+            ->groupBy('mode')
+            ->selectRaw('mode, MIN(value) as low, MAX(value) as high')
+            ->get()
+            ->keyBy('mode');
+
         $boards = [];
 
         foreach (User::PRACTICE_RECORDS as $mode => $record) {
+            $allTimeBest = $viewer->{$record['column']};
+            $week = $weekly->get($mode);
+            $weeklyBest = $week === null ? null : (int) $week->getAttribute($record['lowerIsBetter'] ? 'low' : 'high');
+
             $boards[$mode] = [
-                'allTime' => self::allTime($mode, $record, $viewer),
-                'weekly' => self::weekly($mode, $record, $viewer),
+                'allTime' => [
+                    'entries' => $tops[$mode]['allTime'],
+                    'you' => $allTimeBest === null ? null : [
+                        'position' => self::allTimePosition($record, $allTimeBest),
+                        'value' => $allTimeBest,
+                    ],
+                ],
+                'weekly' => [
+                    'entries' => $tops[$mode]['weekly'],
+                    'you' => $weeklyBest === null ? null : [
+                        'position' => DB::query()
+                            ->fromSub(self::weeklyBests($mode, $record), 'bests')
+                            ->where('best', $record['lowerIsBetter'] ? '<' : '>', $weeklyBest)
+                            ->count() + 1,
+                        'value' => $weeklyBest,
+                    ],
+                ],
             ];
         }
 
         return $boards;
+    }
+
+    /**
+     * Drop the cached top lists, so a new result shows up right away.
+     */
+    public static function forget(): void
+    {
+        Cache::forget(self::cacheKey());
     }
 
     /**
@@ -63,11 +107,33 @@ final class PracticeLeaderboards
         return CarbonImmutable::now()->startOfWeek();
     }
 
+    /** Keyed by week, so the weekly boards start fresh the moment Monday comes. */
+    private static function cacheKey(): string
+    {
+        return 'practice-leaderboards:'.self::weekStart()->toDateString();
+    }
+
+    /**
+     * Every mode's top lists.
+     *
+     * @return array<string, array{allTime: list<Entry>, weekly: list<Entry>}>
+     */
+    private static function tops(): array
+    {
+        $tops = [];
+
+        foreach (User::PRACTICE_RECORDS as $mode => $record) {
+            $tops[$mode] = ['allTime' => self::allTimeTop($mode, $record), 'weekly' => self::weeklyTop($mode, $record)];
+        }
+
+        return $tops;
+    }
+
     /**
      * @param  PracticeRecord  $record
-     * @return Board
+     * @return list<Entry>
      */
-    private static function allTime(string $mode, array $record, User $viewer): array
+    private static function allTimeTop(string $mode, array $record): array
     {
         $column = $record['column'];
 
@@ -81,27 +147,17 @@ final class PracticeLeaderboards
             ->values()
             ->all();
 
-        $best = $viewer->{$column};
-
-        return [
-            'entries' => self::entries($top, self::replayRuns($mode, $top)),
-            'you' => $best === null ? null : [
-                'position' => self::allTimePosition($record, $best),
-                'value' => $best,
-            ],
-        ];
+        return self::entries($top, self::replayRuns($mode, $top));
     }
 
     /**
      * @param  PracticeRecord  $record
-     * @return Board
+     * @return list<Entry>
      */
-    private static function weekly(string $mode, array $record, User $viewer): array
+    private static function weeklyTop(string $mode, array $record): array
     {
-        $bests = self::weeklyBests($mode, $record);
-
         $rows = DB::query()
-            ->fromSub($bests, 'bests')
+            ->fromSub(self::weeklyBests($mode, $record), 'bests')
             ->orderBy('best', $record['lowerIsBetter'] ? 'asc' : 'desc')
             ->orderBy('user_id')
             ->limit(self::SIZE)
@@ -123,18 +179,7 @@ final class PracticeLeaderboards
             }
         }
 
-        $best = self::weeklyBests($mode, $record)->where('user_id', $viewer->id)->value('best');
-
-        return [
-            'entries' => self::entries($top, self::replayRuns($mode, $top, self::weekStart())),
-            'you' => $best === null ? null : [
-                'position' => DB::query()
-                    ->fromSub(self::weeklyBests($mode, $record), 'bests')
-                    ->where('best', $record['lowerIsBetter'] ? '<' : '>', $best)
-                    ->count() + 1,
-                'value' => (int) $best,
-            ],
-        ];
+        return self::entries($top, self::replayRuns($mode, $top, self::weekStart()));
     }
 
     /**

@@ -50,7 +50,9 @@ type Props = {
     currentId: number | null;
 };
 
-const POLL_MS = 4000;
+/** Refresh quickly while a match is live, slower while the bracket waits. */
+const POLL_LIVE_MS = 4000;
+const POLL_IDLE_MS = 10000;
 
 export default function TournamentShow({
     tournament,
@@ -62,22 +64,29 @@ export default function TournamentShow({
     const { auth, errors } = usePage().props;
     const champion = players.find((p) => p.id === tournament.winnerId);
 
-    // Keep the bracket (and sign-ups) fresh until it's decided.
+    const anyLive = rounds.some((round) => round.matches.some((m) => m.live));
+
+    // Keep the bracket (and sign-ups) fresh until it's decided; skipped while the tab is hidden.
     useEffect(() => {
         if (tournament.status === 'finished') {
             return;
         }
 
         const timer = setInterval(
-            () =>
-                router.reload({
-                    only: ['tournament', 'players', 'rounds', 'joined'],
-                }),
-            POLL_MS,
+            () => {
+                if (!document.hidden) {
+                    router.reload({
+                        only: ['tournament', 'players', 'rounds', 'joined'],
+                    });
+                }
+            },
+            anyLive || tournament.status === 'open'
+                ? POLL_LIVE_MS
+                : POLL_IDLE_MS,
         );
 
         return () => clearInterval(timer);
-    }, [tournament.status]);
+    }, [tournament.status, anyLive]);
 
     return (
         <>

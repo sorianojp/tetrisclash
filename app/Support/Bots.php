@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Events\DuelFound;
 use App\Models\Duel;
 use App\Models\Tournament;
+use App\Models\TournamentPlayer;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
@@ -134,11 +135,12 @@ final class Bots
      */
     public static function refreshPresence(): void
     {
-        User::query()->bots()->get()->each(function (User $bot) {
-            if (self::scheduledOnline((string) $bot->bot_key) || ! self::isIdle($bot)) {
-                $bot->forceFill(['last_seen_at' => now()])->save();
-            }
-        });
+        $busy = self::busyBotIds();
+        $online = User::query()->bots()->get(['id', 'bot_key'])
+            ->filter(fn (User $bot) => $busy->contains($bot->id) || self::scheduledOnline((string) $bot->bot_key))
+            ->modelKeys();
+
+        User::query()->whereKey($online)->update(['last_seen_at' => now()]);
     }
 
     /**
@@ -232,12 +234,32 @@ final class Bots
      */
     private static function idleBots(): Collection
     {
-        return User::query()->bots()->get()->filter(fn (User $bot) => self::isIdle($bot))->values();
+        return User::query()->bots()->whereKeyNot(self::busyBotIds()->all())->get();
     }
 
-    private static function isIdle(User $bot): bool
+    /**
+     * Bots in an unfinished duel or still in a tournament, found in two queries (this runs
+     * every second for the bot runner).
+     *
+     * @return Collection<int, int>
+     */
+    private static function busyBotIds(): Collection
     {
-        return Duel::activeFor($bot) === null && Tournament::activeFor($bot) === null;
+        $bots = User::query()->bots()->select('id');
+
+        $inDuels = Duel::query()
+            ->whereNull('finished_at')
+            ->where(fn ($query) => $query->whereIn('player_one_id', $bots)->orWhereIn('player_two_id', $bots))
+            ->get(['player_one_id', 'player_two_id'])
+            ->flatMap(fn (Duel $duel) => [$duel->player_one_id, $duel->player_two_id]);
+
+        $inTournaments = TournamentPlayer::query()
+            ->whereIn('user_id', $bots)
+            ->whereNull('eliminated_at')
+            ->whereHas('tournament', fn ($query) => $query->whereIn('status', [Tournament::STATUS_OPEN, Tournament::STATUS_RUNNING]))
+            ->pluck('user_id');
+
+        return $inDuels->merge($inTournaments)->unique()->values();
     }
 
     private static function isOnline(User $bot): bool

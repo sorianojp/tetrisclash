@@ -54,6 +54,7 @@ final class PracticeResults
             self::keepReplay($user, $run, $replay);
         }
 
+        PracticeLeaderboards::forget();
         Achievements::afterPracticeRun($user, $mode, $value);
     }
 

@@ -193,3 +193,24 @@ test('weekly boards rank each player\'s best run since monday', function () {
             ->has('leaderboards.sprint.weekly.entries', 0)
             ->where('leaderboards.sprint.weekly.you', null));
 });
+
+test('leaderboard top lists are cached, and a new result refreshes them', function () {
+    $viewer = User::factory()->create();
+    $this->actingAs($viewer)->get(route('practice'));
+
+    // Written straight to the database, so the cached lists don't know yet.
+    User::factory()->create(['best_ultra_score' => 99000]);
+
+    $this->actingAs($viewer)
+        ->get(route('practice'))
+        ->assertInertia(fn (AssertableInertia $page) => $page->has('leaderboards.ultra.allTime.entries', 0));
+
+    $this->actingAs($viewer)->postJson(route('practice.records'), ['mode' => 'ultra', 'value' => 5000])->assertNoContent();
+
+    $this->actingAs($viewer)
+        ->get(route('practice'))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('leaderboards.ultra.allTime.entries', 2)
+            ->where('leaderboards.ultra.allTime.you', ['position' => 2, 'value' => 5000])
+            ->where('leaderboards.ultra.weekly.you', ['position' => 1, 'value' => 5000]));
+});

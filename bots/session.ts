@@ -1,5 +1,5 @@
 import Pusher from 'pusher-js';
-import type { Channel } from 'pusher-js';
+import type { Channel, PresenceChannel } from 'pusher-js';
 import type { Game } from '../resources/js/tetris/engine';
 import { ReplayRecorder, encodeReplay } from '../resources/js/tetris/replay';
 import type { Api, DuelJob, DuelState } from './api';
@@ -209,12 +209,31 @@ export class DuelSession {
         }
 
         this.duelChannel?.trigger('client-board', board);
-        this.watchChannel?.trigger('client-board', {
-            ...board,
-            u: this.job.botId,
-        });
+
+        // Nobody watching: skip the spectator copy (a new spectator gets the board
+        // within a second, from the periodic resend).
+        if (this.spectators() > 0) {
+            this.watchChannel?.trigger('client-board', {
+                ...board,
+                u: this.job.botId,
+            });
+        }
         this.lastBoardKey = key;
         this.lastBoardAt = Date.now();
+    }
+
+    /** Members of the spectator channel who aren't one of the two players. */
+    private spectators(): number {
+        const members = (this.watchChannel as PresenceChannel | null)?.members;
+        let count = 0;
+
+        members?.each((member: { id: string }) => {
+            if (!this.job.playerIds.includes(Number(member.id))) {
+                count++;
+            }
+        });
+
+        return count;
     }
 
     private onAttack(lines: number): void {

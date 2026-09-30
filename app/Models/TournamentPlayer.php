@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  * @property-read User $user
+ * @property-read Tournament $tournament
  */
 #[Fillable(['tournament_id', 'user_id', 'seed', 'eliminated_at'])]
 class TournamentPlayer extends Model
@@ -28,6 +29,14 @@ class TournamentPlayer extends Model
     protected function casts(): array
     {
         return ['eliminated_at' => 'datetime'];
+    }
+
+    /**
+     * @return BelongsTo<Tournament, $this>
+     */
+    public function tournament(): BelongsTo
+    {
+        return $this->belongsTo(Tournament::class);
     }
 
     /**

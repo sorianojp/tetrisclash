@@ -153,6 +153,8 @@ export default function Duel({
         null,
     );
     const [spectators, setSpectators] = useState(0);
+    /** Read by the board stream, which runs outside React. */
+    const spectatorsRef = useRef(0);
     const recorder = useRef(new ReplayRecorder());
     const finishedRef = useRef(duel.finished);
     const opponentBoxRef = useRef<HTMLDivElement>(null);
@@ -329,7 +331,10 @@ export default function Duel({
         const watchName = `watch.duel.${duel.id}`;
         const watchers = new Set<number>();
         const players = [me.id, opponent.id];
-        const count = () => setSpectators(watchers.size);
+        const count = () => {
+            spectatorsRef.current = watchers.size;
+            setSpectators(watchers.size);
+        };
         watchRef.current = echo()
             .join(watchName)
             .here((members: Member[]) => {
@@ -382,7 +387,11 @@ export default function Duel({
 
             if (key !== last || Date.now() - lastSentAt > 1000) {
                 channel.whisper('board', board);
-                watchRef.current?.whisper('board', { ...board, u: me.id });
+                // Nobody watching: skip the spectator copy. A new spectator gets the
+                // board within a second, from the periodic resend.
+                if (spectatorsRef.current > 0) {
+                    watchRef.current?.whisper('board', { ...board, u: me.id });
+                }
                 last = key;
                 lastSentAt = Date.now();
             }
