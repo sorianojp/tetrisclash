@@ -1,5 +1,5 @@
-import { usePage } from '@inertiajs/react';
-import { ChevronsUpDown } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { ChevronsUpDown, LogIn, UserPlus } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -14,6 +14,7 @@ import {
 import { UserInfo } from '@/components/user-info';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { login, register } from '@/routes';
 
 export function NavUser() {
     const { auth } = usePage().props;
@@ -21,7 +22,30 @@ export function NavUser() {
     const isMobile = useIsMobile();
 
     if (!auth.user) {
-        return null;
+        return (
+            <SidebarMenu>
+                <SidebarMenuItem>
+                    <SidebarMenuButton
+                        asChild
+                        tooltip="Sign up"
+                        className="bg-amber-400 font-semibold text-amber-950 hover:bg-amber-300 hover:text-amber-950"
+                    >
+                        <Link href={register()}>
+                            <UserPlus />
+                            <span>Sign up to play online</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Log in">
+                        <Link href={login()}>
+                            <LogIn />
+                            <span>Log in</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            </SidebarMenu>
+        );
     }
 
     return (

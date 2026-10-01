@@ -14,7 +14,8 @@ export type User = {
 };
 
 export type Auth = {
-    user: User;
+    /** Null for guests (practice, challenge links and replays are public). */
+    user: User | null;
 };
 
 export type Passkey = {

@@ -41,7 +41,7 @@ export function PracticeLeaderboard({
     const { auth } = usePage().props;
     const [period, setPeriod] = useState<Period>('allTime');
     const board = boards[period];
-    const youListed = board.entries.some((entry) => entry.id === auth.user.id);
+    const youListed = board.entries.some((entry) => entry.id === auth.user?.id);
 
     return (
         <div className="flex flex-col gap-3 text-sm">
@@ -82,7 +82,7 @@ export function PracticeLeaderboard({
                             key={entry.id}
                             className={cn(
                                 'flex items-center gap-3 rounded-md px-2 py-1.5',
-                                entry.id === auth.user.id && 'bg-muted',
+                                entry.id === auth.user?.id && 'bg-muted',
                             )}
                         >
                             <span className="w-5 text-right font-mono text-muted-foreground">

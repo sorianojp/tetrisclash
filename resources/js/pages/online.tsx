@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { BellOff, Eye, Flag, Search, Swords, UserPlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { InviteToggle } from '@/components/tetris/invite-toggle';
@@ -25,6 +25,7 @@ import { dashboard } from '@/routes';
 import { watch as watchDuel } from '@/routes/duels';
 import { index as onlineIndex } from '@/routes/online';
 import { invite, show as showPlayer } from '@/routes/players';
+import { useUser } from '@/hooks/use-user';
 
 type OnlinePlayer = {
     id: number;
@@ -62,7 +63,7 @@ export default function Online({
     onlineCount,
     canInvite,
 }: Props) {
-    const { auth } = usePage().props;
+    const user = useUser();
     const [search, setSearch] = useState(filters.search);
 
     const applyFilters = (next: { search: string; available: boolean }) =>
@@ -129,7 +130,7 @@ export default function Online({
                         <InviteToggle />
                     </CardHeader>
                     <CardContent className="flex flex-col gap-4">
-                        {!auth.user.accepts_invites && (
+                        {!user.accepts_invites && (
                             <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
                                 Invites are off. Other players can see you're
                                 online but can't invite you.

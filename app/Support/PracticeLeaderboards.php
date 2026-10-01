@@ -27,17 +27,18 @@ final class PracticeLeaderboards
     public const CACHE_SECONDS = 30;
 
     /**
-     * Every mode's all-time and weekly boards, plus where the viewer stands on each.
+     * Every mode's all-time and weekly boards, plus where the viewer stands on each (nowhere,
+     * for a guest).
      *
      * @return array<string, array{allTime: Board, weekly: Board}>
      */
-    public static function all(User $viewer): array
+    public static function all(?User $viewer): array
     {
         /** @var array<string, array{allTime: list<Entry>, weekly: list<Entry>}> $tops */
         $tops = Cache::remember(self::cacheKey(), self::CACHE_SECONDS, fn () => self::tops());
 
         // The viewer's weekly bests in every mode, in one query.
-        $weekly = PracticeRun::query()
+        $weekly = $viewer === null ? collect() : PracticeRun::query()
             ->where('user_id', $viewer->id)
             ->where('created_at', '>=', self::weekStart())
             ->groupBy('mode')
@@ -48,7 +49,7 @@ final class PracticeLeaderboards
         $boards = [];
 
         foreach (User::PRACTICE_RECORDS as $mode => $record) {
-            $allTimeBest = $viewer->{$record['column']};
+            $allTimeBest = $viewer?->{$record['column']};
             $week = $weekly->get($mode);
             $weeklyBest = $week === null ? null : (int) $week->getAttribute($record['lowerIsBetter'] ? 'low' : 'high');
 

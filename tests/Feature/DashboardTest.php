@@ -90,6 +90,21 @@ test('the practice page lists every record', function () {
             ->where('records.survival', null));
 });
 
+test('guests can play practice without an account, but their runs are not saved', function () {
+    User::factory()->create(['best_sprint_ms' => 60000]);
+
+    $this->get(route('practice'))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('practice')
+            ->where('records.sprint', null)
+            ->where('leaderboards.sprint.allTime.entries.0.value', 60000)
+            ->where('leaderboards.sprint.allTime.you', null)
+            ->where('leaderboards.sprint.weekly.you', null));
+
+    $this->postJson(route('practice.records'), ['mode' => 'sprint', 'value' => 50000])->assertUnauthorized();
+});
+
 test('practice records faster than humanly possible are rejected', function () {
     $user = User::factory()->create();
 

@@ -12,6 +12,7 @@ import { edit as editThemes, update as updateThemes } from '@/routes/themes';
 import { drawBlock, prepareCanvas } from '@/tetris/render';
 import { soundPreviews } from '@/tetris/sound';
 import { BOARD_SKINS, PIECE_THEMES } from '@/tetris/themes';
+import { useUser } from '@/hooks/use-user';
 
 type Option = { id: string; name: string; rank: number; unlocked: boolean };
 
@@ -37,9 +38,10 @@ export default function Themes({
     boards: Option[];
     rank: RankProgress;
 }) {
-    const { auth, errors } = usePage().props;
-    const pieceTheme = String(auth.user.piece_theme ?? 'classic');
-    const boardSkin = String(auth.user.board_skin ?? 'midnight');
+    const { errors } = usePage().props;
+    const user = useUser();
+    const pieceTheme = String(user.piece_theme ?? 'classic');
+    const boardSkin = String(user.board_skin ?? 'midnight');
 
     const choose = (field: 'piece_theme' | 'board_skin', id: string) =>
         router.patch(

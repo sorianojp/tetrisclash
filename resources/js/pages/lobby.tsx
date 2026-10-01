@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { useEcho } from '@laravel/echo-react';
 import {
     Crown,
@@ -59,6 +59,7 @@ import {
     formatRecord,
 } from '@/tetris/practice-modes';
 import type { PracticeRecords, RecordMode } from '@/tetris/practice-modes';
+import { useUser } from '@/hooks/use-user';
 
 type Props = {
     stats: {
@@ -101,7 +102,7 @@ export default function Lobby({
     energy,
     serverNow,
 }: Props) {
-    const { auth } = usePage().props;
+    const user = useUser();
     const [searching, setSearching] = useState(false);
     const [searchStartedAt, setSearchStartedAt] = useState(0);
     /** Rating gap the server currently accepts for us; null = any opponent. */
@@ -119,7 +120,7 @@ export default function Lobby({
     };
 
     useEcho<{ duelId: number }>(
-        `App.Models.User.${auth.user.id}`,
+        `App.Models.User.${user.id}`,
         'DuelFound',
         ({ duelId }) => goToDuel(duelId),
     );
@@ -380,7 +381,7 @@ export default function Lobby({
                             <CardTitle className="flex items-center justify-between gap-2">
                                 Your stats
                                 <Link
-                                    href={showPlayer(auth.user.id)}
+                                    href={showPlayer(user.id)}
                                     className="text-xs font-normal text-muted-foreground hover:underline"
                                 >
                                     View profile
@@ -491,7 +492,7 @@ export default function Lobby({
                                             key={player.id}
                                             className={cn(
                                                 'flex items-center gap-3 rounded-md px-2 py-1.5',
-                                                player.id === auth.user.id &&
+                                                player.id === user.id &&
                                                     'bg-muted',
                                             )}
                                         >

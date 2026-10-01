@@ -31,25 +31,37 @@
         </style>
 
         {{-- Search results and link previews. Kept here rather than in the pages, because
-             crawlers read the HTML without running the app's JavaScript. --}}
-        @php($description = 'Free 1v1 online Tetris battles. Send garbage, score KOs, climb the ranks, and race your friends to 40 lines.')
+             crawlers read the HTML without running the app's JavaScript. Pages can pass their
+             own title and description with ->withViewData(['meta' => [...]]). --}}
+        @php($siteDescription = 'Free 1v1 online Tetris battles. Send garbage, score KOs, climb the ranks, and race your friends to 40 lines.')
+        @php($metaTitle = $meta['title'] ?? config('app.name').' - Online Tetris battles')
+        @php($description = $meta['description'] ?? $siteDescription)
+        @php($image = asset('og-image.png'))
         <meta name="description" content="{{ $description }}">
+        <link rel="canonical" href="{{ url()->current() }}">
         <meta property="og:type" content="website">
         <meta property="og:site_name" content="{{ config('app.name') }}">
-        <meta property="og:title" content="{{ config('app.name') }}">
+        <meta property="og:title" content="{{ $metaTitle }}">
         <meta property="og:description" content="{{ $description }}">
         <meta property="og:url" content="{{ url()->current() }}">
-        <meta name="twitter:card" content="summary">
-        <meta name="twitter:title" content="{{ config('app.name') }}">
+        <meta property="og:image" content="{{ $image }}">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta property="og:image:alt" content="{{ config('app.name') }}: two boards mid-battle, garbage rising">
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="{{ $metaTitle }}">
         <meta name="twitter:description" content="{{ $description }}">
-        {{-- The site name Google shows above results (it falls back to the bare domain). --}}
+        <meta name="twitter:image" content="{{ $image }}">
+        <meta name="theme-color" content="#070a17">
+        {{-- The site name Google shows above results (it falls back to the bare domain).
+             "@@context" is escaped so Blade doesn't read it as its @context directive. --}}
         <script type="application/ld+json">{!! json_encode([
-            '@context' => 'https://schema.org',
+            '@@context' => 'https://schema.org',
             '@type' => 'WebSite',
             'name' => config('app.name'),
             'alternateName' => 'TetrisClash',
             'url' => rtrim(config('app.url'), '/').'/',
-            'description' => $description,
+            'description' => $siteDescription,
         ], JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}</script>
 
         <link rel="icon" href="/favicon.ico" sizes="any">
@@ -61,7 +73,7 @@
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         <x-inertia::head>
-            <title>{{ config('app.name', 'Laravel') }}</title>
+            <title>{{ $metaTitle }}</title>
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">

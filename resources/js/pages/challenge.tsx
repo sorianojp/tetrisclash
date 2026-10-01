@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { useClipboard } from '@/hooks/use-clipboard';
 import { formatTime } from '@/lib/format';
-import { dashboard } from '@/routes';
+import { dashboard, login, practice, register } from '@/routes';
 import { accept, destroy } from '@/routes/challenges';
 import { show as showDuel } from '@/routes/duels';
 import { show as showPlayer } from '@/routes/players';
@@ -73,23 +73,6 @@ export default function Challenge({
     const remaining = Math.max(0, challenge.expiresAt - now);
     const expired = challenge.status === 'expired' || remaining === 0;
 
-    useEcho<{ duelId: number }>(
-        `App.Models.User.${auth.user.id}`,
-        'DuelFound',
-        ({ duelId }) => router.visit(showDuel(duelId)),
-    );
-
-    useEcho<{ code: string; reason: string }>(
-        `App.Models.User.${auth.user.id}`,
-        'InviteClosed',
-        ({ code, reason }) => {
-            if (code === challenge.code && reason === 'declined') {
-                toast.info(`${invitee?.name ?? 'They'} declined your invite.`);
-                router.visit(dashboard());
-            }
-        },
-    );
-
     useEffect(() => {
         if (!isChallenger || challenge.status !== 'open') {
             return;
@@ -111,6 +94,13 @@ export default function Challenge({
     return (
         <>
             <Head title={`${mode.label} challenge`} />
+            {auth.user && (
+                <ChallengeEvents
+                    userId={auth.user.id}
+                    code={challenge.code}
+                    inviteeName={invitee?.name}
+                />
+            )}
             <div className="flex h-full flex-1 items-start justify-center p-4 sm:items-center">
                 <Card className="w-full max-w-md">
                     <CardHeader>
@@ -221,7 +211,7 @@ export default function Challenge({
                                     Cancel challenge
                                 </Button>
                             </>
-                        ) : (
+                        ) : auth.user ? (
                             <Button
                                 size="lg"
                                 onClick={() =>
@@ -230,6 +220,23 @@ export default function Challenge({
                             >
                                 <mode.icon /> Accept {mode.label.toLowerCase()}
                             </Button>
+                        ) : (
+                            <div className="flex flex-col gap-2">
+                                <Button size="lg" asChild>
+                                    <Link href={register()}>
+                                        <mode.icon /> Sign up free to accept
+                                    </Link>
+                                </Button>
+                                <Button variant="ghost" asChild>
+                                    <Link href={login()}>
+                                        Have an account? Log in
+                                    </Link>
+                                </Button>
+                                <p className="text-center text-xs text-muted-foreground">
+                                    Takes a few seconds. You'll come straight
+                                    back here to play.
+                                </p>
+                            </div>
                         )}
                     </CardContent>
                 </Card>
@@ -245,13 +252,51 @@ Challenge.layout = {
     ],
 };
 
+/** Hear when the challenge is accepted (or an invite declined), for a signed-in viewer. */
+function ChallengeEvents({
+    userId,
+    code,
+    inviteeName,
+}: {
+    userId: number;
+    code: string;
+    inviteeName?: string;
+}) {
+    useEcho<{ duelId: number }>(
+        `App.Models.User.${userId}`,
+        'DuelFound',
+        ({ duelId }) => router.visit(showDuel(duelId)),
+    );
+
+    useEcho<{ code: string; reason: string }>(
+        `App.Models.User.${userId}`,
+        'InviteClosed',
+        (event) => {
+            if (event.code === code && event.reason === 'declined') {
+                toast.info(`${inviteeName ?? 'They'} declined your invite.`);
+                router.visit(dashboard());
+            }
+        },
+    );
+
+    return null;
+}
+
 function Closed({ message }: { message: string }) {
+    const { auth } = usePage().props;
+
     return (
         <div className="flex flex-col items-center gap-3 py-2 text-center">
             <p className="text-sm text-muted-foreground">{message}</p>
-            <Button variant="outline" asChild>
-                <Link href={dashboard()}>Back to lobby</Link>
-            </Button>
+            {auth.user ? (
+                <Button variant="outline" asChild>
+                    <Link href={dashboard()}>Back to lobby</Link>
+                </Button>
+            ) : (
+                <Button asChild>
+                    <Link href={practice()}>Try practice mode, free</Link>
+                </Button>
+            )}
         </div>
     );
 }

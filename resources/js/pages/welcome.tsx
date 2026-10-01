@@ -3,7 +3,7 @@ import { Swords, Timer, Trophy, Zap } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { about, dashboard, login, register } from '@/routes';
+import { about, dashboard, login, practice, register } from '@/routes';
 
 const FEATURES = [
     {
@@ -127,6 +127,18 @@ export default function Welcome() {
                                     <Swords /> Play now
                                 </Link>
                             </Button>
+                            {!auth.user && (
+                                <Button
+                                    size="lg"
+                                    variant="outline"
+                                    className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                                    asChild
+                                >
+                                    <Link href={practice()}>
+                                        <Timer /> Try it now, no sign-up
+                                    </Link>
+                                </Button>
+                            )}
                         </div>
                     </section>
 

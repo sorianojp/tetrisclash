@@ -38,15 +38,22 @@ class LobbyController extends Controller
         ]);
     }
 
+    /**
+     * Practice is open to guests, so people can play before signing up. Their runs aren't
+     * saved, and they have no records yet.
+     */
     public function practice(Request $request): InertiaResponse
     {
-        /** @var User $user */
+        /** @var User|null $user */
         $user = $request->user();
 
         return Inertia::render('practice', [
-            'records' => $user->practiceRecords(),
+            'records' => $user?->practiceRecords() ?? array_map(fn () => null, User::PRACTICE_RECORDS),
             'leaderboards' => PracticeLeaderboards::all($user),
-        ]);
+        ])->withViewData(['meta' => [
+            'title' => 'Play Tetris online: sprint, ultra, dig and more',
+            'description' => 'Play free Tetris practice modes in your browser, no sign-up needed: 40-line sprint, 2-minute ultra, dig, survival and zen. Beat the leaderboard times.',
+        ]]);
     }
 
     /**

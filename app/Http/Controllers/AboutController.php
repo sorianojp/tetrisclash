@@ -35,6 +35,8 @@ class AboutController extends Controller
                 'perKo' => Ranks::XP_PER_KO,
             ],
             'ranks' => Ranks::ladder(),
-        ]);
+        ])->withViewData(['meta' => [
+            'title' => 'How '.config('app.name').' works: rules, ranks and rating',
+        ]]);
     }
 }

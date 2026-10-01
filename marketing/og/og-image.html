@@ -1,0 +1,238 @@
+<!doctype html>
+<!--
+    The link-preview image (public/og-image.png, 1200x630) shown when the site is shared on
+    Discord, Messenger, X, etc. Edit this page, then render it with headless Chrome:
+
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --hide-scrollbars \
+        --window-size=1200,630 --screenshot=public/og-image.png marketing/og/og-image.html
+-->
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            html,
+            body {
+                width: 1200px;
+                height: 630px;
+                overflow: hidden;
+            }
+            body {
+                font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+                color: #fff;
+                background:
+                    radial-gradient(
+                        ellipse 60% 70% at 85% 50%,
+                        rgba(139, 92, 246, 0.28),
+                        transparent 70%
+                    ),
+                    radial-gradient(
+                        ellipse 50% 60% at 10% 100%,
+                        rgba(244, 63, 94, 0.18),
+                        transparent 70%
+                    ),
+                    #070a17;
+                display: flex;
+                align-items: center;
+                padding: 0 72px;
+                gap: 40px;
+            }
+            .copy {
+                flex: 1;
+            }
+            .brand {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                font-size: 30px;
+                font-weight: 800;
+                letter-spacing: 0.02em;
+            }
+            .brand svg {
+                height: 26px;
+                fill: #c084fc;
+            }
+            .eyebrow {
+                margin-top: 34px;
+                font-size: 17px;
+                font-weight: 700;
+                letter-spacing: 0.25em;
+                text-transform: uppercase;
+                color: #f0abfc;
+            }
+            h1 {
+                margin-top: 12px;
+                font-size: 66px;
+                line-height: 1;
+                font-weight: 900;
+                letter-spacing: -0.03em;
+            }
+            h1 span {
+                background: linear-gradient(90deg, #fcd34d, #fb7185, #e879f9);
+                -webkit-background-clip: text;
+                background-clip: text;
+                color: transparent;
+            }
+            .sub {
+                margin-top: 20px;
+                font-size: 24px;
+                color: #c7d2fe;
+            }
+            .cta {
+                display: inline-block;
+                margin-top: 28px;
+                padding: 14px 28px;
+                border-radius: 12px;
+                background: #fbbf24;
+                color: #451a03;
+                font-size: 23px;
+                font-weight: 800;
+            }
+
+            .boards {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+            }
+            .board {
+                padding: 8px;
+                border-radius: 14px;
+                background: #0d1224;
+                box-shadow:
+                    0 0 0 1px rgba(99, 102, 241, 0.35),
+                    0 24px 60px rgba(0, 0, 0, 0.5);
+            }
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(10, 19px);
+                gap: 2px;
+            }
+            .grid i {
+                width: 19px;
+                height: 19px;
+                border-radius: 3px;
+                background: rgba(255, 255, 255, 0.03);
+            }
+            .grid i.b {
+                box-shadow:
+                    inset 0 3px 0 rgba(255, 255, 255, 0.35),
+                    inset 0 -3px 0 rgba(0, 0, 0, 0.25);
+            }
+            .vs {
+                font-size: 28px;
+                font-weight: 900;
+                color: #fbbf24;
+                text-shadow: 0 0 24px rgba(251, 191, 36, 0.6);
+            }
+            .c1 {
+                background: #22d3ee !important;
+            }
+            .c2 {
+                background: #facc15 !important;
+            }
+            .c3 {
+                background: #a855f7 !important;
+            }
+            .c4 {
+                background: #84cc16 !important;
+            }
+            .c5 {
+                background: #f43f5e !important;
+            }
+            .c6 {
+                background: #3b82f6 !important;
+            }
+            .c7 {
+                background: #fb923c !important;
+            }
+            .c8 {
+                background: #64748b !important;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="copy">
+            <div class="brand">
+                <svg viewBox="0 0 30 20">
+                    <rect x="0.5" y="0.5" width="9" height="9" rx="1.5" />
+                    <rect x="10.5" y="0.5" width="9" height="9" rx="1.5" />
+                    <rect x="20.5" y="0.5" width="9" height="9" rx="1.5" />
+                    <rect x="10.5" y="10.5" width="9" height="9" rx="1.5" />
+                </svg>
+                Tetris Clash
+            </div>
+            <div class="eyebrow">Real-time 1v1</div>
+            <h1>Clear lines.<br /><span>Bury your rival.</span></h1>
+            <div class="sub">Free online battles in your browser.</div>
+            <div class="cta">Play now &rarr;</div>
+        </div>
+        <div class="boards">
+            <div class="board"><div class="grid" id="left"></div></div>
+            <div class="vs">VS</div>
+            <div class="board"><div class="grid" id="right"></div></div>
+        </div>
+        <script>
+            // You: a clean stack with a well, an I piece about to drop in for a Tetris.
+            const left = [
+                '.......1..',
+                '.......1..',
+                '.......1..',
+                '.......1..',
+                '..........',
+                '..........',
+                '..........',
+                '..........',
+                '..........',
+                '..........',
+                '..........',
+                '..........',
+                '6.........',
+                '66....3...',
+                '64..333.22',
+                '444.772.22',
+                '5544777.22',
+                '5544366.77',
+                '5333466.77',
+                '8888888.88',
+            ];
+            // Your rival: buried under grey garbage, nearly topped out.
+            const right = [
+                '..........',
+                '..........',
+                '..........',
+                '....22....',
+                '...222....',
+                '..33......',
+                '.3337..55.',
+                '6.7777.55.',
+                '66.44.1...',
+                '6.44..1.77',
+                '8888.88888',
+                '88888.8888',
+                '8.88888888',
+                '888888.888',
+                '88888888.8',
+                '8888.88888',
+                '888.888888',
+                '88888888.8',
+                '.888888888',
+                '8888888.88',
+            ];
+            const draw = (id, rows) => {
+                document.getElementById(id).innerHTML = rows
+                    .join('')
+                    .split('')
+                    .map((c) =>
+                        c === '.' ? '<i></i>' : `<i class="b c${c}"></i>`,
+                    )
+                    .join('');
+            };
+            draw('left', left);
+            draw('right', right);
+        </script>
+    </body>
+</html>

@@ -1,5 +1,5 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { Crown, RotateCcw } from 'lucide-react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Crown, RotateCcw, Swords } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { toast } from 'sonner';
@@ -19,7 +19,7 @@ import { useTouchDevice } from '@/hooks/use-touch-device';
 import { sendJson } from '@/lib/api';
 import { formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { dashboard, practice } from '@/routes';
+import { dashboard, practice, register } from '@/routes';
 import { records as recordsRoute } from '@/routes/practice';
 import type { GameStats } from '@/tetris/engine';
 import {
@@ -155,18 +155,20 @@ export default function Practice({
             record(true);
 
             // Any counted run can move us up this week's board. Its replay goes along, and is
-            // kept if the run is a best.
-            encodeReplay(recorder.current.frames)
-                .catch(() => null)
-                .then((replay) =>
-                    sendJson(recordsRoute(), { mode, value, replay }),
-                )
-                .then(() => router.reload({ only: ['leaderboards'] }))
-                .catch(() =>
-                    toast.error(
-                        "Couldn't save that result, so it won't count on the leaderboards.",
-                    ),
-                );
+            // kept if the run is a best. Guests' runs aren't saved; the result card says so.
+            if (auth.user) {
+                encodeReplay(recorder.current.frames)
+                    .catch(() => null)
+                    .then((replay) =>
+                        sendJson(recordsRoute(), { mode, value, replay }),
+                    )
+                    .then(() => router.reload({ only: ['leaderboards'] }))
+                    .catch(() =>
+                        toast.error(
+                            "Couldn't save that result, so it won't count on the leaderboards.",
+                        ),
+                    );
+            }
         }
 
         setPhase('done');
@@ -325,7 +327,7 @@ export default function Practice({
                 ['Attack', String(game?.stats.linesSent ?? 0)],
             ],
             ribbon: finished.newBest ? 'New personal best' : undefined,
-            player: { name: auth.user.name },
+            player: { name: auth.user?.name ?? 'Guest' },
             board: game?.board ?? null,
             toppedOut: game?.toppedOut,
         };
@@ -477,6 +479,7 @@ export default function Practice({
                                     <ResultCard
                                         mode={mode}
                                         result={result}
+                                        guest={!auth.user}
                                         onRestart={() => restart()}
                                         share={
                                             <ShareResult
@@ -559,11 +562,13 @@ function resultTitle(mode: Mode, outcome: Outcome): string {
 function ResultCard({
     mode,
     result,
+    guest,
     onRestart,
     share,
 }: {
     mode: Mode;
     result: Result;
+    guest: boolean;
     onRestart: () => void;
     share: ReactNode;
 }) {
@@ -591,6 +596,23 @@ function ResultCard({
                 </Button>
                 {share}
             </div>
+            {guest && (
+                <div className="mt-1 flex max-w-60 flex-col items-center gap-2">
+                    <p className="text-xs text-indigo-200">
+                        Sign up to save your bests, get on the leaderboard and
+                        battle real players 1v1.
+                    </p>
+                    <Button
+                        size="sm"
+                        className="bg-amber-400 font-bold text-amber-950 hover:bg-amber-300"
+                        asChild
+                    >
+                        <Link href={register()}>
+                            <Swords /> Sign up free
+                        </Link>
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }

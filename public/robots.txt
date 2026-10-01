@@ -1,2 +1,5 @@
 User-agent: *
-Disallow:
+Disallow: /internal/
+Disallow: /settings/
+
+Sitemap: https://tetrisclash.com/sitemap.xml

@@ -77,6 +77,17 @@ test('anyone can watch a finished duel replay', function () {
             ->where('timelines.1.data', 'abc'));
 });
 
+test('guests can watch a shared replay, with a preview naming both players', function () {
+    $duel = Duel::factory()->create(['finished_at' => now()]);
+    $duel->update(['winner_id' => $duel->player_one_id]);
+
+    $this->get(route('duels.replay', $duel))
+        ->assertOk()
+        ->assertSee('<meta property="og:title" content="'.e("Replay: {$duel->playerOne->name} vs {$duel->playerTwo->name}").'">', false)
+        ->assertSee(e("{$duel->playerOne->name} takes the win."), false)
+        ->assertInertia(fn (Assert $page) => $page->component('replay')->where('kind', 'duel'));
+});
+
 test('an unfinished duel has no replay page yet', function () {
     $duel = Duel::factory()->create();
 

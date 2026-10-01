@@ -12,7 +12,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { about, dashboard, practice } from '@/routes';
+import { about, dashboard, home, practice } from '@/routes';
 import { index as onlineIndex } from '@/routes/online';
 import { index as tournamentsIndex } from '@/routes/tournaments';
 import { show as showPlayer } from '@/routes/players';
@@ -45,7 +45,15 @@ export function AppSidebar() {
     const { auth } = usePage().props;
     const mainNavItems: NavItem[] = [
         ...gameNavItems,
-        { title: 'Profile', href: showPlayer(auth.user.id), icon: UserRound },
+        ...(auth.user
+            ? [
+                  {
+                      title: 'Profile',
+                      href: showPlayer(auth.user.id),
+                      icon: UserRound,
+                  },
+              ]
+            : []),
         { title: 'About', href: about(), icon: Info },
     ];
 
@@ -55,7 +63,10 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
+                            <Link
+                                href={auth.user ? dashboard() : home()}
+                                prefetch
+                            >
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>

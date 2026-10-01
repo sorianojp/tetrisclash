@@ -16,6 +16,7 @@ import {
 } from '@/routes/duels';
 import { show as showPlayer } from '@/routes/players';
 import { index as tournamentsIndex, join, leave } from '@/routes/tournaments';
+import { useUser } from '@/hooks/use-user';
 
 type Player = {
     id: number;
@@ -61,7 +62,8 @@ export default function TournamentShow({
     joined,
     currentId,
 }: Props) {
-    const { auth, errors } = usePage().props;
+    const { errors } = usePage().props;
+    const user = useUser();
     const champion = players.find((p) => p.id === tournament.winnerId);
 
     const anyLive = rounds.some((round) => round.matches.some((m) => m.live));
@@ -191,7 +193,7 @@ export default function TournamentShow({
                                     <MatchCard
                                         key={match.id}
                                         match={match}
-                                        myId={auth.user.id}
+                                        myId={user.id}
                                     />
                                 ))}
                             </section>

@@ -1,13 +1,14 @@
-import { router, usePage } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import { Bell, BellOff } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { preference } from '@/routes/invites';
+import { useUser } from '@/hooks/use-user';
 
 /** The player's "don't disturb" switch for incoming invites. */
 export function InviteToggle() {
-    const { auth } = usePage().props;
-    const acceptsInvites = auth.user.accepts_invites;
+    const user = useUser();
+    const acceptsInvites = user.accepts_invites;
     const [saving, setSaving] = useState(false);
 
     const toggle = () =>

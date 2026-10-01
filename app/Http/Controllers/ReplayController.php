@@ -56,7 +56,13 @@ class ReplayController extends Controller
             'duel' => $duel->toClient(),
             'run' => null,
             'timelines' => [$timeline($duel->player_one_id), $timeline($duel->player_two_id)],
-        ]);
+        ])->withViewData(['meta' => [
+            'title' => "Replay: {$players[$duel->player_one_id]->name} vs {$players[$duel->player_two_id]->name}",
+            'description' => ($duel->winner_id === null
+                ? 'A draw, move for move.'
+                : "{$players[$duel->winner_id]->name} takes the win.")
+                .' Watch both boards side by side on '.config('app.name').'.',
+        ]]);
     }
 
     /**
@@ -75,7 +81,10 @@ class ReplayController extends Controller
                 'data' => $replay->data,
                 'durationMs' => $replay->duration_ms,
             ]],
-        ]);
+        ])->withViewData(['meta' => [
+            'title' => "Replay: {$run->user->name}'s ".ucfirst($run->mode).' run',
+            'description' => "Watch {$run->user->name}'s ".ucfirst($run->mode).' run piece by piece, then try to beat it on '.config('app.name').'.',
+        ]]);
     }
 
     /**

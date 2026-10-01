@@ -36,13 +36,24 @@ class ChallengeController extends Controller
         return to_route('challenges.show', $challenge);
     }
 
+    /**
+     * Anyone with the link can see a challenge, so a friend without an account sees who's
+     * challenging them (and so does the link preview). Signing up brings them back here.
+     */
     public function show(Request $request, Challenge $challenge): Response|RedirectResponse
     {
-        /** @var User $user */
+        /** @var User|null $user */
         $user = $request->user();
 
+        // An invite is private to its two players.
+        if ($challenge->isInvite() && $user === null) {
+            return redirect()->guest(route('login'));
+        }
+
+        abort_if($challenge->isInvite() && ! in_array($user?->id, [$challenge->challenger_id, $challenge->invitee_id], true), 404);
+
         // Once accepted, both players belong in the duel (the challenger may have missed the broadcast).
-        if ($challenge->duel_id !== null) {
+        if ($user !== null && $challenge->duel_id !== null) {
             $duel = Duel::query()->find($challenge->duel_id);
 
             if ($duel && $duel->hasPlayer($user) && ! $duel->isFinished()) {
@@ -50,11 +61,14 @@ class ChallengeController extends Controller
             }
         }
 
-        // An invite is private to its two players.
-        abort_if($challenge->isInvite() && ! in_array($user->id, [$challenge->challenger_id, $challenge->invitee_id], true), 404);
+        if ($user === null) {
+            // Log in or sign up, then land back here to accept.
+            $request->session()->put('url.intended', $request->fullUrl());
+        }
 
         $challenger = $challenge->challenger;
         $invitee = $challenge->invitee;
+        $modeName = $challenge->mode === Duel::MODE_RACE ? 'race' : 'battle';
 
         return Inertia::render('challenge', [
             'challenge' => [
@@ -75,9 +89,15 @@ class ChallengeController extends Controller
                 'rank' => $challenger->rankProgress(),
             ],
             'invitee' => $invitee ? ['id' => $invitee->id, 'name' => $invitee->name] : null,
-            'isChallenger' => $challenger->is($user),
+            'isChallenger' => $user !== null && $challenger->is($user),
             'serverNow' => now()->getTimestampMs(),
-        ]);
+        ])->withViewData(['meta' => [
+            'title' => "{$challenger->name} challenges you to a 1v1 {$modeName}!",
+            'description' => ($challenge->mode === Duel::MODE_RACE
+                ? 'First to clear '.Duel::RACE_LINES.' lines wins.'
+                : 'Send garbage and score '.Duel::KOS_TO_WIN.' KOs to win.')
+                ." Accept {$challenger->name}'s challenge on ".config('app.name').', free in your browser.',
+        ]]);
     }
 
     public function accept(Request $request, Challenge $challenge): RedirectResponse
