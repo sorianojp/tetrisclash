@@ -49,6 +49,10 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string $piece_theme
  * @property string $board_skin
  * @property string|null $bot_key
+ * @property bool $is_admin
+ * @property CarbonImmutable|null $banned_at
+ * @property string|null $ban_reason
+ * @property CarbonImmutable|null $bot_paused_at
  */
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'bot_key'])]
@@ -68,6 +72,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         'accepts_invites' => true,
         'piece_theme' => 'classic',
         'board_skin' => 'midnight',
+        'is_admin' => false,
     ];
 
     /**
@@ -111,6 +116,27 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function scopeBots(Builder $query): void
     {
         $query->whereNotNull('bot_key');
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->is_admin;
+    }
+
+    /**
+     * Suspended by an admin: signed out on their next request and left off every list.
+     */
+    public function isBanned(): bool
+    {
+        return $this->banned_at !== null;
+    }
+
+    /**
+     * @param  Builder<User>  $query
+     */
+    public function scopeNotBanned(Builder $query): void
+    {
+        $query->whereNull('banned_at');
     }
 
     /**
@@ -202,6 +228,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function scopeOnline(Builder $query): void
     {
         $query->whereNotNull('email_verified_at')
+            ->whereNull('banned_at')
             ->where('last_seen_at', '>=', now()->subSeconds(self::ONLINE_WINDOW_SECONDS));
     }
 
@@ -221,6 +248,9 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'accepts_invites' => 'boolean',
             'last_seen_at' => 'datetime',
             'energy_updated_at' => 'datetime',
+            'is_admin' => 'boolean',
+            'banned_at' => 'datetime',
+            'bot_paused_at' => 'datetime',
         ];
     }
 }

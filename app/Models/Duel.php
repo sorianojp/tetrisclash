@@ -302,6 +302,15 @@ class Duel extends Model
     }
 
     /**
+     * Stopped by an admin: no winner, and nothing moves (like an abandoned duel). A cancelled
+     * tournament duel counts as a draw there, so the higher seed goes through.
+     */
+    public function cancel(): void
+    {
+        $this->mutate(fn (Duel $duel) => $duel->settle(null, 'cancelled'));
+    }
+
+    /**
      * When time runs out: in a battle most KOs wins, then most lines sent; in a race most
      * lines cleared wins. A full tie is a draw.
      */
@@ -377,8 +386,8 @@ class Duel extends Model
         $this->finish_reason = $reason;
         $this->finished_at = now();
 
-        // Nobody played an abandoned duel, so it moves nothing.
-        if (! $this->ranked || $reason === 'abandoned') {
+        // Nobody played an abandoned duel, and an admin voided a cancelled one: neither moves anything.
+        if (! $this->ranked || in_array($reason, ['abandoned', 'cancelled'], true)) {
             return;
         }
 

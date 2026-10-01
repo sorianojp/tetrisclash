@@ -286,6 +286,7 @@ function reasonText(reason: string | null): string {
             forfeit: ' by forfeit',
             disconnect: ' (opponent disconnected)',
             abandoned: '',
+            cancelled: '',
         }[reason ?? 'time'] ?? ''
     );
 }

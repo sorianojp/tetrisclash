@@ -1,5 +1,13 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Gamepad2, Info, Swords, Trophy, UserRound, Users } from 'lucide-react';
+import {
+    Gamepad2,
+    Info,
+    ShieldCheck,
+    Swords,
+    Trophy,
+    UserRound,
+    Users,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -13,6 +21,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { about, dashboard, home, practice } from '@/routes';
+import { dashboard as adminDashboard } from '@/routes/admin';
 import { index as onlineIndex } from '@/routes/online';
 import { index as tournamentsIndex } from '@/routes/tournaments';
 import { show as showPlayer } from '@/routes/players';
@@ -76,6 +85,19 @@ export function AppSidebar() {
 
             <SidebarContent>
                 <NavMain items={mainNavItems} />
+                {auth.user?.is_admin && (
+                    <NavMain
+                        label="Manage"
+                        items={[
+                            {
+                                title: 'Admin',
+                                href: adminDashboard(),
+                                icon: ShieldCheck,
+                            },
+                        ]}
+                        matchChildren
+                    />
+                )}
             </SidebarContent>
 
             <SidebarFooter>

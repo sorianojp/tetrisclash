@@ -32,7 +32,7 @@ class InviteController extends Controller
         }
 
         $problem = match (true) {
-            ! $player->accepts_invites => __(':name isn\'t accepting invites right now.', ['name' => $player->name]),
+            ! $player->accepts_invites, $player->isBanned(), $player->bot_paused_at !== null => __(':name isn\'t accepting invites right now.', ['name' => $player->name]),
             MatchmakingController::activeDuelFor($player) !== null => __(':name is in a match right now.', ['name' => $player->name]),
             default => null,
         };

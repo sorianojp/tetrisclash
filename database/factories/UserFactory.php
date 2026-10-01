@@ -47,6 +47,16 @@ class UserFactory extends Factory
     }
 
     /**
+     * An admin (see php artisan user:make-admin).
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_admin' => true,
+        ]);
+    }
+
+    /**
      * Indicate that the model has two-factor authentication configured.
      */
     public function withTwoFactor(): static

@@ -166,8 +166,9 @@ final class Bots
     public static function refreshPresence(): void
     {
         $busy = self::busyBotIds();
-        $online = User::query()->bots()->get(['id', 'bot_key'])
-            ->filter(fn (User $bot) => $busy->contains($bot->id) || self::scheduledOnline((string) $bot->bot_key))
+        $online = User::query()->bots()->get(['id', 'bot_key', 'bot_paused_at'])
+            ->filter(fn (User $bot) => $busy->contains($bot->id)
+                || ($bot->bot_paused_at === null && self::scheduledOnline((string) $bot->bot_key)))
             ->modelKeys();
 
         User::query()->whereKey($online)->update(['last_seen_at' => now()]);
@@ -260,11 +261,13 @@ final class Bots
     }
 
     /**
+     * Free bots an admin hasn't paused.
+     *
      * @return Collection<int, User>
      */
     private static function idleBots(): Collection
     {
-        return User::query()->bots()->whereKeyNot(self::busyBotIds()->all())->get();
+        return User::query()->bots()->whereNull('bot_paused_at')->whereKeyNot(self::busyBotIds()->all())->get();
     }
 
     /**
@@ -273,7 +276,7 @@ final class Bots
      *
      * @return Collection<int, int>
      */
-    private static function busyBotIds(): Collection
+    public static function busyBotIds(): Collection
     {
         $bots = User::query()->bots()->select('id');
 
@@ -292,7 +295,7 @@ final class Bots
         return $inDuels->merge($inTournaments)->unique()->values();
     }
 
-    private static function isOnline(User $bot): bool
+    public static function isOnline(User $bot): bool
     {
         return $bot->last_seen_at !== null && $bot->last_seen_at->gte(now()->subMinutes(self::PRESENCE_MINUTES));
     }
