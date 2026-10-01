@@ -21,7 +21,7 @@ use Illuminate\Support\Str;
 final class Bots
 {
     /**
-     * The 20 bots. Style drives how the runner plays:
+     * The 50 bots. Style drives how the runner plays:
      * pps: pieces per second; mistakes: chance of a sloppy placement; hold: uses hold;
      * well: saves a column for Tetrises; chatty: how often it emotes; invites: chance it
      * accepts an invite. Hours are UTC windows [from, to); attendance is the % of days
@@ -50,6 +50,36 @@ final class Bots
         'b18' => ['name' => 'lazy_L', 'pps' => 0.85, 'mistakes' => 0.2, 'hold' => false, 'well' => false, 'chatty' => 0.7, 'invites' => 0.9, 'hours' => [[17, 22], [5, 7]], 'attendance' => 80],
         'b19' => ['name' => 'Vex', 'pps' => 2.1, 'mistakes' => 0.05, 'hold' => true, 'well' => true, 'chatty' => 0.1, 'invites' => 0.45, 'hours' => [[18, 23], [7, 9]], 'attendance' => 70],
         'b20' => ['name' => 'cloudnine_cc', 'pps' => 1.35, 'mistakes' => 0.1, 'hold' => true, 'well' => false, 'chatty' => 0.6, 'invites' => 0.75, 'hours' => [[19, 24], [9, 11]], 'attendance' => 85],
+        'b21' => ['name' => 'kuya_stack', 'pps' => 1.15, 'mistakes' => 0.13, 'hold' => true, 'well' => false, 'chatty' => 0.7, 'invites' => 0.85, 'hours' => [[10, 14], [22, 24]], 'attendance' => 85],
+        'b22' => ['name' => 'zigzag.zoe', 'pps' => 1.45, 'mistakes' => 0.09, 'hold' => true, 'well' => false, 'chatty' => 0.55, 'invites' => 0.75, 'hours' => [[0, 3], [13, 16]], 'attendance' => 80],
+        'b23' => ['name' => 'HoldMyPiece', 'pps' => 1.7, 'mistakes' => 0.07, 'hold' => true, 'well' => true, 'chatty' => 0.4, 'invites' => 0.6, 'hours' => [[11, 15], [1, 3]], 'attendance' => 75],
+        'b24' => ['name' => 'marisol.m', 'pps' => 0.95, 'mistakes' => 0.17, 'hold' => false, 'well' => false, 'chatty' => 0.8, 'invites' => 0.9, 'hours' => [[12, 16], [23, 24]], 'attendance' => 85],
+        'b25' => ['name' => 'gravityfalls', 'pps' => 1.3, 'mistakes' => 0.11, 'hold' => true, 'well' => false, 'chatty' => 0.35, 'invites' => 0.7, 'hours' => [[2, 6], [17, 19]], 'attendance' => 80],
+        'b26' => ['name' => 'IceTee', 'pps' => 2.0, 'mistakes' => 0.05, 'hold' => true, 'well' => true, 'chatty' => 0.2, 'invites' => 0.5, 'hours' => [[13, 17], [4, 6]], 'attendance' => 70],
+        'b27' => ['name' => 'pogi_plays', 'pps' => 0.8, 'mistakes' => 0.21, 'hold' => false, 'well' => false, 'chatty' => 0.85, 'invites' => 0.95, 'hours' => [[10, 13], [15, 17]], 'attendance' => 90],
+        'b28' => ['name' => 'sevenbag', 'pps' => 2.3, 'mistakes' => 0.04, 'hold' => true, 'well' => true, 'chatty' => 0.1, 'invites' => 0.4, 'hours' => [[20, 24], [6, 8]], 'attendance' => 65],
+        'b29' => ['name' => 'luna_lines', 'pps' => 1.1, 'mistakes' => 0.14, 'hold' => true, 'well' => false, 'chatty' => 0.65, 'invites' => 0.85, 'hours' => [[14, 18], [2, 4]], 'attendance' => 85],
+        'b30' => ['name' => 'deadcell', 'pps' => 1.55, 'mistakes' => 0.08, 'hold' => true, 'well' => true, 'chatty' => 0.25, 'invites' => 0.6, 'hours' => [[21, 24], [0, 2], [8, 10]], 'attendance' => 75],
+        'b31' => ['name' => 'Tala', 'pps' => 1.25, 'mistakes' => 0.12, 'hold' => true, 'well' => false, 'chatty' => 0.6, 'invites' => 0.8, 'hours' => [[11, 14], [19, 21]], 'attendance' => 85],
+        'b32' => ['name' => 'sz_hater', 'pps' => 1.65, 'mistakes' => 0.07, 'hold' => true, 'well' => true, 'chatty' => 0.45, 'invites' => 0.65, 'hours' => [[3, 7], [15, 17]], 'attendance' => 80],
+        'b33' => ['name' => 'mochi.drop', 'pps' => 0.9, 'mistakes' => 0.19, 'hold' => false, 'well' => false, 'chatty' => 0.75, 'invites' => 0.9, 'hours' => [[9, 12], [16, 18]], 'attendance' => 85],
+        'b34' => ['name' => 'Quadrant', 'pps' => 2.15, 'mistakes' => 0.05, 'hold' => true, 'well' => true, 'chatty' => 0.15, 'invites' => 0.45, 'hours' => [[5, 9], [18, 20]], 'attendance' => 70],
+        'b35' => ['name' => 'benj_tz', 'pps' => 1.35, 'mistakes' => 0.1, 'hold' => true, 'well' => false, 'chatty' => 0.5, 'invites' => 0.75, 'hours' => [[12, 15], [0, 2]], 'attendance' => 80],
+        'b36' => ['name' => 'stackpanic', 'pps' => 0.75, 'mistakes' => 0.24, 'hold' => false, 'well' => false, 'chatty' => 0.9, 'invites' => 0.95, 'hours' => [[6, 9], [13, 15]], 'attendance' => 85],
+        'b37' => ['name' => 'Aiko_R', 'pps' => 1.6, 'mistakes' => 0.08, 'hold' => true, 'well' => false, 'chatty' => 0.4, 'invites' => 0.65, 'hours' => [[8, 11], [22, 24]], 'attendance' => 80],
+        'b38' => ['name' => 'perfect_clear', 'pps' => 2.05, 'mistakes' => 0.05, 'hold' => true, 'well' => true, 'chatty' => 0.3, 'invites' => 0.5, 'hours' => [[14, 17], [3, 5]], 'attendance' => 70],
+        'b39' => ['name' => 'nightowl_ph', 'pps' => 1.2, 'mistakes' => 0.12, 'hold' => true, 'well' => false, 'chatty' => 0.6, 'invites' => 0.8, 'hours' => [[15, 19]], 'attendance' => 85],
+        'b40' => ['name' => 'Brickwell', 'pps' => 1.4, 'mistakes' => 0.1, 'hold' => false, 'well' => true, 'chatty' => 0.45, 'invites' => 0.7, 'hours' => [[16, 20], [7, 9]], 'attendance' => 80],
+        'b41' => ['name' => 'jaybee', 'pps' => 1.05, 'mistakes' => 0.15, 'hold' => true, 'well' => false, 'chatty' => 0.7, 'invites' => 0.85, 'hours' => [[10, 12], [20, 23]], 'attendance' => 85],
+        'b42' => ['name' => 'combo_kate', 'pps' => 1.75, 'mistakes' => 0.06, 'hold' => true, 'well' => false, 'chatty' => 0.65, 'invites' => 0.6, 'hours' => [[1, 4], [11, 13]], 'attendance' => 75],
+        'b43' => ['name' => 'T_rex', 'pps' => 0.85, 'mistakes' => 0.2, 'hold' => false, 'well' => false, 'chatty' => 0.8, 'invites' => 0.9, 'hours' => [[4, 8], [17, 19]], 'attendance' => 80],
+        'b44' => ['name' => 'Sakura.lines', 'pps' => 1.5, 'mistakes' => 0.09, 'hold' => true, 'well' => true, 'chatty' => 0.5, 'invites' => 0.7, 'hours' => [[7, 10], [21, 23]], 'attendance' => 80],
+        'b45' => ['name' => 'garbage_man', 'pps' => 1.9, 'mistakes' => 0.06, 'hold' => true, 'well' => true, 'chatty' => 0.55, 'invites' => 0.55, 'hours' => [[18, 22], [9, 11]], 'attendance' => 75],
+        'b46' => ['name' => 'rina_k', 'pps' => 1.15, 'mistakes' => 0.13, 'hold' => true, 'well' => false, 'chatty' => 0.6, 'invites' => 0.85, 'hours' => [[13, 16], [5, 7]], 'attendance' => 85],
+        'b47' => ['name' => 'lowkey_L', 'pps' => 1.3, 'mistakes' => 0.11, 'hold' => false, 'well' => false, 'chatty' => 0.2, 'invites' => 0.75, 'hours' => [[19, 23], [11, 12]], 'attendance' => 80],
+        'b48' => ['name' => 'Ozzy', 'pps' => 2.25, 'mistakes' => 0.04, 'hold' => true, 'well' => true, 'chatty' => 0.25, 'invites' => 0.4, 'hours' => [[0, 4], [12, 14]], 'attendance' => 65],
+        'b49' => ['name' => 'blipblop', 'pps' => 0.7, 'mistakes' => 0.26, 'hold' => false, 'well' => false, 'chatty' => 0.95, 'invites' => 0.95, 'hours' => [[8, 10], [14, 16], [23, 24]], 'attendance' => 85],
+        'b50' => ['name' => 'miguel.dev', 'pps' => 1.6, 'mistakes' => 0.08, 'hold' => true, 'well' => false, 'chatty' => 0.35, 'invites' => 0.65, 'hours' => [[11, 13], [2, 5]], 'attendance' => 80],
     ];
 
     /** Bots in a match or tournament stay online; others are refreshed by the minute. */

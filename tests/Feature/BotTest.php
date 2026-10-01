@@ -36,13 +36,32 @@ function runner(): array
     return ['Authorization' => 'Bearer secret-token', 'Accept' => 'application/json'];
 }
 
-test('installing creates twenty verified bots, once', function () {
-    expect(User::query()->bots()->count())->toBe(20);
+test('installing creates fifty verified bots, once', function () {
+    expect(User::query()->bots()->count())->toBe(50);
 
     Bots::install();
 
-    expect(User::query()->bots()->count())->toBe(20)
+    expect(User::query()->bots()->count())->toBe(50)
         ->and(User::query()->bots()->whereNull('email_verified_at')->count())->toBe(0);
+});
+
+test('every bot has a unique name and sensible hours, and some keep every hour of the day', function () {
+    $roster = collect(Bots::ROSTER);
+
+    expect($roster->pluck('name')->unique())->toHaveCount($roster->count());
+
+    foreach ($roster as $bot) {
+        foreach ($bot['hours'] as [$from, $to]) {
+            expect($from)->toBeGreaterThanOrEqual(0)->toBeLessThan($to)
+                ->and($to)->toBeLessThanOrEqual(24);
+        }
+    }
+
+    foreach (range(0, 23) as $hour) {
+        $covering = $roster->filter(fn (array $bot) => collect($bot['hours'])->contains(fn (array $window) => $hour >= $window[0] && $hour < $window[1]));
+
+        expect($covering->count())->toBeGreaterThanOrEqual(3, "Only {$covering->count()} bots play at {$hour}:00 UTC");
+    }
 });
 
 test('nothing sent to browsers marks a bot as a bot', function () {
@@ -248,7 +267,7 @@ test('idle online bots are offered practice time', function () {
 
     $idle = $this->getJson(route('internal.bots.work'), runner())->json('idle');
 
-    expect($idle)->toHaveCount(19)
+    expect($idle)->toHaveCount(count(Bots::ROSTER) - 1)
         ->and(collect($idle)->pluck('botId'))->not->toContain($busy->id);
 });
 
