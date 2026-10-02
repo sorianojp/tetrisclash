@@ -207,6 +207,64 @@
     animation: versus-slam 1s ease-out both;
 }
 
+/* The player cards flip in from their sides, then a holographic sheen sweeps across. */
+@keyframes card-in-left {
+    from {
+        opacity: 0;
+        transform: translateX(-45%) rotateY(40deg) scale(0.9);
+    }
+}
+
+@keyframes card-in-right {
+    from {
+        opacity: 0;
+        transform: translateX(45%) rotateY(-40deg) scale(0.9);
+    }
+}
+
+@keyframes card-sheen {
+    from {
+        background-position: 150% 0;
+    }
+    to {
+        background-position: -50% 0;
+    }
+}
+
+@keyframes fade-down {
+    from {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+}
+
+@keyframes fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+}
+
+@utility animate-card-in-left {
+    animation: card-in-left 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@utility animate-card-in-right {
+    animation: card-in-right 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.08s both;
+}
+
+@utility animate-card-sheen {
+    animation: card-sheen 1.4s ease-in-out 0.7s both;
+}
+
+@utility animate-fade-down {
+    animation: fade-down 0.5s ease-out both;
+}
+
+@utility animate-fade-up {
+    animation: fade-up 0.5s ease-out 0.6s both;
+}
+
 /* Arcade backdrop behind game boards: drifting neon glows over a slow grid. */
 @keyframes stage-drift {
     0% {

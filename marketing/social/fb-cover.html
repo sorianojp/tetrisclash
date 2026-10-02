@@ -1,0 +1,217 @@
+<!doctype html>
+<!--
+    Facebook cover photo (fb-cover.png, 1640x924). Phones show the whole 16:9 image; desktop
+    crops it to the middle 1640x624 band, so everything that matters sits in that band, and the
+    bottom left stays clear for the profile picture. The boards are real frames from a ranked
+    match (TSPinPro's 5-combo Tetris, and the knockout it caused). Render with headless Chrome:
+
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --hide-scrollbars \
+        --force-device-scale-factor=1 --window-size=1640,924 --virtual-time-budget=5000 \
+        --screenshot=marketing/social/fb-cover.png marketing/social/fb-cover.html
+-->
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=Montserrat:ital,wght@0,900;1,800;1,900&display=block"
+            rel="stylesheet"
+        />
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            html,
+            body {
+                width: 1640px;
+                height: 924px;
+                overflow: hidden;
+            }
+            body {
+                position: relative;
+                font-family: 'Instrument Sans', sans-serif;
+                color: #fff;
+                background:
+                    radial-gradient(
+                        ellipse 45% 70% at 76% 50%,
+                        rgba(139, 92, 246, 0.32),
+                        transparent 70%
+                    ),
+                    radial-gradient(
+                        ellipse 45% 60% at 8% 100%,
+                        rgba(244, 63, 94, 0.18),
+                        transparent 70%
+                    ),
+                    radial-gradient(
+                        ellipse 40% 50% at 30% 0%,
+                        rgba(34, 211, 238, 0.08),
+                        transparent 70%
+                    ),
+                    #070a17;
+            }
+            .grid {
+                position: absolute;
+                inset: 0;
+                background-image:
+                    linear-gradient(
+                        rgba(255, 255, 255, 0.03) 1px,
+                        transparent 1px
+                    ),
+                    linear-gradient(
+                        90deg,
+                        rgba(255, 255, 255, 0.03) 1px,
+                        transparent 1px
+                    );
+                background-size: 46px 46px;
+                -webkit-mask-image: linear-gradient(
+                    90deg,
+                    transparent 0%,
+                    black 40%,
+                    black 100%
+                );
+            }
+
+            /* Desktop shows y 150..774 only. */
+            .copy {
+                position: absolute;
+                left: 112px;
+                top: 196px;
+                width: 780px;
+            }
+            .brand {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                font: 900 30px 'Montserrat';
+                letter-spacing: 0.08em;
+            }
+            .brand svg {
+                height: 24px;
+                fill: #c084fc;
+                filter: drop-shadow(0 0 10px rgba(192, 132, 252, 0.8));
+            }
+            h1 {
+                margin-top: 30px;
+                font: italic 900 84px/0.98 'Montserrat';
+                letter-spacing: -0.02em;
+            }
+            h1 span {
+                background: linear-gradient(
+                    90deg,
+                    #fcd34d,
+                    #fb7185 55%,
+                    #e879f9
+                );
+                -webkit-background-clip: text;
+                background-clip: text;
+                color: transparent;
+                filter: drop-shadow(0 0 22px rgba(232, 121, 249, 0.35));
+            }
+            .sub {
+                margin-top: 26px;
+                font-size: 30px;
+                font-weight: 600;
+                color: #c7d2fe;
+            }
+            .cta {
+                display: flex;
+                align-items: center;
+                gap: 22px;
+                margin-top: 34px;
+            }
+            .button {
+                padding: 18px 34px;
+                border-radius: 999px;
+                background: linear-gradient(90deg, #fcd34d, #fbbf24);
+                color: #451a03;
+                font: italic 900 28px 'Montserrat';
+                letter-spacing: 0.02em;
+                box-shadow: 0 0 36px rgba(251, 191, 36, 0.45);
+            }
+            .url {
+                font-size: 30px;
+                font-weight: 700;
+            }
+
+            .match {
+                position: absolute;
+                left: 905px;
+                top: 150px;
+                height: 624px;
+                display: flex;
+                align-items: center;
+                gap: 22px;
+            }
+            .board {
+                border-radius: 18px;
+                overflow: hidden;
+                box-shadow:
+                    0 0 0 2px rgba(99, 102, 241, 0.45),
+                    0 0 60px rgba(34, 211, 238, 0.18),
+                    0 30px 60px rgba(0, 0, 0, 0.55);
+            }
+            .board img {
+                display: block;
+            }
+            .you img {
+                height: 560px;
+            }
+            .them img {
+                height: 380px;
+            }
+            .label {
+                margin-top: 14px;
+                text-align: center;
+                font: 700 20px 'Instrument Sans';
+                color: #a5b4fc;
+                letter-spacing: 0.12em;
+                text-transform: uppercase;
+            }
+            .vs {
+                font: italic 900 52px 'Montserrat';
+                background: linear-gradient(90deg, #fb923c, #e879f9);
+                -webkit-background-clip: text;
+                background-clip: text;
+                color: transparent;
+                filter: drop-shadow(0 0 18px rgba(244, 114, 182, 0.6));
+            }
+        </style>
+    </head>
+    <body>
+        <div class="grid"></div>
+        <div class="copy">
+            <div class="brand">
+                <svg viewBox="0 0 30 20">
+                    <rect x="0.5" y="0.5" width="9" height="9" rx="1.5" />
+                    <rect x="10.5" y="0.5" width="9" height="9" rx="1.5" />
+                    <rect x="20.5" y="0.5" width="9" height="9" rx="1.5" />
+                    <rect x="10.5" y="10.5" width="9" height="9" rx="1.5" />
+                </svg>
+                TETRIS CLASH
+            </div>
+            <h1>Clear lines.<br /><span>Bury your rival.</span></h1>
+            <div class="sub">Real-time 1v1 battles · Free in your browser</div>
+            <div class="cta">
+                <div class="button">PLAY FREE</div>
+                <div class="url">tetrisclash.com</div>
+            </div>
+        </div>
+        <div class="match">
+            <div>
+                <div class="board you">
+                    <img src="assets/board-tetris.png" alt="" />
+                </div>
+            </div>
+            <div class="vs">VS</div>
+            <div>
+                <div class="board them">
+                    <img src="assets/board-ko.png" alt="" />
+                </div>
+                <div class="label">Knocked out</div>
+            </div>
+        </div>
+    </body>
+</html>

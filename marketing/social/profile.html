@@ -1,0 +1,102 @@
+<!doctype html>
+<!--
+    Profile picture for Instagram and Facebook (profile.png, 1080x1080). Both show it as a small
+    circle, so it's the logo mark alone, centred by its visual weight. Render with headless Chrome:
+
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --hide-scrollbars \
+        --force-device-scale-factor=1 --window-size=1080,1080 \
+        --screenshot=marketing/social/profile.png marketing/social/profile.html
+-->
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            html,
+            body {
+                width: 1080px;
+                height: 1080px;
+                overflow: hidden;
+            }
+            body {
+                position: relative;
+                background:
+                    radial-gradient(
+                        circle at 50% 46%,
+                        rgba(168, 85, 247, 0.42),
+                        transparent 58%
+                    ),
+                    radial-gradient(
+                        circle at 80% 90%,
+                        rgba(244, 63, 94, 0.22),
+                        transparent 50%
+                    ),
+                    #070a17;
+            }
+            /* A faint board grid, like the game's field. */
+            .grid {
+                position: absolute;
+                inset: 0;
+                background-image:
+                    linear-gradient(
+                        rgba(255, 255, 255, 0.045) 2px,
+                        transparent 2px
+                    ),
+                    linear-gradient(
+                        90deg,
+                        rgba(255, 255, 255, 0.045) 2px,
+                        transparent 2px
+                    );
+                background-size: 72px 72px;
+                background-position: 18px 18px;
+                -webkit-mask-image: radial-gradient(
+                    circle at 50% 50%,
+                    black 30%,
+                    transparent 70%
+                );
+            }
+            /* The T-tetromino, drawn with the game's bevelled blocks. */
+            .mark {
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                width: 714px;
+                height: 470px;
+                /* The T's weight sits in its top row, so its box sits a little low. */
+                transform: translate(-50%, calc(-50% + 40px));
+                filter: drop-shadow(0 0 48px rgba(217, 70, 239, 0.55))
+                    drop-shadow(0 24px 40px rgba(0, 0, 0, 0.5));
+            }
+            .block {
+                position: absolute;
+                width: 230px;
+                height: 230px;
+                border-radius: 26px;
+                background: linear-gradient(
+                    135deg,
+                    #e879f9 0%,
+                    #c084fc 45%,
+                    #a855f7 100%
+                );
+                box-shadow:
+                    inset 0 16px 0 rgba(255, 255, 255, 0.38),
+                    inset 0 -16px 0 rgba(0, 0, 0, 0.22),
+                    inset 16px 0 0 rgba(255, 255, 255, 0.12),
+                    inset -16px 0 0 rgba(0, 0, 0, 0.1);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="grid"></div>
+        <div class="mark">
+            <div class="block" style="left: 0; top: 0"></div>
+            <div class="block" style="left: 242px; top: 0"></div>
+            <div class="block" style="left: 484px; top: 0"></div>
+            <div class="block" style="left: 242px; top: 240px"></div>
+        </div>
+    </body>
+</html>

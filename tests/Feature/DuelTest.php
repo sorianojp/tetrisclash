@@ -21,6 +21,20 @@ test('players can open their duel', function () {
             ->where('seed', $duel->seed));
 });
 
+test('the duel page has both players records for the intro cards', function () {
+    $duel = Duel::factory()->create();
+    $duel->playerOne->forceFill(['wins' => 12, 'losses' => 5])->save();
+    $duel->playerTwo->forceFill(['wins' => 3, 'losses' => 9])->save();
+
+    $this->actingAs($duel->playerOne)
+        ->get(route('duels.show', $duel))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('me.wins', 12)
+            ->where('me.losses', 5)
+            ->where('opponent.wins', 3)
+            ->where('opponent.losses', 9));
+});
+
 test('other users cannot open or act on a duel', function () {
     $duel = Duel::factory()->create();
     $stranger = User::factory()->create();

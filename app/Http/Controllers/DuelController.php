@@ -19,11 +19,14 @@ class DuelController extends Controller
         $user = $this->player($request, $duel);
         $opponent = User::query()->findOrFail($duel->opponentIdOf($user));
 
+        // The record goes on the player cards in the pre-match intro.
         $profile = fn (User $player) => [
             'id' => $player->id,
             'name' => $player->name,
             'rating' => $player->rating,
             'rank' => $player->rankProgress(),
+            'wins' => $player->wins,
+            'losses' => $player->losses,
         ];
 
         return Inertia::render('duel', [

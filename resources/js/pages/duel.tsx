@@ -66,7 +66,14 @@ type DuelState = {
     finished: boolean;
 };
 
-type Player = { id: number; name: string; rating: number; rank: RankProgress };
+type Player = {
+    id: number;
+    name: string;
+    rating: number;
+    rank: RankProgress;
+    wins: number;
+    losses: number;
+};
 
 type Props = {
     duel: DuelState;
@@ -852,12 +859,15 @@ export default function Duel({
                 <VersusIntro
                     me={me}
                     opponent={opponent}
+                    mode={duel.mode}
                     title={modeLabel}
-                    rules={
+                    rules={[
                         isRace
-                            ? `First to ${raceLines} lines wins · ${minutes} minutes`
-                            : `First to ${kosToWin} KOs wins · ${minutes} minutes`
-                    }
+                            ? `First to ${raceLines} lines`
+                            : `First to ${kosToWin} KOs`,
+                        `${minutes} minutes`,
+                        state.ranked ? 'Rating on the line' : 'Just for fun',
+                    ]}
                     status={
                         presence === 'connecting'
                             ? 'Connecting…'
