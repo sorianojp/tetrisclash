@@ -1,17 +1,12 @@
 import { Swords } from 'lucide-react';
-import { PlayerEmblem } from '@/components/tetris/player-emblem';
-import { RankBadge } from '@/components/tetris/rank-badge';
+import { RankEmblem, rankTier } from '@/components/tetris/rank-emblem';
 import type { RankProgress } from '@/components/tetris/rank-badge';
 import { cn } from '@/lib/utils';
 
 /** Side colours, as in the match intro: you in amber, your opponent in rose. */
 const TONES = {
-    you: {
-        emblem: 'bg-amber-400 text-amber-950',
-    },
-    opponent: {
-        emblem: 'bg-rose-500 text-white',
-    },
+    you: 'border-amber-400/50 shadow-[0_0_24px_-10px_rgb(251_191_36/0.7)]',
+    opponent: 'border-rose-500/50 shadow-[0_0_24px_-10px_rgb(244_63_94/0.7)]',
 } as const;
 
 /** A player's mini card above their board: name, rank and match progress (KOs, or race lines). */
@@ -36,20 +31,19 @@ export function PlayerPlate({
     align?: 'left' | 'right';
     tone?: keyof typeof TONES;
 }) {
-    const look = tone ? TONES[tone] : null;
-
     return (
         <div
             className={cn(
-                'relative flex min-w-0 items-center gap-2.5 overflow-hidden rounded-2xl border bg-card/80 px-2.5 py-2 shadow-sm backdrop-blur sm:gap-3 sm:px-3',
+                'relative flex min-w-0 items-center gap-2.5 overflow-hidden rounded-2xl border bg-card/80 px-2 py-2 shadow-sm backdrop-blur sm:gap-3 sm:px-3',
                 align === 'right' && 'flex-row-reverse text-right',
+                tone && TONES[tone],
             )}
         >
-            <PlayerEmblem
-                name={player.name}
-                id={player.id}
-                size="md"
-                tone={look?.emblem}
+            {/* The rank badge is the plate's picture: big enough to read at a glance. */}
+            <RankEmblem
+                rank={player.rank.rank}
+                title={player.rank.title}
+                size="lg"
                 className="hidden sm:inline-flex"
             />
             <div
@@ -64,18 +58,29 @@ export function PlayerPlate({
                         align === 'right' && 'flex-row-reverse',
                     )}
                 >
+                    {/* Phones: a small badge beside the name, so the name keeps its room. */}
+                    <RankEmblem
+                        rank={player.rank.rank}
+                        title={player.rank.title}
+                        size="sm"
+                        className="self-center sm:hidden"
+                    />
                     <span className="truncate font-black tracking-tight">
                         {player.name}
                     </span>
-                    <span className="text-xs text-muted-foreground tabular-nums">
+                    <span className="hidden text-xs text-muted-foreground tabular-nums sm:inline">
                         {player.rating}
                     </span>
                 </div>
-                <RankBadge
-                    progress={player.rank}
-                    compact
-                    className={cn(align === 'left' && 'self-start')}
-                />
+                <span className="max-w-full truncate text-xs font-bold">
+                    <span className="hidden text-muted-foreground sm:inline">
+                        Rank {player.rank.rank} ·{' '}
+                    </span>
+                    <span className="text-foreground">
+                        {player.rank.title}{' '}
+                        {rankTier(player.rank.rank, player.rank.title)}
+                    </span>
+                </span>
                 {mode === 'race' ? (
                     <div
                         className={cn(
@@ -121,7 +126,7 @@ export function PlayerPlate({
                                 />
                             ))}
                         </div>
-                        <span className="font-semibold text-muted-foreground tabular-nums">
+                        <span className="font-semibold whitespace-nowrap text-muted-foreground tabular-nums">
                             <Swords className="mr-1 inline size-3" />
                             {linesSent} sent
                         </span>

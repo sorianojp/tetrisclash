@@ -51,6 +51,7 @@ import { ReplayRecorder, encodeReplay } from '@/tetris/replay';
 import { sfx } from '@/tetris/sound';
 import type { ShareCardData } from '@/tetris/share-card';
 import { useCellSize, useTetrisGame } from '@/tetris/use-tetris-game';
+import { ARCADE } from '@/tetris/arcade';
 
 type DuelState = {
     id: number;
@@ -715,10 +716,13 @@ export default function Duel({
                     <div className="flex flex-col items-center gap-1">
                         <div
                             className={cn(
-                                'rounded-xl bg-[#080b18] px-4 py-2 text-center font-mono text-2xl font-black text-white tabular-nums shadow-[0_0_24px_-6px_rgb(139_92_246/0.6)] ring-1 ring-violet-500/40 sm:text-3xl',
+                                'rounded-xl bg-[#080b18] px-4 py-1.5 text-center text-3xl font-black tabular-nums shadow-[0_0_24px_-6px_rgb(139_92_246/0.6)] ring-1 ring-violet-500/40 sm:text-4xl',
+                                phase === 'playing' && remaining < 15000
+                                    ? ARCADE.ko
+                                    : ARCADE.plain,
                                 phase === 'playing' &&
                                     remaining < 15000 &&
-                                    'text-rose-400 shadow-[0_0_28px_-4px_rgb(244_63_94/0.7)] ring-rose-500/60 motion-safe:animate-pulse',
+                                    'shadow-[0_0_28px_-4px_rgb(244_63_94/0.7)] ring-rose-500/60 motion-safe:animate-pulse',
                             )}
                         >
                             {formatTime(remaining, false)}
@@ -757,12 +761,17 @@ export default function Duel({
                                 <div className="flex flex-col items-center gap-2 text-white">
                                     <span
                                         key={countdown}
-                                        className="animate-callout text-7xl font-black"
+                                        className={cn(
+                                            'animate-callout text-8xl font-black',
+                                            countdown > 0
+                                                ? ARCADE.gold
+                                                : ARCADE.go,
+                                        )}
                                     >
                                         {countdown > 0 ? countdown : 'GO!'}
                                     </span>
                                     {isRace && (
-                                        <span className="text-sm font-semibold text-white">
+                                        <span className="rounded-full bg-black/50 px-3 py-1 text-sm font-bold text-white">
                                             First to {raceLines} lines
                                         </span>
                                     )}
@@ -779,7 +788,12 @@ export default function Duel({
 
                         {knockedOut && phase === 'playing' && (
                             <FieldOverlay className="bg-rose-950/60">
-                                <span className="animate-callout text-6xl font-black text-rose-300">
+                                <span
+                                    className={cn(
+                                        'animate-callout text-7xl font-black',
+                                        ARCADE.ko,
+                                    )}
+                                >
                                     {isRace ? 'OOPS!' : 'K.O.'}
                                 </span>
                             </FieldOverlay>
@@ -787,7 +801,12 @@ export default function Duel({
 
                         {phase === 'timeup' && (
                             <FieldOverlay>
-                                <span className="text-4xl font-black text-white">
+                                <span
+                                    className={cn(
+                                        'animate-callout text-6xl font-black',
+                                        ARCADE.time,
+                                    )}
+                                >
                                     TIME!
                                 </span>
                             </FieldOverlay>
@@ -820,7 +839,12 @@ export default function Duel({
                                     key={myKos}
                                     className="pointer-events-none absolute inset-0 flex animate-callout items-center justify-center"
                                 >
-                                    <span className="text-4xl font-black text-amber-300 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">
+                                    <span
+                                        className={cn(
+                                            'text-4xl font-black md:text-5xl',
+                                            ARCADE.gold,
+                                        )}
+                                    >
                                         K.O.!
                                     </span>
                                 </div>
@@ -1077,7 +1101,12 @@ function Result({
                 {state.ranked && (
                     <div className="flex w-full flex-col items-center gap-2">
                         {rankedUp && (
-                            <span className="animate-callout text-2xl font-black text-amber-300">
+                            <span
+                                className={cn(
+                                    'animate-callout text-2xl font-black',
+                                    ARCADE.gold,
+                                )}
+                            >
                                 RANK UP! {me.rank.rank} · {me.rank.title}
                             </span>
                         )}

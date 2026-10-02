@@ -13,8 +13,7 @@ import {
 import { useEffect, useState } from 'react';
 import { InviteToggle } from '@/components/tetris/invite-toggle';
 import { PageHeader } from '@/components/tetris/page-header';
-import { PlayerEmblem } from '@/components/tetris/player-emblem';
-import { RankBadge } from '@/components/tetris/rank-badge';
+import { RankEmblem, rankTier } from '@/components/tetris/rank-emblem';
 import type { RankProgress } from '@/components/tetris/rank-badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -203,14 +202,19 @@ export default function Online({
                             <li key={player.id}>
                                 <Card className="h-full flex-row items-center gap-3 px-4 py-4">
                                     <span className="relative">
-                                        <PlayerEmblem
-                                            name={player.name}
-                                            id={player.id}
-                                            size="md"
+                                        <RankEmblem
+                                            rank={player.rank.rank}
+                                            title={player.rank.title}
+                                            size="lg"
                                         />
                                         <span
+                                            title={
+                                                player.inMatch
+                                                    ? 'In a match'
+                                                    : 'Online'
+                                            }
                                             className={cn(
-                                                'absolute -right-1 -bottom-1 size-3.5 rounded-full border-2 border-card',
+                                                'absolute -top-0.5 -right-0.5 size-4 rounded-full border-[3px] border-card',
                                                 player.inMatch
                                                     ? 'bg-rose-500'
                                                     : 'bg-emerald-500',
@@ -220,24 +224,29 @@ export default function Online({
                                     <div className="min-w-0 flex-1">
                                         <Link
                                             href={showPlayer(player.id)}
-                                            className="block truncate font-bold hover:underline"
+                                            className="block truncate text-base font-black hover:underline"
                                         >
                                             {player.name}
                                         </Link>
-                                        <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                                            <RankBadge
-                                                progress={player.rank}
-                                                compact
-                                            />
-                                            <span className="font-semibold tabular-nums">
-                                                {player.rating}
+                                        <p className="truncate text-sm font-bold">
+                                            {player.rank.title}{' '}
+                                            {rankTier(
+                                                player.rank.rank,
+                                                player.rank.title,
+                                            )}
+                                        </p>
+                                        <p className="flex items-center gap-1.5 text-xs text-muted-foreground tabular-nums">
+                                            <span>Rank {player.rank.rank}</span>
+                                            <span>·</span>
+                                            <span className="font-semibold">
+                                                {player.rating} rating
                                             </span>
                                             {player.inMatch && (
                                                 <span className="font-semibold text-rose-500">
-                                                    In a match
+                                                    · In a match
                                                 </span>
                                             )}
-                                        </div>
+                                        </p>
                                     </div>
                                     <PlayerAction
                                         player={player}

@@ -36,6 +36,7 @@ import { ReplayRecorder, encodeReplay } from '@/tetris/replay';
 import { sfx } from '@/tetris/sound';
 import type { ShareCardData } from '@/tetris/share-card';
 import { useCellSize, useTetrisGame } from '@/tetris/use-tetris-game';
+import { ARCADE } from '@/tetris/arcade';
 
 type Mode = PracticeMode;
 type Phase = 'countdown' | 'playing' | 'done';
@@ -465,11 +466,14 @@ export default function Practice({
                                     <div className="flex flex-col items-center gap-2 text-center text-white">
                                         <span
                                             key={countdown}
-                                            className="animate-callout text-7xl font-black"
+                                            className={cn(
+                                                'animate-callout text-8xl font-black',
+                                                ARCADE.gold,
+                                            )}
                                         >
                                             {countdown}
                                         </span>
-                                        <span className="text-sm font-semibold tracking-widest uppercase">
+                                        <span className="rounded-full bg-black/50 px-3 py-1 text-sm font-bold tracking-widest uppercase">
                                             {MODES[mode].label}
                                         </span>
                                     </div>
@@ -581,9 +585,27 @@ function ResultCard({
 
     return (
         <div className="flex flex-col items-center gap-3 text-center text-white">
-            <span className="text-3xl font-black">{title}</span>
+            <span
+                className={cn(
+                    'text-4xl font-black',
+                    outcome === 'toppedOut' &&
+                        mode !== 'survival' &&
+                        mode !== 'zen'
+                        ? ARCADE.ko
+                        : outcome === 'cleared'
+                          ? ARCADE.go
+                          : ARCADE.time,
+                )}
+            >
+                {title}
+            </span>
             {(timed || showsScore) && (
-                <span className="text-4xl font-bold tabular-nums">
+                <span
+                    className={cn(
+                        'text-5xl font-black tabular-nums',
+                        ARCADE.plain,
+                    )}
+                >
                     {timed ? formatTime(timeMs) : score.toLocaleString()}
                 </span>
             )}

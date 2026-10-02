@@ -22,6 +22,7 @@ import { sfx } from '@/tetris/sound';
 import { replay as duelReplay } from '@/routes/duels';
 import { useCellSize } from '@/tetris/use-tetris-game';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { ARCADE } from '@/tetris/arcade';
 
 type DuelState = {
     id: number;
@@ -207,11 +208,16 @@ export default function Watch({
                     <div className="flex flex-col items-center gap-1">
                         <div
                             className={cn(
-                                'rounded-xl bg-[#080b18] px-4 py-2 text-center font-mono text-2xl font-black text-white tabular-nums shadow-[0_0_24px_-6px_rgb(139_92_246/0.6)] ring-1 ring-violet-500/40 sm:text-3xl',
+                                'rounded-xl bg-[#080b18] px-4 py-1.5 text-center text-3xl font-black tabular-nums shadow-[0_0_24px_-6px_rgb(139_92_246/0.6)] ring-1 ring-violet-500/40 sm:text-4xl',
+                                !state.finished &&
+                                    clock >= startsAt &&
+                                    remaining < 15000
+                                    ? ARCADE.ko
+                                    : ARCADE.plain,
                                 !state.finished &&
                                     clock >= startsAt &&
                                     remaining < 15000 &&
-                                    'text-rose-400',
+                                    'ring-rose-500/60',
                             )}
                         >
                             {formatTime(remaining, false)}
@@ -259,7 +265,12 @@ export default function Watch({
                             <EmoteBubble emote={emote} />
                             {!state.finished && countdown > 0 && (
                                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                                    <span className="text-6xl font-black text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">
+                                    <span
+                                        className={cn(
+                                            'text-7xl font-black',
+                                            ARCADE.gold,
+                                        )}
+                                    >
                                         {countdown}
                                     </span>
                                 </div>

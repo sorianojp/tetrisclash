@@ -282,3 +282,17 @@
         0 2px 4px rgb(0 0 0 / 0.9);
     animation: glow-pulse 1.2s ease-in-out infinite;
 }
+
+/*
+ * Arcade lettering for in-game moments (countdown, GO!, K.O., TIME!, the clock): a thick dark
+ * outline, a solid drop shade and a glow. Set the colours with --arcade-shade and --arcade-glow.
+ */
+@utility arcade-text {
+    -webkit-text-stroke: 0.09em #0b0f20;
+    paint-order: stroke fill;
+    letter-spacing: 0.02em;
+    text-shadow:
+        0 0.07em 0 var(--arcade-shade, #4c1d95),
+        0 0.12em 0.04em rgb(0 0 0 / 0.6),
+        0 0 0.45em var(--arcade-glow, rgb(167 139 250 / 0.75));
+}
