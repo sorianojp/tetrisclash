@@ -254,7 +254,7 @@ export default function Lobby({
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     <Card className="gap-0 overflow-hidden py-0 lg:col-span-2">
-                        <div className="relative h-full bg-gradient-to-br from-indigo-950 via-violet-900 to-fuchsia-900 p-6 text-white sm:p-8">
+                        <div className="relative h-full bg-violet-900 p-6 text-white sm:p-8">
                             <TetrominoBackdrop />
                             <div className="relative flex h-full flex-col gap-5">
                                 <div>
@@ -264,7 +264,7 @@ export default function Lobby({
                                     </p>
                                     <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">
                                         Battle for{' '}
-                                        <span className="inline-block bg-gradient-to-r from-amber-300 via-rose-300 to-fuchsia-300 bg-clip-text pr-[0.15em] pb-[0.12em] text-transparent">
+                                        <span className="inline-block pr-[0.15em] pb-[0.12em] text-amber-300">
                                             the top
                                         </span>
                                     </h1>
@@ -309,7 +309,7 @@ export default function Lobby({
                                     <div className="flex flex-wrap gap-3">
                                         <Button
                                             size="lg"
-                                            className="h-12 bg-gradient-to-r from-amber-300 to-amber-400 px-6 text-base font-black text-amber-950 shadow-lg shadow-amber-500/30 hover:from-amber-200 hover:to-amber-300"
+                                            className="h-12 bg-amber-300 px-6 text-base font-black text-amber-950 shadow-lg shadow-amber-500/30 hover:bg-amber-200"
                                             onClick={startSearch}
                                             disabled={
                                                 activeDuelId !== null ||
@@ -591,9 +591,9 @@ Lobby.layout = {
 /** Leaderboard position; the top three get medal colours. */
 function Place({ position }: { position: number }) {
     const medal = [
-        'bg-gradient-to-br from-amber-200 to-amber-500 text-amber-950',
-        'bg-gradient-to-br from-slate-100 to-slate-400 text-slate-900',
-        'bg-gradient-to-br from-orange-300 to-orange-700 text-orange-950',
+        'bg-amber-200 text-amber-950',
+        'bg-slate-100 text-slate-900',
+        'bg-orange-300 text-orange-950',
     ][position - 1];
 
     return (

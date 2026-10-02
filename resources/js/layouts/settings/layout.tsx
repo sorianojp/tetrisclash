@@ -61,7 +61,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                 className={cn(
                                     'h-9 shrink-0 justify-start rounded-lg font-semibold text-muted-foreground lg:w-full',
                                     isCurrentOrParentUrl(item.href) &&
-                                        'bg-gradient-to-r from-violet-500/20 to-fuchsia-500/5 text-foreground shadow-[inset_2px_0_0_0_var(--color-violet-400)]',
+                                        'bg-violet-500/20 text-foreground shadow-[inset_2px_0_0_0_var(--color-violet-400)]',
                                 )}
                             >
                                 <Link href={item.href}>

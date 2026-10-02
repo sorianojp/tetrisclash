@@ -14,14 +14,6 @@ export default function AuthSimpleLayout({
     return (
         <div className="relative flex min-h-svh flex-col items-center justify-center gap-6 overflow-hidden bg-background p-6 md:p-10">
             {/* The landing page's glows, over a faint board grid. */}
-            <div
-                aria-hidden
-                className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_20%_10%,rgb(139_92_246/0.18),transparent),radial-gradient(ellipse_45%_40%_at_85%_90%,rgb(244_63_94/0.14),transparent)]"
-            />
-            <div
-                aria-hidden
-                className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgb(139_92_246/0.06)_1px,transparent_1px),linear-gradient(90deg,rgb(139_92_246/0.06)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_at_center,black,transparent_70%)] bg-[size:40px_40px]"
-            />
 
             <div className="relative w-full max-w-sm">
                 <div className="flex flex-col gap-6">

@@ -98,7 +98,7 @@ export default function Tournaments({
                     </h2>
                     {open.length === 0 ? (
                         <Card className="items-center gap-3 px-6 py-10 text-center">
-                            <span className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-300 to-orange-500 text-amber-950 shadow-lg shadow-amber-500/25">
+                            <span className="flex size-14 items-center justify-center rounded-2xl bg-amber-300 text-amber-950 shadow-lg shadow-amber-500/25">
                                 <Trophy className="size-7" />
                             </span>
                             <p className="font-semibold">
@@ -121,8 +121,8 @@ export default function Tournaments({
                                                 className={cn(
                                                     'flex size-12 shrink-0 items-center justify-center rounded-xl shadow-lg',
                                                     tournament.mode === 'race'
-                                                        ? 'bg-gradient-to-br from-cyan-300 to-sky-600 text-white shadow-cyan-500/25'
-                                                        : 'bg-gradient-to-br from-amber-300 to-orange-500 text-amber-950 shadow-amber-500/25',
+                                                        ? 'bg-cyan-400 text-cyan-950 shadow-cyan-500/25'
+                                                        : 'bg-amber-300 text-amber-950 shadow-amber-500/25',
                                                 )}
                                             >
                                                 <Trophy className="size-6" />
@@ -232,7 +232,7 @@ function SeatMeter({ filled, size }: { filled: number; size: number }) {
                     className={cn(
                         'h-2.5 flex-1 rounded-sm',
                         i < filled
-                            ? 'bg-gradient-to-b from-emerald-300 to-emerald-500 shadow-[0_0_8px_rgb(16_185_129/0.5)]'
+                            ? 'bg-emerald-300 shadow-[0_0_8px_rgb(16_185_129/0.5)]'
                             : 'bg-muted',
                     )}
                 />

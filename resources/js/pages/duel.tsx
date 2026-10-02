@@ -747,7 +747,7 @@ export default function Duel({
                 </header>
 
                 <div className="flex items-start justify-center gap-2 md:gap-6">
-                    <div className="relative tetris-stage rounded-xl p-1.5 shadow-xl ring-1 ring-indigo-500/20 md:p-3">
+                    <div className="relative rounded-xl tetris-stage p-1.5 shadow-xl ring-1 ring-indigo-500/20 md:p-3">
                         <canvas ref={canvasRef} className="block" />
                         <ClearCallout callout={callout} />
                         <EmoteBubble emote={myEmote} />
@@ -796,7 +796,7 @@ export default function Duel({
                         {phase === 'finished' && !showResult && (
                             <FieldOverlay className="items-end pb-6">
                                 <Button
-                                    className="bg-gradient-to-r from-amber-300 to-amber-400 font-black text-amber-950 hover:from-amber-200 hover:to-amber-300"
+                                    className="bg-amber-300 font-black text-amber-950 hover:bg-amber-200"
                                     onClick={() => setShowResult(true)}
                                 >
                                     <Trophy /> Show result
@@ -808,7 +808,7 @@ export default function Duel({
                     <div className="flex flex-col items-center gap-2">
                         <div
                             ref={opponentBoxRef}
-                            className="relative tetris-stage rounded-lg p-1 ring-1 ring-indigo-500/20 md:rounded-xl md:p-2"
+                            className="relative rounded-lg tetris-stage p-1 ring-1 ring-indigo-500/20 md:rounded-xl md:p-2"
                         >
                             <OpponentField
                                 view={opponentView}
@@ -978,17 +978,17 @@ function Result({
 
     const look = {
         win: {
-            title: 'from-amber-200 to-orange-400',
+            title: 'text-amber-300',
             glow: 'shadow-[0_0_80px_-20px_rgb(251_191_36/0.6)]',
             label: 'YOU WIN!',
         },
         loss: {
-            title: 'from-rose-300 to-fuchsia-400',
+            title: 'text-rose-300',
             glow: 'shadow-[0_0_80px_-20px_rgb(244_63_94/0.55)]',
             label: 'YOU LOSE',
         },
         draw: {
-            title: 'from-slate-100 to-slate-400',
+            title: 'text-slate-200',
             glow: '',
             label: 'DRAW',
         },
@@ -1017,7 +1017,7 @@ function Result({
                 <div className="flex flex-col items-center gap-1.5">
                     <span
                         className={cn(
-                            'inline-block bg-gradient-to-r bg-clip-text pb-[0.1em] text-5xl font-black tracking-tight text-transparent sm:text-6xl',
+                            'inline-block pb-[0.1em] text-5xl font-black tracking-tight sm:text-6xl',
                             look.title,
                         )}
                     >
@@ -1092,7 +1092,7 @@ function Result({
                     {state.ranked && (
                         <Button
                             size="lg"
-                            className="h-12 w-full bg-gradient-to-r from-amber-300 to-amber-400 text-base font-black text-amber-950 hover:from-amber-200 hover:to-amber-300"
+                            className="h-12 w-full bg-amber-300 text-base font-black text-amber-950 hover:bg-amber-200"
                             onClick={() =>
                                 router.visit(dashboard({ query: { queue: 1 } }))
                             }
@@ -1141,8 +1141,8 @@ function ScoreSide({
                 size="md"
                 tone={
                     tone === 'you'
-                        ? 'from-amber-300 to-orange-500 text-amber-950'
-                        : 'from-rose-400 to-fuchsia-600 text-white'
+                        ? 'bg-amber-400 text-amber-950'
+                        : 'bg-rose-500 text-white'
                 }
             />
             <span className="w-full truncate text-sm font-bold">

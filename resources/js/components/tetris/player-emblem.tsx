@@ -1,14 +1,14 @@
 import { cn } from '@/lib/utils';
 
-/** Piece colours, as block gradients. A player keeps the same one everywhere. */
+/** Piece colours, as solid blocks. A player keeps the same one everywhere. */
 const TONES = [
-    'from-cyan-300 to-sky-500 text-cyan-950',
-    'from-amber-300 to-orange-500 text-amber-950',
-    'from-violet-400 to-fuchsia-600 text-white',
-    'from-lime-300 to-emerald-500 text-emerald-950',
-    'from-rose-400 to-red-600 text-white',
-    'from-sky-400 to-indigo-600 text-white',
-    'from-orange-300 to-amber-600 text-orange-950',
+    'bg-cyan-400 text-cyan-950',
+    'bg-amber-400 text-amber-950',
+    'bg-violet-500 text-white',
+    'bg-lime-400 text-lime-950',
+    'bg-rose-500 text-white',
+    'bg-blue-500 text-white',
+    'bg-orange-400 text-orange-950',
 ] as const;
 
 const SIZES = {
@@ -52,7 +52,7 @@ export function PlayerEmblem({
         <span
             aria-hidden
             className={cn(
-                'inline-flex shrink-0 items-center justify-center bg-gradient-to-br leading-none font-black select-none',
+                'inline-flex shrink-0 items-center justify-center leading-none font-black select-none',
                 SIZES[size],
                 tone ?? emblemTone(id ?? name),
                 className,

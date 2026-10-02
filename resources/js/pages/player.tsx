@@ -88,11 +88,7 @@ export default function Player({
                 )}
 
                 <Card className="gap-0 overflow-hidden py-0">
-                    <div className="relative flex flex-col gap-5 bg-gradient-to-br from-indigo-950 via-violet-900 to-fuchsia-900 p-6 text-white sm:flex-row sm:items-center sm:p-8">
-                        <div
-                            aria-hidden
-                            className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgb(255_255_255/0.05)_1px,transparent_1px),linear-gradient(90deg,rgb(255_255_255/0.05)_1px,transparent_1px)] [mask-image:linear-gradient(90deg,transparent,black)] bg-[size:32px_32px]"
-                        />
+                    <div className="relative flex flex-col gap-5 bg-violet-900 p-6 text-white sm:flex-row sm:items-center sm:p-8">
                         <PlayerEmblem
                             name={player.name}
                             id={player.id}
@@ -174,7 +170,7 @@ export default function Player({
                                             className={cn(
                                                 'rounded-md px-1.5 py-0.5 text-[11px] font-black tabular-nums',
                                                 placements[mode] <= 3
-                                                    ? 'bg-gradient-to-br from-amber-200 to-amber-500 text-amber-950'
+                                                    ? 'bg-amber-200 text-amber-950'
                                                     : 'bg-muted text-muted-foreground',
                                             )}
                                             title={`#${placements[mode]} all-time in ${PRACTICE_MODES[mode].label}`}
@@ -225,7 +221,7 @@ export default function Player({
                         </CardTitle>
                         <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
                             <div
-                                className="h-full rounded-full bg-gradient-to-r from-amber-300 to-orange-500"
+                                className="h-full rounded-full bg-amber-300"
                                 style={{
                                     width: `${achievements.length ? (unlocked / achievements.length) * 100 : 0}%`,
                                 }}

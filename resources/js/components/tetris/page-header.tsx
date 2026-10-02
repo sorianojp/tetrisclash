@@ -24,7 +24,7 @@ export function PageHeader({
             )}
         >
             <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-white shadow-lg shadow-violet-500/25 sm:size-12">
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-white shadow-lg shadow-violet-500/25 sm:size-12">
                     <Icon className="size-5 sm:size-6" />
                 </span>
                 <div className="min-w-0">

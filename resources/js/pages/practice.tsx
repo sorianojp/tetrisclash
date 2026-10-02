@@ -418,7 +418,7 @@ export default function Practice({
                                     <ToggleGroupItem
                                         key={key}
                                         value={key}
-                                        className="px-3 font-semibold data-[state=on]:border-transparent data-[state=on]:bg-gradient-to-r data-[state=on]:from-violet-500 data-[state=on]:to-fuchsia-500 data-[state=on]:text-white sm:px-4"
+                                        className="px-3 font-semibold data-[state=on]:border-transparent data-[state=on]:bg-violet-500 data-[state=on]:text-white sm:px-4"
                                     >
                                         {MODES[key].label}
                                     </ToggleGroupItem>
@@ -456,7 +456,7 @@ export default function Practice({
 
                 <div className="flex w-full max-w-5xl flex-col items-center gap-6 lg:flex-row lg:items-start lg:justify-center">
                     <div className="flex w-full flex-col items-center gap-4 lg:w-auto">
-                        <div className="relative tetris-stage rounded-xl p-1.5 shadow-xl ring-1 ring-indigo-500/20 md:p-3">
+                        <div className="relative rounded-xl tetris-stage p-1.5 shadow-xl ring-1 ring-indigo-500/20 md:p-3">
                             <canvas ref={canvasRef} className="block" />
                             <ClearCallout callout={callout} />
 
@@ -631,7 +631,7 @@ function HudStat({
     return (
         <div
             className={cn(
-                'rounded-xl border bg-card shadow-sm dark:bg-gradient-to-b dark:from-white/[0.04] dark:to-transparent',
+                'rounded-xl border bg-card shadow-sm dark:bg-white/[0.04]',
                 compact ? 'px-2.5 py-1.5' : 'px-3 py-2.5',
             )}
         >

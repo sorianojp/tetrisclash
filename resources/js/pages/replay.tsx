@@ -203,7 +203,7 @@ export default function Replay({ kind, duel, run, timelines }: Props) {
                                             </span>
                                         )}
                                     </div>
-                                    <div className="relative tetris-stage rounded-xl p-2 ring-1 ring-indigo-500/20">
+                                    <div className="relative rounded-xl tetris-stage p-2 ring-1 ring-indigo-500/20">
                                         <OpponentField
                                             view={views.current[i]}
                                             cell={cell}
@@ -228,7 +228,7 @@ export default function Replay({ kind, duel, run, timelines }: Props) {
                             ))}
                         </div>
 
-                        <div className="flex w-full max-w-xl flex-col gap-3 rounded-2xl border bg-card p-4 shadow-sm dark:bg-gradient-to-b dark:from-white/[0.04] dark:to-transparent">
+                        <div className="flex w-full max-w-xl flex-col gap-3 rounded-2xl border bg-card p-4 shadow-sm dark:bg-white/[0.04]">
                             <input
                                 type="range"
                                 min={0}

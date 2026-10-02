@@ -100,7 +100,7 @@ export function InviteCard({
                     <div className="flex w-full flex-col gap-2">
                         <Button
                             size="lg"
-                            className="h-12 bg-gradient-to-r from-amber-300 to-amber-400 text-base font-black text-amber-950 shadow-lg shadow-amber-500/25 hover:from-amber-200 hover:to-amber-300"
+                            className="h-12 bg-amber-300 text-base font-black text-amber-950 shadow-lg shadow-amber-500/25 hover:bg-amber-200"
                             onClick={onAccept}
                         >
                             <Check /> ACCEPT
@@ -115,8 +115,8 @@ export function InviteCard({
                 <div className="h-1 bg-muted">
                     <div
                         className={cn(
-                            'h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-[width] duration-300 ease-linear',
-                            left < 5000 && 'from-rose-500 to-rose-400',
+                            'h-full bg-violet-500 transition-[width] duration-300 ease-linear',
+                            left < 5000 && 'bg-rose-500',
                         )}
                         style={{
                             width: `${(left / invite.expiresInMs) * 100}%`,

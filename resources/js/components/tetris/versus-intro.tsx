@@ -19,14 +19,14 @@ const SIDES = {
         label: 'You',
         tag: 'bg-amber-300 text-amber-950',
         ring: 'ring-amber-300/50 shadow-[0_0_60px_-12px_rgb(251_191_36/0.55)]',
-        emblem: 'from-amber-300 via-amber-400 to-orange-500 text-amber-950',
+        emblem: 'bg-amber-400 text-amber-950',
         enter: 'motion-safe:animate-card-in-left',
     },
     opponent: {
         label: 'Opponent',
         tag: 'bg-rose-400 text-rose-950',
         ring: 'ring-rose-400/50 shadow-[0_0_60px_-12px_rgb(244_63_94/0.55)]',
-        emblem: 'from-rose-400 via-pink-500 to-fuchsia-600 text-white',
+        emblem: 'bg-rose-500 text-white',
         enter: 'motion-safe:animate-card-in-right',
     },
 } as const;
@@ -70,14 +70,6 @@ export function VersusIntro({
             )}
         >
             {/* Each side glows in its player's colour, over a faint board grid. */}
-            <div
-                aria-hidden
-                className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_18%_55%,rgb(251_191_36/0.16),transparent_55%),radial-gradient(ellipse_at_82%_55%,rgb(244_63_94/0.18),transparent_55%),radial-gradient(ellipse_at_50%_0%,rgb(139_92_246/0.18),transparent_60%)]"
-            />
-            <div
-                aria-hidden
-                className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgb(255_255_255/0.035)_1px,transparent_1px),linear-gradient(90deg,rgb(255_255_255/0.035)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)] bg-[size:44px_44px]"
-            />
 
             <p className="relative inline-flex items-center gap-2 rounded-full border border-fuchsia-300/30 bg-fuchsia-400/10 px-4 py-1.5 text-xs font-bold tracking-[0.25em] text-fuchsia-200 uppercase motion-safe:animate-fade-down sm:text-sm">
                 <ModeIcon className="size-4" />
@@ -89,9 +81,9 @@ export function VersusIntro({
                 <div className="relative z-10 -mx-4 flex flex-col items-center sm:mx-2">
                     <span
                         aria-hidden
-                        className="absolute top-1/2 left-1/2 h-40 w-px -translate-x-1/2 -translate-y-1/2 bg-gradient-to-b from-transparent via-white/40 to-transparent sm:h-72"
+                        className="absolute top-1/2 left-1/2 h-40 w-px -translate-x-1/2 -translate-y-1/2 bg-white/15 sm:h-72"
                     />
-                    <span className="relative inline-block bg-gradient-to-br from-amber-300 via-rose-400 to-fuchsia-400 bg-clip-text pr-[0.2em] pb-[0.1em] pl-1 text-4xl font-black text-transparent drop-shadow-[0_0_24px_rgb(244_63_94/0.6)] motion-safe:animate-versus-slam sm:text-7xl">
+                    <span className="relative inline-block pr-[0.2em] pb-[0.1em] pl-1 text-4xl font-black text-amber-300 drop-shadow-[0_0_24px_rgb(244_63_94/0.6)] motion-safe:animate-versus-slam sm:text-7xl">
                         VS
                     </span>
                 </div>
@@ -123,7 +115,7 @@ export function VersusIntro({
                 className="absolute inset-x-0 bottom-0 h-1 bg-white/10"
             >
                 <div
-                    className="h-full bg-gradient-to-r from-amber-300 via-rose-400 to-fuchsia-400 transition-[width] duration-100 ease-linear"
+                    className="h-full bg-amber-300 transition-[width] duration-100 ease-linear"
                     style={{ width: `${progress * 100}%` }}
                 />
             </div>
@@ -147,16 +139,12 @@ function PlayerCard({
         <div className="min-w-0 [perspective:1200px]">
             <article
                 className={cn(
-                    'relative flex flex-col gap-3 overflow-hidden rounded-2xl bg-gradient-to-b from-[#161b33] to-[#0b0f20] p-3 ring-1 sm:gap-4 sm:rounded-3xl sm:p-6',
+                    'relative flex flex-col gap-3 overflow-hidden rounded-2xl bg-[#161b33] p-3 ring-1 sm:gap-4 sm:rounded-3xl sm:p-6',
                     look.ring,
                     look.enter,
                 )}
             >
                 {/* The card's colour strip, and a holographic sheen that sweeps across once. */}
-                <span
-                    aria-hidden
-                    className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_35%,rgb(255_255_255/0.16)_48%,rgb(232_121_249/0.12)_52%,transparent_65%)] bg-[length:250%_100%] bg-[position:150%_0] motion-safe:animate-card-sheen"
-                />
 
                 <span
                     className={cn(
@@ -214,7 +202,7 @@ function Emblem({ name, className }: { name: string; className: string }) {
         <div
             aria-hidden
             className={cn(
-                'relative mx-auto flex aspect-square w-16 items-center justify-center rounded-xl bg-gradient-to-br text-3xl font-black shadow-[inset_0_6px_0_rgb(255_255_255/0.35),inset_0_-6px_0_rgb(0_0_0/0.25)] sm:w-28 sm:rounded-2xl sm:text-6xl sm:shadow-[inset_0_10px_0_rgb(255_255_255/0.35),inset_0_-10px_0_rgb(0_0_0/0.25)]',
+                'relative mx-auto flex aspect-square w-16 items-center justify-center rounded-xl text-3xl font-black shadow-[inset_0_6px_0_rgb(255_255_255/0.35),inset_0_-6px_0_rgb(0_0_0/0.25)] sm:w-28 sm:rounded-2xl sm:text-6xl sm:shadow-[inset_0_10px_0_rgb(255_255_255/0.35),inset_0_-10px_0_rgb(0_0_0/0.25)]',
                 className,
             )}
         >

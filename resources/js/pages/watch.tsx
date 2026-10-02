@@ -253,7 +253,7 @@ export default function Watch({
                     ].map(({ player, view, emote }) => (
                         <div
                             key={player.id}
-                            className="relative tetris-stage rounded-xl p-2 ring-1 ring-indigo-500/20"
+                            className="relative rounded-xl tetris-stage p-2 ring-1 ring-indigo-500/20"
                         >
                             <OpponentField view={view} cell={opponentCell} />
                             <EmoteBubble emote={emote} />

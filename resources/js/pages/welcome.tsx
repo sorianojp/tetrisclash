@@ -122,7 +122,7 @@ export default function Welcome() {
                         <h1 className="mt-3 text-5xl font-black tracking-tight sm:text-6xl">
                             Clear lines.
                             <br />
-                            <span className="inline-block bg-gradient-to-r from-amber-300 via-rose-400 to-fuchsia-400 bg-clip-text pr-[0.1em] pb-[0.12em] text-transparent">
+                            <span className="inline-block pr-[0.1em] pb-[0.12em] text-amber-300">
                                 Bury your rival.
                             </span>
                         </h1>

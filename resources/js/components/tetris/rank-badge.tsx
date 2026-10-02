@@ -14,7 +14,7 @@ export type RankProgress = {
 /** Badge colour climbs with the title groups: blocks, builders, fighters, forces, cosmic. */
 function tierClass(rank: number): string {
     if (rank >= 110) {
-        return 'bg-gradient-to-r from-amber-400 to-rose-500 text-white';
+        return 'bg-amber-400 text-white';
     }
 
     if (rank >= 101) {
@@ -87,7 +87,7 @@ export function RankProgressBar({
                 aria-valuenow={Math.round(percent)}
             >
                 <div
-                    className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 transition-[width] duration-700"
+                    className="h-full rounded-full bg-violet-500 transition-[width] duration-700"
                     style={{ width: `${percent}%` }}
                 />
             </div>

@@ -209,7 +209,7 @@
     animation: versus-slam 1s ease-out both;
 }
 
-/* The player cards flip in from their sides, then a holographic sheen sweeps across. */
+/* The player cards flip in from their sides. */
 @keyframes card-in-left {
     from {
         opacity: 0;
@@ -221,15 +221,6 @@
     from {
         opacity: 0;
         transform: translateX(45%) rotateY(-40deg) scale(0.9);
-    }
-}
-
-@keyframes card-sheen {
-    from {
-        background-position: 150% 0;
-    }
-    to {
-        background-position: -50% 0;
     }
 }
 
@@ -255,10 +246,6 @@
     animation: card-in-right 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.08s both;
 }
 
-@utility animate-card-sheen {
-    animation: card-sheen 1.4s ease-in-out 0.7s both;
-}
-
 @utility animate-fade-down {
     animation: fade-down 0.5s ease-out both;
 }
@@ -267,81 +254,31 @@
     animation: fade-up 0.5s ease-out 0.6s both;
 }
 
-/* Arcade backdrop behind game boards: drifting neon glows over a slow grid. */
-@keyframes stage-drift {
-    0% {
-        background-position:
-            0% 0%,
-            100% 100%,
-            0 0,
-            0 0;
-    }
-    50% {
-        background-position:
-            100% 30%,
-            0% 70%,
-            0 12px,
-            12px 0;
-    }
-    100% {
-        background-position:
-            0% 0%,
-            100% 100%,
-            0 24px,
-            24px 0;
-    }
-}
-
 @utility tetris-stage {
+    /* The game's field: solid navy with a faint grid. */
     background-color: #070a17;
     background-image:
-        radial-gradient(
-            circle at center,
-            rgb(124 58 237 / 0.35),
-            transparent 55%
-        ),
-        radial-gradient(
-            circle at center,
-            rgb(14 165 233 / 0.25),
-            transparent 55%
-        ),
         linear-gradient(rgb(255 255 255 / 0.035) 1px, transparent 1px),
         linear-gradient(90deg, rgb(255 255 255 / 0.035) 1px, transparent 1px);
-    background-size:
-        160% 160%,
-        160% 160%,
-        24px 24px,
-        24px 24px;
-    animation: stage-drift 16s ease-in-out infinite;
+    background-size: 24px 24px;
     box-shadow:
         0 0 0 1px rgb(99 102 241 / 0.2),
         0 20px 60px -20px rgb(124 58 237 / 0.55);
-
-    @media (prefers-reduced-motion: reduce) {
-        animation: none;
-    }
 }
 
-/* Shimmering rainbow text for perfect clears. */
-@keyframes rainbow-shift {
-    to {
-        background-position: 200% center;
+/* Big-moment text (perfect clears, long combos): solid gold that pulses with a glow. */
+@keyframes glow-pulse {
+    50% {
+        text-shadow:
+            0 0 18px rgb(251 191 36 / 0.9),
+            0 2px 4px rgb(0 0 0 / 0.9);
     }
 }
 
 @utility text-rainbow {
-    background-image: linear-gradient(
-        90deg,
-        #ff5f6d,
-        #ffc371,
-        #fff275,
-        #6dffb0,
-        #43e6ff,
-        #b388ff,
-        #ff5f6d
-    );
-    background-size: 200% auto;
-    background-clip: text;
-    color: transparent;
-    animation: rainbow-shift 1.2s linear infinite;
+    color: #fcd34d;
+    text-shadow:
+        0 0 8px rgb(251 191 36 / 0.5),
+        0 2px 4px rgb(0 0 0 / 0.9);
+    animation: glow-pulse 1.2s ease-in-out infinite;
 }

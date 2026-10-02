@@ -114,7 +114,7 @@ export default function Challenge({
             <div className="flex h-full flex-1 items-start justify-center p-4 sm:items-center sm:p-6">
                 <Card className="w-full max-w-md">
                     <CardHeader className="items-center text-center">
-                        <span className="mb-1 flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-white shadow-lg shadow-violet-500/30">
+                        <span className="mb-1 flex size-12 items-center justify-center rounded-xl bg-violet-600 text-white shadow-lg shadow-violet-500/30">
                             <mode.icon className="size-6" />
                         </span>
                         <CardTitle className="justify-center text-2xl font-black">
@@ -231,7 +231,7 @@ export default function Challenge({
                         ) : auth.user ? (
                             <Button
                                 size="lg"
-                                className="h-12 bg-gradient-to-r from-amber-300 to-amber-400 text-base font-black text-amber-950 shadow-lg shadow-amber-500/25 hover:from-amber-200 hover:to-amber-300"
+                                className="h-12 bg-amber-300 text-base font-black text-amber-950 shadow-lg shadow-amber-500/25 hover:bg-amber-200"
                                 onClick={() =>
                                     router.post(accept(challenge.code).url)
                                 }
@@ -242,7 +242,7 @@ export default function Challenge({
                             <div className="flex flex-col gap-2">
                                 <Button
                                     size="lg"
-                                    className="h-12 bg-gradient-to-r from-amber-300 to-amber-400 text-base font-black text-amber-950 shadow-lg shadow-amber-500/25 hover:from-amber-200 hover:to-amber-300"
+                                    className="h-12 bg-amber-300 text-base font-black text-amber-950 shadow-lg shadow-amber-500/25 hover:bg-amber-200"
                                     asChild
                                 >
                                     <Link href={register()}>

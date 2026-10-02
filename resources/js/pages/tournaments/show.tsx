@@ -150,7 +150,7 @@ export default function TournamentShow({
 
                 {champion && (
                     <Card className="gap-0 overflow-hidden py-0">
-                        <div className="flex flex-col items-center gap-3 bg-gradient-to-br from-amber-300 via-orange-400 to-rose-500 px-6 py-8 text-center text-amber-950 sm:flex-row sm:text-left">
+                        <div className="flex flex-col items-center gap-3 bg-amber-300 px-6 py-8 text-center text-amber-950 sm:flex-row sm:text-left">
                             <PlayerEmblem
                                 name={champion.name}
                                 id={champion.id}
@@ -282,7 +282,7 @@ function MatchCard({ match, myId }: { match: Match; myId: number }) {
     return (
         <div
             className={cn(
-                'relative flex flex-col gap-1 overflow-hidden rounded-2xl border bg-card p-2.5 text-sm shadow-sm dark:bg-gradient-to-b dark:from-white/[0.04] dark:to-transparent',
+                'relative flex flex-col gap-1 overflow-hidden rounded-2xl border bg-card p-2.5 text-sm shadow-sm dark:bg-white/[0.04]',
                 match.live && 'border-rose-500/50 shadow-rose-500/10',
                 mine && 'ring-2 ring-violet-500/40',
             )}

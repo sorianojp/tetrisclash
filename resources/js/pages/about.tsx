@@ -129,7 +129,7 @@ export default function About({ rules, xp, ranks }: Props) {
                 </header>
 
                 <main className="mx-auto flex max-w-4xl flex-col gap-10 px-4 py-8">
-                    <section className="overflow-hidden rounded-xl bg-gradient-to-br from-indigo-950 via-violet-900 to-fuchsia-900 p-6 text-white sm:p-8">
+                    <section className="overflow-hidden rounded-xl bg-violet-900 p-6 text-white sm:p-8">
                         <p className="text-xs font-semibold tracking-[0.2em] text-fuchsia-200 uppercase">
                             About the game
                         </p>
