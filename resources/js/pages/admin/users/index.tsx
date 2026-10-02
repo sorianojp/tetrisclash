@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { AdminHeader, adminBreadcrumb } from '@/components/admin/admin-header';
@@ -176,11 +176,15 @@ export default function AdminUsers({ users, filters }: Props) {
                         aria-label="Pages"
                         className="flex items-center justify-between gap-3 text-sm"
                     >
-                        <PageLink href={users.prev_page_url}>Previous</PageLink>
+                        <PageLink href={users.prev_page_url}>
+                            <ChevronLeft /> Previous
+                        </PageLink>
                         <span className="text-muted-foreground tabular-nums">
                             Page {users.current_page} of {users.last_page}
                         </span>
-                        <PageLink href={users.next_page_url}>Next</PageLink>
+                        <PageLink href={users.next_page_url}>
+                            Next <ChevronRight />
+                        </PageLink>
                     </nav>
                 )}
             </div>

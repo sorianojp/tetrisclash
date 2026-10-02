@@ -1,4 +1,4 @@
-import { KeyRound, Trash2 } from 'lucide-react';
+import { KeyRound, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -76,13 +76,16 @@ export default function PasskeyItem({ passkey, onDelete }: Props) {
                     </DialogDescription>
                     <DialogFooter className="gap-2">
                         <DialogClose asChild>
-                            <Button variant="secondary">Cancel</Button>
+                            <Button variant="secondary">
+                                <X /> Cancel
+                            </Button>
                         </DialogClose>
                         <Button
                             variant="destructive"
                             onClick={handleDelete}
                             disabled={isDeleting}
                         >
+                            <Trash2 />
                             {isDeleting ? 'Removing...' : 'Remove passkey'}
                         </Button>
                     </DialogFooter>

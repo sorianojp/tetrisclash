@@ -93,7 +93,7 @@ export function VersusIntro({
                         aria-hidden
                         className="absolute top-1/2 left-1/2 h-40 w-px -translate-x-1/2 -translate-y-1/2 bg-gradient-to-b from-transparent via-white/40 to-transparent sm:h-72"
                     />
-                    <span className="relative bg-gradient-to-br from-amber-300 via-rose-400 to-fuchsia-400 bg-clip-text px-1 text-4xl font-black text-transparent italic drop-shadow-[0_0_24px_rgb(244_63_94/0.6)] motion-safe:animate-versus-slam sm:text-7xl">
+                    <span className="relative inline-block bg-gradient-to-br from-amber-300 via-rose-400 to-fuchsia-400 bg-clip-text pr-[0.2em] pb-[0.1em] pl-1 text-4xl font-black text-transparent italic drop-shadow-[0_0_24px_rgb(244_63_94/0.6)] motion-safe:animate-versus-slam sm:text-7xl">
                         VS
                     </span>
                 </div>

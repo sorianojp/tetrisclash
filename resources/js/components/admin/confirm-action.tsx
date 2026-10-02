@@ -1,4 +1,5 @@
 import { router } from '@inertiajs/react';
+import { Check, TriangleAlert, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -91,13 +92,16 @@ export function ConfirmAction({
                 )}
                 <DialogFooter>
                     <DialogClose asChild>
-                        <Button variant="outline">Cancel</Button>
+                        <Button variant="outline">
+                            <X /> Cancel
+                        </Button>
                     </DialogClose>
                     <Button
                         variant={destructive ? 'destructive' : 'default'}
                         disabled={processing}
                         onClick={submit}
                     >
+                        {destructive ? <TriangleAlert /> : <Check />}
                         {confirmLabel}
                     </Button>
                 </DialogFooter>

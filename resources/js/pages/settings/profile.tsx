@@ -1,4 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
+import { Save } from 'lucide-react';
 import { Link } from '@inertiajs/react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/delete-user';
@@ -111,7 +112,7 @@ export default function Profile({
                                     disabled={processing}
                                     data-test="update-profile-button"
                                 >
-                                    Save
+                                    <Save /> Save
                                 </Button>
                             </div>
                         </>

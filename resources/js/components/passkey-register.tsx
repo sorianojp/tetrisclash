@@ -1,4 +1,5 @@
 import { usePasskeyRegister } from '@laravel/passkeys/react';
+import { KeyRound, Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -67,7 +68,7 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
     if (!showForm) {
         return (
             <Button variant="outline" onClick={() => setShowForm(true)}>
-                Add passkey
+                <Plus /> Add passkey
             </Button>
         );
     }
@@ -97,10 +98,11 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
 
             <div className="flex gap-2">
                 <Button type="submit" disabled={isLoading || !name.trim()}>
+                    <KeyRound />
                     {isLoading ? 'Registering...' : 'Register passkey'}
                 </Button>
                 <Button type="button" variant="ghost" onClick={handleCancel}>
-                    Cancel
+                    <X /> Cancel
                 </Button>
             </div>
         </form>

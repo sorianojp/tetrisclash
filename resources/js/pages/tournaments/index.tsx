@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Crown, Flag, Plus, Swords, Trophy, Users } from 'lucide-react';
+import { Crown, Flag, LogIn, Plus, Swords, Trophy, Users } from 'lucide-react';
 import InputError from '@/components/input-error';
 import { PageHeader } from '@/components/tetris/page-header';
 import { PlayerEmblem } from '@/components/tetris/player-emblem';
@@ -166,7 +166,8 @@ export default function Tournaments({
                                                 <Link
                                                     href={show(tournament.id)}
                                                 >
-                                                    Joined · View bracket
+                                                    <Trophy /> Joined · View
+                                                    bracket
                                                 </Link>
                                             </Button>
                                         ) : (
@@ -179,7 +180,7 @@ export default function Tournaments({
                                                     )
                                                 }
                                             >
-                                                Join tournament
+                                                <LogIn /> Join tournament
                                             </Button>
                                         )}
                                     </Card>

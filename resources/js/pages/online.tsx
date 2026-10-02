@@ -1,6 +1,8 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
     BellOff,
+    ChevronLeft,
+    ChevronRight,
     Eye,
     Flag,
     Search,
@@ -256,12 +258,14 @@ export default function Online({
                         className="flex items-center justify-between gap-3 text-sm"
                     >
                         <PageLink href={players.prev_page_url}>
-                            Previous
+                            <ChevronLeft /> Previous
                         </PageLink>
                         <span className="text-muted-foreground tabular-nums">
                             Page {players.current_page} of {players.last_page}
                         </span>
-                        <PageLink href={players.next_page_url}>Next</PageLink>
+                        <PageLink href={players.next_page_url}>
+                            Next <ChevronRight />
+                        </PageLink>
                     </nav>
                 )}
             </div>

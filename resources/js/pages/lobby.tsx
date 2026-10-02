@@ -11,6 +11,7 @@ import {
     Timer,
     Trophy,
     UserPlus,
+    X,
     Zap,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -266,7 +267,7 @@ export default function Lobby({
                                     </p>
                                     <h1 className="mt-3 text-4xl font-black tracking-tight italic sm:text-5xl">
                                         Battle for{' '}
-                                        <span className="bg-gradient-to-r from-amber-300 via-rose-300 to-fuchsia-300 bg-clip-text text-transparent">
+                                        <span className="inline-block bg-gradient-to-r from-amber-300 via-rose-300 to-fuchsia-300 bg-clip-text pr-[0.15em] pb-[0.12em] text-transparent">
                                             the top
                                         </span>
                                     </h1>
@@ -304,7 +305,7 @@ export default function Lobby({
                                             variant="secondary"
                                             onClick={cancelSearch}
                                         >
-                                            Cancel
+                                            <X /> Cancel
                                         </Button>
                                     </div>
                                 ) : (

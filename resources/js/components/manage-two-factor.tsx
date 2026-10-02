@@ -1,5 +1,5 @@
 import { Form } from '@inertiajs/react';
-import { ShieldCheck } from 'lucide-react';
+import { ArrowRight, ShieldCheck, ShieldOff } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import Heading from '@/components/heading';
 import TwoFactorRecoveryCodes from '@/components/two-factor-recovery-codes';
@@ -67,7 +67,7 @@ export default function ManageTwoFactor(props: Props) {
                                     type="submit"
                                     disabled={processing}
                                 >
-                                    Disable 2FA
+                                    <ShieldOff /> Disable 2FA
                                 </Button>
                             )}
                         </Form>
@@ -92,7 +92,7 @@ export default function ManageTwoFactor(props: Props) {
                         {hasSetupData ? (
                             <Button onClick={() => setShowSetupModal(true)}>
                                 <ShieldCheck />
-                                Continue setup
+                                <ArrowRight /> Continue setup
                             </Button>
                         ) : (
                             <Form
@@ -101,7 +101,7 @@ export default function ManageTwoFactor(props: Props) {
                             >
                                 {({ processing }) => (
                                     <Button type="submit" disabled={processing}>
-                                        Enable 2FA
+                                        <ShieldCheck /> Enable 2FA
                                     </Button>
                                 )}
                             </Form>

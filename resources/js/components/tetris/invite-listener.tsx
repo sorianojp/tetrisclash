@@ -1,53 +1,41 @@
 import { router } from '@inertiajs/react';
 import { useEcho } from '@laravel/echo-react';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import type { RankProgress } from '@/components/tetris/rank-badge';
+import { InviteCard } from '@/components/tetris/invite-card';
+import type { Invite } from '@/components/tetris/invite-card';
 import { startOnlinePing } from '@/hooks/use-online';
 import { sendJson } from '@/lib/api';
 import { accept, decline } from '@/routes/challenges';
 import { show as showDuel } from '@/routes/duels';
 
-type Invite = {
-    code: string;
-    mode: 'battle' | 'race';
-    expiresInMs: number;
-    challenger: {
-        id: number;
-        name: string;
-        rating: number;
-        rank: RankProgress;
-    };
-};
-
-const toastId = (code: string) => `invite-${code}`;
-
 /**
- * On every signed-in page: keeps the player in the online list, pops up invites
- * from other players with Accept / Decline until they expire, and announces
- * achievements as they unlock.
+ * On every signed-in page: keeps the player in the online list, shows invites from other
+ * players as a card in the middle of the screen until they expire (one at a time, oldest
+ * first), and announces achievements as they unlock.
  */
 export function InviteListener({ userId }: { userId: number }) {
+    const [invites, setInvites] = useState<
+        { invite: Invite; receivedAt: number }[]
+    >([]);
+    const current = invites[0];
+
     useEffect(() => startOnlinePing(), []);
 
-    useEcho<Invite>(
-        `App.Models.User.${userId}`,
-        'InviteReceived',
-        ({ code, mode, expiresInMs, challenger }) => {
-            toast(`${challenger.name} invites you to a ${mode}`, {
-                id: toastId(code),
-                description: `${challenger.rank.title} · rating ${challenger.rating}. Friendly match: no rating or XP.`,
-                duration: expiresInMs,
-                action: {
-                    label: 'Accept',
-                    onClick: () => router.post(accept(code).url),
-                },
-                cancel: {
-                    label: 'Decline',
-                    onClick: () => void sendJson(decline(code)).catch(() => {}),
-                },
-            });
-        },
+    const close = useCallback(
+        (code: string) =>
+            setInvites((list) => list.filter((i) => i.invite.code !== code)),
+        [],
+    );
+
+    useEcho<Invite>(`App.Models.User.${userId}`, 'InviteReceived', (invite) =>
+        setInvites((list) => [
+            // A newer invite from the same player replaces theirs.
+            ...list.filter(
+                (i) => i.invite.challenger.id !== invite.challenger.id,
+            ),
+            { invite, receivedAt: Date.now() },
+        ]),
     );
 
     // A bracket match started: go play it, wherever we are.
@@ -73,10 +61,31 @@ export function InviteListener({ userId }: { userId: number }) {
         'InviteClosed',
         ({ code, reason }) => {
             if (reason === 'cancelled') {
-                toast.dismiss(toastId(code));
+                close(code);
             }
         },
     );
 
-    return null;
+    if (!current) {
+        return null;
+    }
+
+    const { code } = current.invite;
+
+    return (
+        <InviteCard
+            key={code}
+            invite={current.invite}
+            receivedAt={current.receivedAt}
+            onAccept={() => {
+                close(code);
+                router.post(accept(code).url);
+            }}
+            onDecline={() => {
+                close(code);
+                void sendJson(decline(code)).catch(() => {});
+            }}
+            onDismiss={() => close(code)}
+        />
+    );
 }

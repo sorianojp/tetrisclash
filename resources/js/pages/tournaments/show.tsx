@@ -1,5 +1,14 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Crown, Eye, Film, Swords, Trophy, Users } from 'lucide-react';
+import {
+    Crown,
+    Eye,
+    Film,
+    LogIn,
+    LogOut,
+    Swords,
+    Trophy,
+    Users,
+} from 'lucide-react';
 import { useEffect } from 'react';
 import InputError from '@/components/input-error';
 import { PageHeader } from '@/components/tetris/page-header';
@@ -99,7 +108,7 @@ export default function TournamentShow({
                 variant="outline"
                 onClick={() => router.delete(leave(tournament.id).url)}
             >
-                Leave
+                <LogOut /> Leave
             </Button>
         ) : (
             <Button
@@ -107,7 +116,7 @@ export default function TournamentShow({
                 disabled={currentId !== null}
                 onClick={() => router.post(join(tournament.id).url)}
             >
-                Join tournament
+                <LogIn /> Join tournament
             </Button>
         ));
 

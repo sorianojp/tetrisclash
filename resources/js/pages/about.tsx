@@ -3,6 +3,7 @@ import {
     Flag,
     Gamepad2,
     Keyboard,
+    LogIn,
     ShieldCheck,
     Swords,
     Trophy,
@@ -105,15 +106,21 @@ export default function About({ rules, xp, ranks }: Props) {
                         <nav className="flex items-center gap-2">
                             {auth.user ? (
                                 <Button size="sm" asChild>
-                                    <Link href={dashboard()}>Go to lobby</Link>
+                                    <Link href={dashboard()}>
+                                        <Swords /> Go to lobby
+                                    </Link>
                                 </Button>
                             ) : (
                                 <>
                                     <Button size="sm" variant="ghost" asChild>
-                                        <Link href={login()}>Log in</Link>
+                                        <Link href={login()}>
+                                            <LogIn /> Log in
+                                        </Link>
                                     </Button>
                                     <Button size="sm" asChild>
-                                        <Link href={register()}>Sign up</Link>
+                                        <Link href={register()}>
+                                            <UserPlus /> Sign up
+                                        </Link>
                                     </Button>
                                 </>
                             )}

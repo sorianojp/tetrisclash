@@ -1,6 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { echo } from '@laravel/echo-react';
-import { Eye, Film } from 'lucide-react';
+import { Eye, Film, House } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import {
     EMOTE_COOLDOWN_MS,
@@ -237,7 +237,9 @@ export default function Watch({
                             </Link>
                         </Button>
                         <Button size="sm" variant="ghost" asChild>
-                            <Link href={dashboard()}>Lobby</Link>
+                            <Link href={dashboard()}>
+                                <House /> Lobby
+                            </Link>
                         </Button>
                     </div>
                 )}

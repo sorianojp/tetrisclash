@@ -1,6 +1,15 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEcho } from '@laravel/echo-react';
-import { Check, Copy, Flag, Swords } from 'lucide-react';
+import {
+    Check,
+    Copy,
+    Flag,
+    Gamepad2,
+    House,
+    LogIn,
+    Swords,
+    X,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { PlayerEmblem } from '@/components/tetris/player-emblem';
@@ -170,7 +179,7 @@ export default function Challenge({
                                         )
                                     }
                                 >
-                                    Cancel invite
+                                    <X /> Cancel invite
                                 </Button>
                             </>
                         ) : isChallenger ? (
@@ -219,7 +228,7 @@ export default function Challenge({
                                         )
                                     }
                                 >
-                                    Cancel challenge
+                                    <X /> Cancel challenge
                                 </Button>
                             </>
                         ) : auth.user ? (
@@ -245,7 +254,7 @@ export default function Challenge({
                                 </Button>
                                 <Button variant="ghost" asChild>
                                     <Link href={login()}>
-                                        Have an account? Log in
+                                        <LogIn /> Have an account? Log in
                                     </Link>
                                 </Button>
                                 <p className="text-center text-xs text-muted-foreground">
@@ -306,11 +315,15 @@ function Closed({ message }: { message: string }) {
             <p className="text-sm text-muted-foreground">{message}</p>
             {auth.user ? (
                 <Button variant="outline" asChild>
-                    <Link href={dashboard()}>Back to lobby</Link>
+                    <Link href={dashboard()}>
+                        <House /> Back to lobby
+                    </Link>
                 </Button>
             ) : (
                 <Button asChild>
-                    <Link href={practice()}>Try practice mode, free</Link>
+                    <Link href={practice()}>
+                        <Gamepad2 /> Try practice mode, free
+                    </Link>
                 </Button>
             )}
         </div>

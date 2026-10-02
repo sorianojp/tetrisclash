@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Eye, Flag, Swords, UserMinus, XCircle } from 'lucide-react';
+import { Eye, Flag, Gavel, Swords, UserMinus, XCircle } from 'lucide-react';
 import { AdminHeader, adminBreadcrumb } from '@/components/admin/admin-header';
 import { ConfirmAction } from '@/components/admin/confirm-action';
 import InputError from '@/components/input-error';
@@ -222,7 +222,7 @@ function TournamentCard({
                                                     variant="outline"
                                                     size="sm"
                                                 >
-                                                    Decide
+                                                    <Gavel /> Decide
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">

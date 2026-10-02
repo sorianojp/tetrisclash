@@ -1,6 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { echo } from '@laravel/echo-react';
-import { Eye, Flag, Film, Swords, WifiOff } from 'lucide-react';
+import { Eye, Film, Flag, House, Swords, Trophy, WifiOff } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ClearCallout, describeClear } from '@/components/tetris/clear-callout';
@@ -965,7 +965,7 @@ function Result({
             <div className="flex flex-col items-center gap-1">
                 <span
                     className={cn(
-                        'bg-gradient-to-r bg-clip-text text-4xl font-black tracking-tight text-transparent italic',
+                        'inline-block bg-gradient-to-r bg-clip-text pr-[0.15em] pb-[0.1em] text-4xl font-black tracking-tight text-transparent italic',
                         outcome === 'win' && 'from-amber-200 to-orange-400',
                         outcome === 'loss' && 'from-rose-300 to-fuchsia-400',
                         outcome === 'draw' && 'from-slate-100 to-slate-400',
@@ -1039,13 +1039,15 @@ function Result({
                 {tournamentId !== null && (
                     <Button className="w-full" asChild>
                         <Link href={showTournament(tournamentId)}>
-                            Back to bracket
+                            <Trophy /> Back to bracket
                         </Link>
                     </Button>
                 )}
                 <div className="flex flex-wrap justify-center gap-2">
                     <Button variant="secondary" size="sm" asChild>
-                        <Link href={dashboard()}>Lobby</Link>
+                        <Link href={dashboard()}>
+                            <House /> Lobby
+                        </Link>
                     </Button>
                     <Button variant="secondary" size="sm" asChild>
                         <Link href={duelReplay(state.id)}>

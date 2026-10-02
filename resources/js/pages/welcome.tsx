@@ -1,5 +1,13 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Swords, Timer, Trophy, Zap } from 'lucide-react';
+import {
+    Info,
+    LogIn,
+    Swords,
+    Timer,
+    Trophy,
+    UserPlus,
+    Zap,
+} from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -72,11 +80,15 @@ export default function Welcome() {
                             className="text-white hover:bg-white/10 hover:text-white"
                             asChild
                         >
-                            <Link href={about()}>About</Link>
+                            <Link href={about()}>
+                                <Info /> About
+                            </Link>
                         </Button>
                         {auth.user ? (
                             <Button asChild>
-                                <Link href={dashboard()}>Go to lobby</Link>
+                                <Link href={dashboard()}>
+                                    <Swords /> Go to lobby
+                                </Link>
                             </Button>
                         ) : (
                             <>
@@ -85,13 +97,17 @@ export default function Welcome() {
                                     className="text-white hover:bg-white/10 hover:text-white"
                                     asChild
                                 >
-                                    <Link href={login()}>Log in</Link>
+                                    <Link href={login()}>
+                                        <LogIn /> Log in
+                                    </Link>
                                 </Button>
                                 <Button
                                     className="bg-amber-400 text-amber-950 hover:bg-amber-300"
                                     asChild
                                 >
-                                    <Link href={register()}>Sign up</Link>
+                                    <Link href={register()}>
+                                        <UserPlus /> Sign up
+                                    </Link>
                                 </Button>
                             </>
                         )}
@@ -106,7 +122,7 @@ export default function Welcome() {
                         <h1 className="mt-3 text-5xl font-black tracking-tight sm:text-6xl">
                             Clear lines.
                             <br />
-                            <span className="bg-gradient-to-r from-amber-300 via-rose-400 to-fuchsia-400 bg-clip-text text-transparent">
+                            <span className="inline-block bg-gradient-to-r from-amber-300 via-rose-400 to-fuchsia-400 bg-clip-text pr-[0.1em] pb-[0.12em] text-transparent">
                                 Bury your rival.
                             </span>
                         </h1>

@@ -1,5 +1,16 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { Ban, Eye, Film, RotateCcw, Trash2, Trophy } from 'lucide-react';
+import {
+    Ban,
+    BatteryCharging,
+    ExternalLink,
+    Eye,
+    Film,
+    RotateCcw,
+    Save,
+    ShieldCheck,
+    Trash2,
+    Trophy,
+} from 'lucide-react';
 import type { FormEvent } from 'react';
 import { AdminHeader, adminBreadcrumb } from '@/components/admin/admin-header';
 import { ConfirmAction } from '@/components/admin/confirm-action';
@@ -123,7 +134,7 @@ export default function AdminUser({
                             )}
                             <Button variant="outline" size="sm" asChild>
                                 <Link href={showPlayer(user.id)}>
-                                    Public profile
+                                    <ExternalLink /> Public profile
                                 </Link>
                             </Button>
                         </div>
@@ -300,7 +311,7 @@ function BanCard({ user, canBan }: { user: Props['user']; canBan: boolean }) {
                         confirmLabel="Unban"
                         destructive={false}
                     >
-                        Unban
+                        <ShieldCheck /> Unban
                     </ConfirmAction>
                 </CardContent>
             </Card>
@@ -386,7 +397,7 @@ function StatsCard({ user }: { user: Props['user'] }) {
                         className="self-start"
                         disabled={form.processing || !form.isDirty}
                     >
-                        Save
+                        <Save /> Save
                     </Button>
                 </form>
             </CardContent>
@@ -435,7 +446,7 @@ function EnergyCard({ user }: { user: Props['user'] }) {
                     disabled={user.energy.current >= user.energy.max}
                     onClick={() => set(user.energy.max)}
                 >
-                    Refill
+                    <BatteryCharging /> Refill
                 </Button>
             </CardContent>
         </Card>

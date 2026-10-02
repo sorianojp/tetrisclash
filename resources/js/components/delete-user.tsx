@@ -1,4 +1,5 @@
 import { Form } from '@inertiajs/react';
+import { Trash2, X } from 'lucide-react';
 import { useRef } from 'react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import Heading from '@/components/heading';
@@ -40,7 +41,7 @@ export default function DeleteUser() {
                             variant="destructive"
                             data-test="delete-user-button"
                         >
-                            Delete account
+                            <Trash2 /> Delete account
                         </Button>
                     </DialogTrigger>
                     <DialogContent>
@@ -92,7 +93,7 @@ export default function DeleteUser() {
                                                     resetAndClearErrors()
                                                 }
                                             >
-                                                Cancel
+                                                <X /> Cancel
                                             </Button>
                                         </DialogClose>
 
