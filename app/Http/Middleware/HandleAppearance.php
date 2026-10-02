@@ -16,7 +16,8 @@ class HandleAppearance
      */
     public function handle(Request $request, Closure $next): Response
     {
-        View::share('appearance', $request->cookie('appearance') ?? 'system');
+        // Dark is the game's look; players can switch in Settings › Appearance.
+        View::share('appearance', $request->cookie('appearance') ?? 'dark');
 
         return $next($request);
     }

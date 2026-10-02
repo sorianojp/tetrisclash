@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { Film } from 'lucide-react';
+import { PlayerEmblem } from '@/components/tetris/player-emblem';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { replay as duelReplay } from '@/routes/duels';
@@ -35,22 +36,31 @@ export function DuelHistory({
     }
 
     return (
-        <ul className="flex flex-col gap-2 text-sm">
+        <ul className="flex flex-col gap-1.5 text-sm">
             {duels.map((duel) => (
-                <li key={duel.id} className="flex items-center gap-3">
-                    <ResultBadge result={duel.result} />
-                    <span className="min-w-0 flex-1 truncate">
-                        vs{' '}
+                <li
+                    key={duel.id}
+                    className="flex items-center gap-2.5 rounded-lg border border-transparent px-1.5 py-1 transition-colors hover:border-border hover:bg-muted/40"
+                >
+                    <ResultTile result={duel.result} />
+                    <PlayerEmblem
+                        name={duel.opponent}
+                        id={duel.opponentId}
+                        size="xs"
+                    />
+                    <span className="flex min-w-0 flex-1 flex-col leading-tight">
                         <Link
                             href={showPlayer(duel.opponentId)}
-                            className="font-medium hover:underline"
+                            className="truncate font-semibold hover:underline"
                         >
                             {duel.opponent}
                         </Link>
-                        <span className="ml-1 text-xs text-muted-foreground">
+                        <span className="truncate text-xs text-muted-foreground">
                             {duel.mode === 'race'
                                 ? `${duel.myLines}–${duel.theirLines} lines`
                                 : `${duel.myKos}–${duel.theirKos} KO`}
+                            {!duel.ranked &&
+                                ` · ${duel.mode === 'race' ? 'Race' : 'Friendly'}`}
                             {duel.reason &&
                             !['time', 'knockout', 'finish'].includes(
                                 duel.reason,
@@ -59,27 +69,63 @@ export function DuelHistory({
                                 : ''}
                         </span>
                     </span>
-                    {!duel.ranked && (
-                        <Badge variant="outline" className="text-[10px]">
-                            {duel.mode === 'race' ? 'Race' : 'Friendly'}
-                        </Badge>
-                    )}
-                    <span className="text-xs whitespace-nowrap text-muted-foreground">
-                        {duel.finishedAt}
+                    <span className="flex flex-col items-end leading-tight">
+                        {/* The server stores the size of the change; the result gives its sign. */}
+                        {duel.ranked &&
+                            duel.ratingChange !== null &&
+                            duel.result !== 'draw' && (
+                                <span
+                                    className={cn(
+                                        'text-xs font-bold tabular-nums',
+                                        duel.result === 'win'
+                                            ? 'text-emerald-600 dark:text-emerald-400'
+                                            : 'text-rose-600 dark:text-rose-400',
+                                    )}
+                                >
+                                    {duel.result === 'win' ? '+' : '−'}
+                                    {duel.ratingChange}
+                                </span>
+                            )}
+                        <span className="text-[11px] whitespace-nowrap text-muted-foreground">
+                            {duel.finishedAt}
+                        </span>
                     </span>
-                    {duel.hasReplay && (
+                    {duel.hasReplay ? (
                         <Link
                             href={duelReplay(duel.id)}
-                            className="text-muted-foreground hover:text-foreground"
+                            className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
                             title="Watch replay"
                         >
                             <Film className="size-4" />
                             <span className="sr-only">Watch replay</span>
                         </Link>
+                    ) : (
+                        <span className="size-7 shrink-0" />
                     )}
                 </li>
             ))}
         </ul>
+    );
+}
+
+/** A one-letter result block: W, L or D. */
+function ResultTile({ result }: { result: 'win' | 'loss' | 'draw' }) {
+    const styles = {
+        win: 'bg-emerald-500 text-white shadow-emerald-500/30',
+        loss: 'bg-rose-500 text-white shadow-rose-500/30',
+        draw: 'bg-muted text-muted-foreground',
+    };
+
+    return (
+        <span
+            title={result}
+            className={cn(
+                'flex size-6 shrink-0 items-center justify-center rounded-md text-xs font-black uppercase shadow-sm',
+                styles[result],
+            )}
+        >
+            {result[0]}
+        </span>
     );
 }
 

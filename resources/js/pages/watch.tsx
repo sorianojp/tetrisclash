@@ -207,7 +207,7 @@ export default function Watch({
                     <div className="flex flex-col items-center gap-1">
                         <div
                             className={cn(
-                                'rounded-lg bg-[#080b18] px-4 py-2 text-center font-mono text-2xl font-bold text-white tabular-nums ring-1 ring-indigo-500/30',
+                                'rounded-xl bg-[#080b18] px-4 py-2 text-center font-mono text-2xl font-black text-white tabular-nums shadow-[0_0_24px_-6px_rgb(139_92_246/0.6)] ring-1 ring-violet-500/40 sm:text-3xl',
                                 !state.finished &&
                                     clock >= startsAt &&
                                     remaining < 15000 &&

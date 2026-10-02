@@ -1,5 +1,6 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import AppLogoIcon from '@/components/app-logo-icon';
+import { Card } from '@/components/ui/card';
 import { home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
 
@@ -8,29 +9,45 @@ export default function AuthSimpleLayout({
     title,
     description,
 }: AuthLayoutProps) {
-    return (
-        <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
-            <div className="w-full max-w-sm">
-                <div className="flex flex-col gap-8">
-                    <div className="flex flex-col items-center gap-4">
-                        <Link
-                            href={home()}
-                            className="flex flex-col items-center gap-2 font-medium"
-                        >
-                            <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-md">
-                                <AppLogoIcon className="size-9 fill-current text-[var(--foreground)] dark:text-white" />
-                            </div>
-                            <span className="sr-only">{title}</span>
-                        </Link>
+    const { name } = usePage().props;
 
-                        <div className="space-y-2 text-center">
-                            <h1 className="text-xl font-medium">{title}</h1>
-                            <p className="text-center text-sm text-muted-foreground">
+    return (
+        <div className="relative flex min-h-svh flex-col items-center justify-center gap-6 overflow-hidden bg-background p-6 md:p-10">
+            {/* The landing page's glows, over a faint board grid. */}
+            <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_20%_10%,rgb(139_92_246/0.18),transparent),radial-gradient(ellipse_45%_40%_at_85%_90%,rgb(244_63_94/0.14),transparent)]"
+            />
+            <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgb(139_92_246/0.06)_1px,transparent_1px),linear-gradient(90deg,rgb(139_92_246/0.06)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_at_center,black,transparent_70%)] bg-[size:40px_40px]"
+            />
+
+            <div className="relative w-full max-w-sm">
+                <div className="flex flex-col gap-6">
+                    <Link
+                        href={home()}
+                        className="flex items-center justify-center gap-2.5"
+                    >
+                        <span className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 shadow-lg shadow-violet-500/40">
+                            <AppLogoIcon className="size-6 fill-white" />
+                        </span>
+                        <span className="text-lg font-black tracking-wide uppercase">
+                            {name}
+                        </span>
+                    </Link>
+
+                    <Card accent="violet" className="gap-6 px-6 py-7 sm:px-8">
+                        <div className="space-y-1.5 text-center">
+                            <h1 className="text-2xl font-black tracking-tight">
+                                {title}
+                            </h1>
+                            <p className="text-sm text-muted-foreground">
                                 {description}
                             </p>
                         </div>
-                    </div>
-                    {children}
+                        {children}
+                    </Card>
                 </div>
             </div>
         </div>

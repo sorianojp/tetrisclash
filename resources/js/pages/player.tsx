@@ -1,11 +1,21 @@
 import { Head, Link } from '@inertiajs/react';
-import { Award, Eye, Swords, Timer, Trophy } from 'lucide-react';
+import {
+    Award,
+    Eye,
+    History,
+    Percent,
+    Swords,
+    Timer,
+    Trophy,
+} from 'lucide-react';
 import { AchievementList } from '@/components/tetris/achievement-list';
 import type { AchievementStatus } from '@/components/tetris/achievement-list';
 import { DuelHistory } from '@/components/tetris/duel-history';
 import type { DuelSummary } from '@/components/tetris/duel-history';
+import { PlayerEmblem } from '@/components/tetris/player-emblem';
 import { RankBadge, RankProgressBar } from '@/components/tetris/rank-badge';
 import type { RankProgress } from '@/components/tetris/rank-badge';
+import { StatTile } from '@/components/tetris/stat-tile';
 import {
     Card,
     CardContent,
@@ -59,103 +69,138 @@ export default function Player({
     return (
         <>
             <Head title={player.name} />
-            <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 p-4">
+            <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 p-4 sm:p-6">
                 {liveDuelId !== null && (
-                    <Link
-                        href={watchDuel(liveDuelId)}
-                        className="flex items-center justify-between gap-3 rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm hover:bg-rose-500/15"
-                    >
-                        <span className="flex items-center gap-2 font-medium">
-                            <span className="size-2 animate-pulse rounded-full bg-rose-500" />
-                            {player.name} is in a match right now
-                        </span>
-                        <span className="flex items-center gap-1 font-semibold">
-                            <Eye className="size-4" /> Watch
-                        </span>
+                    <Link href={watchDuel(liveDuelId)}>
+                        <Card
+                            accent="rose"
+                            className="flex-row items-center justify-between gap-3 px-5 py-4 transition-colors hover:bg-rose-500/5"
+                        >
+                            <span className="flex items-center gap-2 text-sm font-semibold">
+                                <span className="relative flex size-2.5">
+                                    <span className="absolute inline-flex size-full rounded-full bg-rose-500 opacity-60 motion-safe:animate-ping" />
+                                    <span className="relative inline-flex size-2.5 rounded-full bg-rose-500" />
+                                </span>
+                                {player.name} is in a match right now
+                            </span>
+                            <span className="flex items-center gap-1 text-sm font-bold text-rose-600 dark:text-rose-300">
+                                <Eye className="size-4" /> Watch live
+                            </span>
+                        </Card>
                     </Link>
                 )}
-                <Card className="overflow-hidden">
-                    <div className="flex flex-col gap-4 bg-gradient-to-br from-indigo-950 via-violet-900 to-fuchsia-900 p-6 text-white sm:flex-row sm:items-end sm:justify-between">
-                        <div className="min-w-0">
-                            <h1 className="truncate text-3xl font-black tracking-tight">
+
+                <Card className="gap-0 overflow-hidden py-0">
+                    <div className="relative flex flex-col gap-5 bg-gradient-to-br from-indigo-950 via-violet-900 to-fuchsia-900 p-6 text-white sm:flex-row sm:items-center sm:p-8">
+                        <div
+                            aria-hidden
+                            className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgb(255_255_255/0.05)_1px,transparent_1px),linear-gradient(90deg,rgb(255_255_255/0.05)_1px,transparent_1px)] [mask-image:linear-gradient(90deg,transparent,black)] bg-[size:32px_32px]"
+                        />
+                        <PlayerEmblem
+                            name={player.name}
+                            id={player.id}
+                            size="xl"
+                            className="relative ring-4 ring-white/15"
+                        />
+                        <div className="relative min-w-0 flex-1">
+                            <p className="text-[11px] font-bold tracking-[0.25em] text-fuchsia-200 uppercase">
+                                Player card
+                            </p>
+                            <h1 className="truncate text-3xl font-black tracking-tight sm:text-4xl">
                                 {player.name}
                             </h1>
-                            {player.joinedAt && (
-                                <p className="text-sm text-indigo-200">
-                                    Playing since {player.joinedAt}
-                                </p>
-                            )}
+                            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-indigo-200">
+                                <RankBadge
+                                    progress={player.rank}
+                                    className="bg-white/15 text-sm text-white"
+                                />
+                                {player.joinedAt && (
+                                    <span>Playing since {player.joinedAt}</span>
+                                )}
+                            </div>
                         </div>
-                        <div className="flex w-full flex-col gap-2 sm:w-64">
-                            <RankBadge
-                                progress={player.rank}
-                                className="self-start bg-white/15 text-sm text-white sm:self-end"
-                            />
-                            <RankProgressBar progress={player.rank} />
-                        </div>
+                        <RankProgressBar
+                            progress={player.rank}
+                            className="relative w-full text-indigo-100 sm:w-60"
+                        />
                     </div>
-                    <CardContent className="grid grid-cols-3 gap-3 pt-6">
-                        <Stat
-                            icon={<Trophy className="size-4" />}
+                    <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4 sm:p-6">
+                        <StatTile
+                            icon={Trophy}
+                            tone="amber"
                             label="Rating"
                             value={player.rating}
                         />
-                        <Stat
-                            icon={<Swords className="size-4" />}
+                        <StatTile
+                            icon={Swords}
+                            tone="violet"
                             label="Record"
                             value={`${player.wins}–${player.losses}`}
                         />
-                        <Stat label="Win rate" value={winRate} />
-                    </CardContent>
+                        <StatTile
+                            icon={Percent}
+                            tone="emerald"
+                            label="Win rate"
+                            value={winRate}
+                        />
+                        <StatTile
+                            icon={Award}
+                            tone="rose"
+                            label="Achievements"
+                            value={`${unlocked}/${achievements.length}`}
+                        />
+                    </div>
                 </Card>
 
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_2fr]">
-                    <Card>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-[1fr_1.6fr]">
+                    <Card accent="emerald">
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Timer className="size-4" /> Practice bests
+                            <CardTitle>
+                                <Timer className="size-4 text-emerald-500" />
+                                Practice bests
                             </CardTitle>
+                            <CardDescription>
+                                With their all-time leaderboard place.
+                            </CardDescription>
                         </CardHeader>
-                        <CardContent>
-                            <dl className="flex flex-col gap-2 text-sm">
-                                {RECORD_MODES.map((mode) => (
-                                    <div
-                                        key={mode}
-                                        className="flex justify-between gap-2"
-                                    >
-                                        <dt className="text-muted-foreground">
-                                            {PRACTICE_MODES[mode].label}
-                                        </dt>
-                                        <dd className="flex items-baseline gap-2 font-semibold tabular-nums">
-                                            {placements[mode] !== null && (
-                                                <span
-                                                    className={cn(
-                                                        'text-xs font-medium',
-                                                        placements[mode] <= 3
-                                                            ? 'text-amber-500'
-                                                            : 'text-muted-foreground',
-                                                    )}
-                                                    title={`#${placements[mode]} all-time in ${PRACTICE_MODES[mode].label}`}
-                                                >
-                                                    #{placements[mode]}
-                                                </span>
+                        <CardContent className="flex flex-col gap-2">
+                            {RECORD_MODES.map((mode) => (
+                                <div
+                                    key={mode}
+                                    className="flex items-center gap-3 rounded-xl border bg-muted/40 px-3 py-2 dark:bg-white/[0.03]"
+                                >
+                                    <span className="flex-1 text-sm font-semibold">
+                                        {PRACTICE_MODES[mode].label}
+                                    </span>
+                                    {placements[mode] !== null && (
+                                        <span
+                                            className={cn(
+                                                'rounded-md px-1.5 py-0.5 text-[11px] font-black tabular-nums',
+                                                placements[mode] <= 3
+                                                    ? 'bg-gradient-to-br from-amber-200 to-amber-500 text-amber-950'
+                                                    : 'bg-muted text-muted-foreground',
                                             )}
-                                            {records[mode] === null
-                                                ? '—'
-                                                : formatRecord(
-                                                      mode,
-                                                      records[mode],
-                                                  )}
-                                        </dd>
-                                    </div>
-                                ))}
-                            </dl>
+                                            title={`#${placements[mode]} all-time in ${PRACTICE_MODES[mode].label}`}
+                                        >
+                                            #{placements[mode]}
+                                        </span>
+                                    )}
+                                    <span className="w-20 text-right font-black tabular-nums">
+                                        {records[mode] === null
+                                            ? '—'
+                                            : formatRecord(mode, records[mode])}
+                                    </span>
+                                </div>
+                            ))}
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card accent="cyan">
                         <CardHeader>
-                            <CardTitle>Match history</CardTitle>
+                            <CardTitle>
+                                <History className="size-4 text-cyan-500" />
+                                Match history
+                            </CardTitle>
                             <CardDescription>
                                 Latest {recentDuels.length || ''} matches,
                                 ranked and friendly.
@@ -170,17 +215,25 @@ export default function Player({
                     </Card>
                 </div>
 
-                <Card>
+                <Card accent="amber">
                     <CardHeader>
-                        <CardTitle className="flex items-center justify-between gap-2">
+                        <CardTitle className="justify-between">
                             <span className="flex items-center gap-2">
-                                <Award className="size-4 text-amber-500" />{' '}
+                                <Award className="size-4 text-amber-500" />
                                 Achievements
                             </span>
-                            <span className="text-sm font-normal text-muted-foreground tabular-nums">
+                            <span className="text-sm font-semibold text-muted-foreground tabular-nums">
                                 {unlocked} / {achievements.length}
                             </span>
                         </CardTitle>
+                        <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
+                            <div
+                                className="h-full rounded-full bg-gradient-to-r from-amber-300 to-orange-500"
+                                style={{
+                                    width: `${achievements.length ? (unlocked / achievements.length) * 100 : 0}%`,
+                                }}
+                            />
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <AchievementList achievements={achievements} />
@@ -197,25 +250,3 @@ Player.layout = {
         { title: 'Player', href: dashboard() },
     ],
 };
-
-function Stat({
-    label,
-    value,
-    icon,
-}: {
-    label: string;
-    value: string | number;
-    icon?: React.ReactNode;
-}) {
-    return (
-        <div className="rounded-lg border p-3">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                {icon}
-                {label}
-            </div>
-            <div className="mt-1 text-lg font-bold whitespace-nowrap tabular-nums sm:text-xl">
-                {value}
-            </div>
-        </div>
-    );
-}

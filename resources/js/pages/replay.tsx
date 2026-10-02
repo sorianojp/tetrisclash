@@ -1,8 +1,9 @@
 import { Head, Link } from '@inertiajs/react';
-import { Pause, Play, RotateCcw } from 'lucide-react';
+import { Film, Pause, Play, RotateCcw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { OpponentField } from '@/components/tetris/opponent-field';
 import type { OpponentView } from '@/components/tetris/opponent-field';
+import { PlayerEmblem } from '@/components/tetris/player-emblem';
 import { RankBadge } from '@/components/tetris/rank-badge';
 import type { RankProgress } from '@/components/tetris/rank-badge';
 import { Button } from '@/components/ui/button';
@@ -147,9 +148,14 @@ export default function Replay({ kind, duel, run, timelines }: Props) {
     return (
         <>
             <Head title={`Replay: ${heading}`} />
-            <div className="flex h-full flex-1 flex-col items-center gap-4 p-4">
-                <div className="flex flex-col items-center gap-1 text-center">
-                    <h1 className="text-xl font-bold">{heading}</h1>
+            <div className="flex h-full flex-1 flex-col items-center gap-5 p-4 sm:p-6">
+                <div className="flex flex-col items-center gap-2 text-center">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-500/15 px-3 py-1 text-[11px] font-bold tracking-[0.2em] text-violet-600 uppercase dark:text-violet-300">
+                        <Film className="size-3.5" /> Replay
+                    </span>
+                    <h1 className="text-2xl font-black tracking-tight sm:text-3xl">
+                        {heading}
+                    </h1>
                     <p className="text-sm text-muted-foreground">
                         {duel && describeDuel(duel, timelines)}
                         {run &&
@@ -171,10 +177,11 @@ export default function Replay({ kind, duel, run, timelines }: Props) {
                                     key={timeline.player.id}
                                     className="flex flex-col items-center gap-2"
                                 >
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <RankBadge
-                                            progress={timeline.player.rank}
-                                            compact
+                                    <div className="flex items-center gap-2 rounded-xl border bg-card px-2.5 py-1.5 text-sm shadow-sm">
+                                        <PlayerEmblem
+                                            name={timeline.player.name}
+                                            id={timeline.player.id}
+                                            size="xs"
                                         />
                                         <Link
                                             href={showPlayer(
@@ -184,6 +191,10 @@ export default function Replay({ kind, duel, run, timelines }: Props) {
                                         >
                                             {timeline.player.name}
                                         </Link>
+                                        <RankBadge
+                                            progress={timeline.player.rank}
+                                            compact
+                                        />
                                         {duel && duel.mode === 'battle' && (
                                             <span className="text-xs text-muted-foreground">
                                                 {duel.kos[timeline.player.id] ??
@@ -217,7 +228,7 @@ export default function Replay({ kind, duel, run, timelines }: Props) {
                             ))}
                         </div>
 
-                        <div className="flex w-full max-w-xl flex-col gap-3">
+                        <div className="flex w-full max-w-xl flex-col gap-3 rounded-2xl border bg-card p-4 shadow-sm dark:bg-gradient-to-b dark:from-white/[0.04] dark:to-transparent">
                             <input
                                 type="range"
                                 min={0}

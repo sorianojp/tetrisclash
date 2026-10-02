@@ -13,6 +13,7 @@ import { ShareResult } from '@/components/tetris/share-result';
 import { SoundToggle } from '@/components/tetris/sound-toggle';
 import { TouchControls } from '@/components/tetris/touch-controls';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTouchDevice } from '@/hooks/use-touch-device';
@@ -407,6 +408,7 @@ export default function Practice({
                             <ToggleGroup
                                 type="single"
                                 variant="outline"
+                                className="rounded-xl bg-card"
                                 value={mode}
                                 onValueChange={(value) =>
                                     value && restart(value as Mode)
@@ -416,7 +418,7 @@ export default function Practice({
                                     <ToggleGroupItem
                                         key={key}
                                         value={key}
-                                        className="px-3 sm:px-4"
+                                        className="px-3 font-semibold data-[state=on]:border-transparent data-[state=on]:bg-gradient-to-r data-[state=on]:from-violet-500 data-[state=on]:to-fuchsia-500 data-[state=on]:text-white sm:px-4"
                                     >
                                         {MODES[key].label}
                                     </ToggleGroupItem>
@@ -512,8 +514,8 @@ export default function Practice({
                                     />
                                 ))}
                         </div>
-                        <div className="rounded-xl border p-4">
-                            <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                        <Card accent="violet" className="gap-3 px-4 py-5">
+                            <h2 className="flex items-center gap-2 text-sm font-bold">
                                 <Crown className="size-4 text-amber-500" />
                                 {MODES[mode].label} leaderboard
                             </h2>
@@ -521,10 +523,10 @@ export default function Practice({
                                 mode={mode}
                                 boards={leaderboards[mode]}
                             />
-                        </div>
-                        <div className="rounded-xl border p-4">
+                        </Card>
+                        <Card className="px-4 py-5">
                             <ControlsLegend />
-                        </div>
+                        </Card>
                     </aside>
                 </div>
             </div>
@@ -629,17 +631,17 @@ function HudStat({
     return (
         <div
             className={cn(
-                'rounded-lg border',
-                compact ? 'px-2 py-1' : 'px-3 py-2',
+                'rounded-xl border bg-card shadow-sm dark:bg-gradient-to-b dark:from-white/[0.04] dark:to-transparent',
+                compact ? 'px-2.5 py-1.5' : 'px-3 py-2.5',
             )}
         >
-            <div className="truncate text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+            <div className="truncate text-[11px] font-semibold tracking-wider text-violet-500 uppercase dark:text-violet-300">
                 {label}
             </div>
             <div
                 className={cn(
-                    'font-bold tabular-nums',
-                    compact ? 'text-base' : 'text-lg',
+                    'font-black tracking-tight tabular-nums',
+                    compact ? 'text-base' : 'text-xl',
                 )}
             >
                 {value}

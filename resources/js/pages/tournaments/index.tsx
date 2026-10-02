@@ -1,21 +1,18 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Crown, Flag, Plus, Swords, Trophy, Users } from 'lucide-react';
 import InputError from '@/components/input-error';
+import { PageHeader } from '@/components/tetris/page-header';
+import { PlayerEmblem } from '@/components/tetris/player-emblem';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import {
     index as tournamentsIndex,
@@ -54,87 +51,127 @@ export default function Tournaments({
     const create = (mode: 'battle' | 'race') =>
         router.post(store().url, { mode });
 
+    const createButton =
+        currentId === null ? (
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button className="font-bold">
+                        <Plus /> New tournament
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={() => create('battle')}>
+                        <Swords /> Battle cup
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => create('race')}>
+                        <Flag /> Race cup
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        ) : (
+            <Button className="font-bold" asChild>
+                <Link href={show(currentId)}>
+                    <Trophy /> Your tournament
+                </Link>
+            </Button>
+        );
+
     return (
         <>
             <Head title="Tournaments" />
-            <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 p-4">
-                <div className="flex flex-wrap items-end justify-between gap-3">
-                    <div>
-                        <h1 className="flex items-center gap-2 text-2xl font-black tracking-tight">
-                            <Trophy className="size-6 text-amber-500" />{' '}
-                            Tournaments
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            {size} players, single elimination. It starts the
-                            moment the last seat fills, and your matches start
-                            on their own. Friendly matches: no rating or energy.
-                        </p>
-                    </div>
-                    {currentId === null ? (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button>
-                                    <Plus /> New tournament
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                    onSelect={() => create('battle')}
-                                >
-                                    <Swords /> Battle cup
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    onSelect={() => create('race')}
-                                >
-                                    <Flag /> Race cup
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    ) : (
-                        <Button asChild>
-                            <Link href={show(currentId)}>Your tournament</Link>
-                        </Button>
-                    )}
-                </div>
+            <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 p-4 sm:p-6">
+                <PageHeader
+                    icon={Trophy}
+                    title="Tournaments"
+                    description={`${size} players, single elimination. It starts the moment the last seat fills, and your matches start on their own. Friendly: no rating or energy.`}
+                    actions={createButton}
+                />
                 <InputError message={errors.tournament} />
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Taking sign-ups</CardTitle>
-                        <CardDescription>
-                            Join one and it starts when {size} players are in.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {open.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">
-                                None open right now. Start one!
+                <section className="flex flex-col gap-3">
+                    <h2 className="flex items-center gap-2 text-sm font-bold tracking-wider text-muted-foreground uppercase">
+                        <span className="relative flex size-2">
+                            <span className="absolute inline-flex size-full rounded-full bg-emerald-400 opacity-60 motion-safe:animate-ping" />
+                            <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+                        </span>
+                        Taking sign-ups
+                    </h2>
+                    {open.length === 0 ? (
+                        <Card className="items-center gap-3 px-6 py-10 text-center">
+                            <span className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-300 to-orange-500 text-amber-950 shadow-lg shadow-amber-500/25">
+                                <Trophy className="size-7" />
+                            </span>
+                            <p className="font-semibold">
+                                No tournaments open right now
                             </p>
-                        ) : (
-                            <ul className="flex flex-col gap-2">
-                                {open.map((tournament) => (
-                                    <li
-                                        key={tournament.id}
-                                        className="flex flex-wrap items-center gap-3 rounded-lg border p-3"
+                            <p className="text-sm text-muted-foreground">
+                                Start one and it fills as players join.
+                            </p>
+                            {currentId === null && (
+                                <div className="mt-1">{createButton}</div>
+                            )}
+                        </Card>
+                    ) : (
+                        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            {open.map((tournament) => (
+                                <li key={tournament.id}>
+                                    <Card
+                                        accent={
+                                            tournament.mode === 'race'
+                                                ? 'cyan'
+                                                : 'amber'
+                                        }
+                                        className="h-full gap-4 px-5"
                                     >
-                                        <ModeBadge mode={tournament.mode} />
-                                        <Link
-                                            href={show(tournament.id)}
-                                            className="flex-1 font-semibold hover:underline"
-                                        >
-                                            {tournament.name}
-                                        </Link>
-                                        <span className="flex items-center gap-1 text-sm text-muted-foreground tabular-nums">
-                                            <Users className="size-4" />
-                                            {tournament.players}/{size}
-                                        </span>
+                                        <div className="flex items-center gap-3">
+                                            <span
+                                                className={cn(
+                                                    'flex size-12 shrink-0 items-center justify-center rounded-xl shadow-lg',
+                                                    tournament.mode === 'race'
+                                                        ? 'bg-gradient-to-br from-cyan-300 to-sky-600 text-white shadow-cyan-500/25'
+                                                        : 'bg-gradient-to-br from-amber-300 to-orange-500 text-amber-950 shadow-amber-500/25',
+                                                )}
+                                            >
+                                                <Trophy className="size-6" />
+                                            </span>
+                                            <div className="min-w-0">
+                                                <Link
+                                                    href={show(tournament.id)}
+                                                    className="block truncate text-lg font-black tracking-tight hover:underline"
+                                                >
+                                                    {tournament.name}
+                                                </Link>
+                                                <ModeBadge
+                                                    mode={tournament.mode}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col gap-1.5">
+                                            <div className="flex justify-between text-xs font-semibold text-muted-foreground">
+                                                <span className="flex items-center gap-1">
+                                                    <Users className="size-3.5" />
+                                                    Seats
+                                                </span>
+                                                <span className="tabular-nums">
+                                                    {tournament.players}/{size}
+                                                </span>
+                                            </div>
+                                            <SeatMeter
+                                                filled={tournament.players}
+                                                size={size}
+                                            />
+                                        </div>
                                         {tournament.id === currentId ? (
-                                            <Badge variant="secondary">
-                                                Joined
-                                            </Badge>
+                                            <Button variant="secondary" asChild>
+                                                <Link
+                                                    href={show(tournament.id)}
+                                                >
+                                                    Joined · View bracket
+                                                </Link>
+                                            </Button>
                                         ) : (
                                             <Button
-                                                size="sm"
+                                                className="font-bold"
                                                 disabled={currentId !== null}
                                                 onClick={() =>
                                                     router.post(
@@ -142,20 +179,23 @@ export default function Tournaments({
                                                     )
                                                 }
                                             >
-                                                Join
+                                                Join tournament
                                             </Button>
                                         )}
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </CardContent>
-                </Card>
+                                    </Card>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </section>
 
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <Card>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <Card accent="violet">
                         <CardHeader>
-                            <CardTitle>In progress</CardTitle>
+                            <CardTitle>
+                                <Swords className="size-4 text-violet-500" />
+                                In progress
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <TournamentList
@@ -164,9 +204,12 @@ export default function Tournaments({
                             />
                         </CardContent>
                     </Card>
-                    <Card>
+                    <Card accent="amber">
                         <CardHeader>
-                            <CardTitle>Recent champions</CardTitle>
+                            <CardTitle>
+                                <Crown className="size-4 text-amber-500" />
+                                Recent champions
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <TournamentList
@@ -178,6 +221,29 @@ export default function Tournaments({
                 </div>
             </div>
         </>
+    );
+}
+
+/** One pip per seat; filled ones glow. */
+function SeatMeter({ filled, size }: { filled: number; size: number }) {
+    return (
+        <div
+            className="flex gap-1"
+            role="img"
+            aria-label={`${filled} of ${size} seats taken`}
+        >
+            {Array.from({ length: size }, (_, i) => (
+                <span
+                    key={i}
+                    className={cn(
+                        'h-2.5 flex-1 rounded-sm',
+                        i < filled
+                            ? 'bg-gradient-to-b from-emerald-300 to-emerald-500 shadow-[0_0_8px_rgb(16_185_129/0.5)]'
+                            : 'bg-muted',
+                    )}
+                />
+            ))}
+        </div>
     );
 }
 
@@ -215,16 +281,21 @@ function TournamentList({
     return (
         <ul className="flex flex-col gap-2 text-sm">
             {tournaments.map((tournament) => (
-                <li key={tournament.id} className="flex items-center gap-2">
+                <li
+                    key={tournament.id}
+                    className="flex items-center gap-2.5 rounded-lg px-1.5 py-1.5 hover:bg-muted/40"
+                >
+                    <Trophy className="size-4 shrink-0 text-muted-foreground" />
                     <Link
                         href={show(tournament.id)}
-                        className="flex-1 truncate font-medium hover:underline"
+                        className="flex-1 truncate font-semibold hover:underline"
                     >
                         {tournament.name}
                     </Link>
                     {tournament.winner && (
-                        <span className="flex items-center gap-1 text-muted-foreground">
+                        <span className="flex items-center gap-1.5 font-semibold">
                             <Crown className="size-3.5 text-amber-500" />
+                            <PlayerEmblem name={tournament.winner} size="xs" />
                             {tournament.winner}
                         </span>
                     )}

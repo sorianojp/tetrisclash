@@ -1,9 +1,12 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useEcho } from '@laravel/echo-react';
 import {
+    ChevronRight,
     Crown,
     Flag,
     Gamepad2,
+    History,
+    Keyboard,
     Swords,
     Timer,
     Trophy,
@@ -20,16 +23,12 @@ import { OnlineNow } from '@/components/tetris/online-now';
 import { PracticeLeaderboard } from '@/components/tetris/practice-leaderboard';
 import type { PracticeBoards } from '@/components/tetris/practice-leaderboard';
 import type { DuelSummary } from '@/components/tetris/duel-history';
+import { PlayerEmblem } from '@/components/tetris/player-emblem';
 import { RankBadge, RankProgressBar } from '@/components/tetris/rank-badge';
 import type { RankProgress } from '@/components/tetris/rank-badge';
+import { StatTile } from '@/components/tetris/stat-tile';
 import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -232,222 +231,216 @@ export default function Lobby({
     return (
         <>
             <Head title="Lobby" />
-            <div className="flex h-full flex-1 flex-col gap-4 p-4">
+            <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-4 sm:p-6">
                 {activeDuelId && (
-                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm">
-                        <span>You have a match in progress.</span>
+                    <Card
+                        accent="amber"
+                        className="flex-row flex-wrap items-center justify-between gap-3 px-5 py-4"
+                    >
+                        <span className="flex items-center gap-2 text-sm font-semibold">
+                            <span className="relative flex size-2.5">
+                                <span className="absolute inline-flex size-full rounded-full bg-amber-400 opacity-60 motion-safe:animate-ping" />
+                                <span className="relative inline-flex size-2.5 rounded-full bg-amber-400" />
+                            </span>
+                            You have a match in progress.
+                        </span>
                         <Button
                             size="sm"
+                            className="bg-amber-400 font-bold text-amber-950 hover:bg-amber-300"
                             onClick={() => goToDuel(activeDuelId)}
                         >
-                            Rejoin match
+                            <Swords /> Rejoin match
                         </Button>
-                    </div>
+                    </Card>
                 )}
 
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                    <div className="flex flex-col gap-4 lg:col-span-2">
-                        <Card className="h-full gap-0 overflow-hidden py-0">
-                            <div className="relative h-full bg-gradient-to-br from-indigo-950 via-violet-900 to-fuchsia-900 p-6 text-white sm:p-8">
-                                <TetrominoBackdrop />
-                                <div className="relative flex flex-col gap-4">
-                                    <div>
-                                        <p className="text-xs font-semibold tracking-[0.2em] text-fuchsia-200 uppercase">
-                                            Tetris Clash · 1v1
-                                        </p>
-                                        <h1 className="mt-1 text-3xl font-black tracking-tight sm:text-4xl">
-                                            Battle for the top
-                                        </h1>
-                                        <p className="mt-2 max-w-md text-sm text-indigo-100">
-                                            Two minutes. Clear lines to send
-                                            garbage. Top your opponent out three
-                                            times to win by KO. Otherwise, most
-                                            KOs wins, then most lines sent.
-                                        </p>
-                                    </div>
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                    <Card className="gap-0 overflow-hidden py-0 lg:col-span-2">
+                        <div className="relative h-full bg-gradient-to-br from-indigo-950 via-violet-900 to-fuchsia-900 p-6 text-white sm:p-8">
+                            <TetrominoBackdrop />
+                            <div className="relative flex h-full flex-col gap-5">
+                                <div>
+                                    <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold tracking-[0.25em] text-fuchsia-100 uppercase">
+                                        <Swords className="size-3.5" /> Ranked
+                                        1v1
+                                    </p>
+                                    <h1 className="mt-3 text-4xl font-black tracking-tight italic sm:text-5xl">
+                                        Battle for{' '}
+                                        <span className="bg-gradient-to-r from-amber-300 via-rose-300 to-fuchsia-300 bg-clip-text text-transparent">
+                                            the top
+                                        </span>
+                                    </h1>
+                                    <p className="mt-3 max-w-md text-sm text-indigo-100 sm:text-base">
+                                        Two minutes. Clear lines to send
+                                        garbage. Top your opponent out three
+                                        times to win by KO. Otherwise, most KOs
+                                        wins, then most lines sent.
+                                    </p>
+                                </div>
 
-                                    {searching ? (
-                                        <div className="flex flex-wrap items-center gap-3">
-                                            <div className="flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 font-medium">
-                                                <Spinner />
-                                                Searching for an opponent…
-                                                <span className="text-indigo-200 tabular-nums">
-                                                    {formatTime(
-                                                        Math.max(
-                                                            0,
-                                                            now -
-                                                                searchStartedAt,
-                                                        ),
-                                                        false,
-                                                    )}
-                                                </span>
-                                                {searchRange !== undefined && (
-                                                    <span className="text-xs text-indigo-200">
-                                                        {searchRange === null
-                                                            ? 'any rating'
-                                                            : `rating ±${searchRange}`}
-                                                    </span>
+                                {searching ? (
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <div className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2.5 font-semibold ring-1 ring-white/15">
+                                            <Spinner />
+                                            Searching for an opponent…
+                                            <span className="text-indigo-200 tabular-nums">
+                                                {formatTime(
+                                                    Math.max(
+                                                        0,
+                                                        now - searchStartedAt,
+                                                    ),
+                                                    false,
                                                 )}
-                                            </div>
-                                            <Button
-                                                variant="secondary"
-                                                onClick={cancelSearch}
-                                            >
-                                                Cancel
-                                            </Button>
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-wrap gap-3">
-                                            <Button
-                                                size="lg"
-                                                className="bg-amber-400 font-bold text-amber-950 hover:bg-amber-300"
-                                                onClick={startSearch}
-                                                disabled={
-                                                    activeDuelId !== null ||
-                                                    !hasEnergy
-                                                }
-                                            >
-                                                <Swords /> Find match
-                                                <span className="flex items-center gap-0.5 rounded bg-amber-950/15 px-1.5 text-xs">
-                                                    <Zap className="size-3" />1
+                                            </span>
+                                            {searchRange !== undefined && (
+                                                <span className="text-xs text-indigo-200">
+                                                    {searchRange === null
+                                                        ? 'any rating'
+                                                        : `rating ±${searchRange}`}
                                                 </span>
-                                            </Button>
-                                            <Button
-                                                size="lg"
-                                                variant="secondary"
-                                                className="bg-white/10 text-white hover:bg-white/20"
-                                                asChild
-                                            >
-                                                <Link href={practice()}>
-                                                    <Gamepad2 /> Practice
-                                                </Link>
-                                            </Button>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button
-                                                        size="lg"
-                                                        variant="secondary"
-                                                        className="bg-white/10 text-white hover:bg-white/20"
-                                                        disabled={
-                                                            activeDuelId !==
-                                                            null
-                                                        }
-                                                    >
-                                                        <UserPlus /> Challenge a
-                                                        friend
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="start">
-                                                    <DropdownMenuItem
-                                                        onSelect={() =>
-                                                            challenge('battle')
-                                                        }
-                                                    >
-                                                        <Swords /> Battle
-                                                        <span className="ml-auto text-xs text-muted-foreground">
-                                                            3 KOs
-                                                        </span>
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        onSelect={() =>
-                                                            challenge('race')
-                                                        }
-                                                    >
-                                                        <Flag /> Race
-                                                        <span className="ml-auto text-xs text-muted-foreground">
-                                                            First to 40 lines
-                                                        </span>
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
+                                            )}
                                         </div>
-                                    )}
+                                        <Button
+                                            variant="secondary"
+                                            onClick={cancelSearch}
+                                        >
+                                            Cancel
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-wrap gap-3">
+                                        <Button
+                                            size="lg"
+                                            className="h-12 bg-gradient-to-r from-amber-300 to-amber-400 px-6 text-base font-black text-amber-950 italic shadow-lg shadow-amber-500/30 hover:from-amber-200 hover:to-amber-300"
+                                            onClick={startSearch}
+                                            disabled={
+                                                activeDuelId !== null ||
+                                                !hasEnergy
+                                            }
+                                        >
+                                            <Swords /> FIND MATCH
+                                            <span className="flex items-center gap-0.5 rounded bg-amber-950/15 px-1.5 text-xs not-italic">
+                                                <Zap className="size-3" />1
+                                            </span>
+                                        </Button>
+                                        <Button
+                                            size="lg"
+                                            variant="secondary"
+                                            className="h-12 bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/20"
+                                            asChild
+                                        >
+                                            <Link href={practice()}>
+                                                <Gamepad2 /> Practice
+                                            </Link>
+                                        </Button>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    size="lg"
+                                                    variant="secondary"
+                                                    className="h-12 bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/20"
+                                                    disabled={
+                                                        activeDuelId !== null
+                                                    }
+                                                >
+                                                    <UserPlus /> Challenge a
+                                                    friend
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="start">
+                                                <DropdownMenuItem
+                                                    onSelect={() =>
+                                                        challenge('battle')
+                                                    }
+                                                >
+                                                    <Swords /> Battle
+                                                    <span className="ml-auto text-xs text-muted-foreground">
+                                                        3 KOs
+                                                    </span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onSelect={() =>
+                                                        challenge('race')
+                                                    }
+                                                >
+                                                    <Flag /> Race
+                                                    <span className="ml-auto text-xs text-muted-foreground">
+                                                        First to 40 lines
+                                                    </span>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                )}
 
+                                <div className="mt-auto flex flex-wrap items-end justify-between gap-4">
                                     <EnergyMeter
                                         current={liveEnergyNow.current}
                                         max={energy.max}
                                         nextInMs={liveEnergyNow.nextInMs}
                                         intervalMs={energy.intervalMs}
                                     />
-
                                     <OnlineNow initialCount={onlineCount} />
                                 </div>
                             </div>
-                        </Card>
-                    </div>
+                        </div>
+                    </Card>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center justify-between gap-2">
-                                Your stats
-                                <Link
-                                    href={showPlayer(user.id)}
-                                    className="text-xs font-normal text-muted-foreground hover:underline"
-                                >
-                                    View profile
-                                </Link>
-                            </CardTitle>
-                            <CardDescription>
-                                Ranked matches earn XP and move your rating.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="grid grid-cols-3 gap-3">
-                            <div className="col-span-3 flex flex-col gap-2 rounded-lg border p-3">
+                    {/* Your player card, like the ones in the match intro. */}
+                    <Card accent="amber" className="gap-5 px-6">
+                        <div className="flex items-center gap-4">
+                            <PlayerEmblem
+                                name={user.name}
+                                id={user.id}
+                                size="lg"
+                            />
+                            <div className="min-w-0 flex-1">
+                                <p className="text-[11px] font-bold tracking-[0.2em] text-amber-600 uppercase dark:text-amber-300">
+                                    Your card
+                                </p>
+                                <h2 className="truncate text-2xl font-black tracking-tight">
+                                    {user.name}
+                                </h2>
                                 <RankBadge
                                     progress={stats.rank}
-                                    className="self-start text-sm"
+                                    className="mt-1"
                                 />
-                                <RankProgressBar progress={stats.rank} />
                             </div>
-                            <Stat
-                                icon={<Trophy className="size-4" />}
+                        </div>
+                        <RankProgressBar progress={stats.rank} />
+                        <div className="grid grid-cols-3 gap-2">
+                            <StatTile
+                                icon={Trophy}
+                                tone="amber"
                                 label="Rating"
                                 value={stats.rating}
                             />
-                            <Stat
-                                icon={<Swords className="size-4" />}
+                            <StatTile
+                                icon={Swords}
+                                tone="violet"
                                 label="Record"
                                 value={`${stats.wins}–${stats.losses}`}
                             />
-                            <Stat
-                                label="Win rate"
+                            <StatTile
+                                tone="emerald"
+                                label="Win"
                                 value={winRate === null ? '—' : `${winRate}%`}
                             />
-                            <div className="col-span-3 rounded-lg border p-3">
-                                <div className="mb-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-                                    <Timer className="size-4" /> Practice bests
-                                </div>
-                                <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                                    {RECORD_MODES.map((mode) => (
-                                        <div
-                                            key={mode}
-                                            className="flex justify-between gap-2"
-                                        >
-                                            <dt className="text-muted-foreground">
-                                                {PRACTICE_MODES[mode].label}
-                                            </dt>
-                                            <dd className="font-semibold tabular-nums">
-                                                {records[mode] === null
-                                                    ? '—'
-                                                    : formatRecord(
-                                                          mode,
-                                                          records[mode],
-                                                      )}
-                                            </dd>
-                                        </div>
-                                    ))}
-                                </dl>
-                            </div>
-                        </CardContent>
+                        </div>
+                        <Button variant="outline" className="mt-auto" asChild>
+                            <Link href={showPlayer(user.id)}>
+                                View profile <ChevronRight />
+                            </Link>
+                        </Button>
                     </Card>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                    <Card>
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                    <Card accent="violet">
                         <CardHeader>
-                            <CardTitle className="flex items-center justify-between gap-2">
+                            <CardTitle className="justify-between">
                                 <span className="flex items-center gap-2">
-                                    <Crown className="size-4 text-amber-500" />{' '}
+                                    <Crown className="size-4 text-amber-500" />
                                     Leaderboard
                                 </span>
                                 <Select
@@ -491,28 +484,31 @@ export default function Lobby({
                                         <li
                                             key={player.id}
                                             className={cn(
-                                                'flex items-center gap-3 rounded-md px-2 py-1.5',
+                                                'flex items-center gap-2.5 rounded-lg px-2 py-1.5',
                                                 player.id === user.id &&
-                                                    'bg-muted',
+                                                    'bg-violet-500/10 ring-1 ring-violet-500/30',
                                             )}
                                         >
-                                            <span className="w-5 text-right font-mono text-muted-foreground">
-                                                {i + 1}
-                                            </span>
+                                            <Place position={i + 1} />
+                                            <PlayerEmblem
+                                                name={player.name}
+                                                id={player.id}
+                                                size="xs"
+                                            />
+                                            <Link
+                                                href={showPlayer(player.id)}
+                                                className="min-w-0 flex-1 truncate font-semibold hover:underline"
+                                            >
+                                                {player.name}
+                                            </Link>
                                             <RankBadge
                                                 progress={player.rank}
                                                 compact
                                             />
-                                            <Link
-                                                href={showPlayer(player.id)}
-                                                className="flex-1 truncate font-medium hover:underline"
-                                            >
-                                                {player.name}
-                                            </Link>
-                                            <span className="text-xs text-muted-foreground tabular-nums">
+                                            <span className="hidden text-xs text-muted-foreground tabular-nums sm:inline">
                                                 {player.wins}–{player.losses}
                                             </span>
-                                            <span className="w-12 text-right font-semibold tabular-nums">
+                                            <span className="w-11 text-right font-black tabular-nums">
                                                 {player.rating}
                                             </span>
                                         </li>
@@ -522,9 +518,12 @@ export default function Lobby({
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card accent="cyan">
                         <CardHeader>
-                            <CardTitle>Recent matches</CardTitle>
+                            <CardTitle>
+                                <History className="size-4 text-cyan-500" />
+                                Recent matches
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <DuelHistory
@@ -534,14 +533,53 @@ export default function Lobby({
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Controls</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ControlsLegend />
-                        </CardContent>
-                    </Card>
+                    <div className="flex flex-col gap-6">
+                        <Card accent="emerald">
+                            <CardHeader>
+                                <CardTitle className="justify-between">
+                                    <span className="flex items-center gap-2">
+                                        <Timer className="size-4 text-emerald-500" />
+                                        Practice bests
+                                    </span>
+                                    <Link
+                                        href={practice()}
+                                        className="text-xs font-semibold text-muted-foreground hover:text-foreground"
+                                    >
+                                        Play →
+                                    </Link>
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="grid grid-cols-2 gap-2">
+                                {RECORD_MODES.map((mode) => (
+                                    <StatTile
+                                        key={mode}
+                                        label={PRACTICE_MODES[mode].label}
+                                        value={
+                                            records[mode] === null
+                                                ? '—'
+                                                : formatRecord(
+                                                      mode,
+                                                      records[mode],
+                                                  )
+                                        }
+                                        className="py-2 [&>span:nth-child(2)]:text-base"
+                                    />
+                                ))}
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>
+                                    <Keyboard className="size-4 text-muted-foreground" />
+                                    Controls
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <ControlsLegend />
+                            </CardContent>
+                        </Card>
+                    </div>
                 </div>
             </div>
         </>
@@ -552,36 +590,34 @@ Lobby.layout = {
     breadcrumbs: [{ title: 'Lobby', href: dashboard() }],
 };
 
-function Stat({
-    label,
-    value,
-    icon,
-}: {
-    label: string;
-    value: string | number;
-    icon?: React.ReactNode;
-}) {
+/** Leaderboard position; the top three get medal colours. */
+function Place({ position }: { position: number }) {
+    const medal = [
+        'bg-gradient-to-br from-amber-200 to-amber-500 text-amber-950',
+        'bg-gradient-to-br from-slate-100 to-slate-400 text-slate-900',
+        'bg-gradient-to-br from-orange-300 to-orange-700 text-orange-950',
+    ][position - 1];
+
     return (
-        <div className="rounded-lg border p-3">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                {icon}
-                {label}
-            </div>
-            <div className="mt-1 text-lg font-bold whitespace-nowrap tabular-nums sm:text-xl">
-                {value}
-            </div>
-        </div>
+        <span
+            className={cn(
+                'flex size-6 shrink-0 items-center justify-center rounded-md text-xs font-black tabular-nums',
+                medal ?? 'text-muted-foreground',
+            )}
+        >
+            {position}
+        </span>
     );
 }
 
 /** Decorative falling blocks for the hero card. */
 function TetrominoBackdrop() {
     const blocks = [
-        { color: 'bg-cyan-400', className: 'right-6 top-4 h-4 w-16' },
+        // Kept to the top right, clear of the buttons and the online pill.
+        { color: 'bg-cyan-400', className: 'right-6 top-5 h-4 w-16' },
         { color: 'bg-amber-400', className: 'right-28 top-12 size-8' },
-        { color: 'bg-fuchsia-500', className: 'right-10 bottom-6 h-4 w-12' },
-        { color: 'bg-lime-400', className: 'right-44 bottom-10 h-8 w-4' },
-        { color: 'bg-rose-500', className: 'right-20 top-28 h-4 w-8' },
+        { color: 'bg-fuchsia-500', className: 'right-8 top-20 h-8 w-4' },
+        { color: 'bg-rose-500', className: 'right-16 top-32 h-4 w-8' },
     ];
 
     return (

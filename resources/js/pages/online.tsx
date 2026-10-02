@@ -1,17 +1,21 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { BellOff, Eye, Flag, Search, Swords, UserPlus } from 'lucide-react';
+import {
+    BellOff,
+    Eye,
+    Flag,
+    Search,
+    Swords,
+    UserPlus,
+    Users,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { InviteToggle } from '@/components/tetris/invite-toggle';
+import { PageHeader } from '@/components/tetris/page-header';
+import { PlayerEmblem } from '@/components/tetris/player-emblem';
 import { RankBadge } from '@/components/tetris/rank-badge';
 import type { RankProgress } from '@/components/tetris/rank-badge';
 import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
     DropdownMenu,
@@ -21,6 +25,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { watch as watchDuel } from '@/routes/duels';
 import { index as onlineIndex } from '@/routes/online';
@@ -111,132 +116,154 @@ export default function Online({
     return (
         <>
             <Head title="Online players" />
-            <div className="flex h-full flex-1 flex-col items-center p-4">
-                <Card className="w-full max-w-3xl">
-                    <CardHeader className="flex-row flex-wrap items-start justify-between gap-3">
-                        <div className="flex flex-col gap-1.5">
-                            <CardTitle className="flex items-center gap-2">
-                                <span className="size-2 rounded-full bg-emerald-500" />
-                                Online players
-                                <span className="font-normal text-muted-foreground tabular-nums">
-                                    {others.toLocaleString()}
-                                </span>
-                            </CardTitle>
-                            <CardDescription>
-                                Invite a player to a friendly match. No rating
-                                or XP. Closest rating to yours first.
-                            </CardDescription>
-                        </div>
-                        <InviteToggle />
-                    </CardHeader>
-                    <CardContent className="flex flex-col gap-4">
-                        {!user.accepts_invites && (
-                            <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
-                                Invites are off. Other players can see you're
-                                online but can't invite you.
-                            </p>
-                        )}
+            <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 p-4 sm:p-6">
+                <PageHeader
+                    icon={Users}
+                    title="Online players"
+                    description={
+                        <>
+                            <span className="font-semibold text-emerald-600 tabular-nums dark:text-emerald-400">
+                                {others.toLocaleString()} online
+                            </span>{' '}
+                            · Invite anyone to a friendly match: no rating or
+                            XP. Closest rating to yours first.
+                        </>
+                    }
+                    actions={<InviteToggle />}
+                />
 
-                        <div className="flex flex-wrap items-center gap-3">
-                            <div className="relative min-w-48 flex-1">
-                                <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                                <Input
-                                    id="online-search"
-                                    type="search"
-                                    placeholder="Search by name"
-                                    className="pl-8"
-                                    value={search}
-                                    maxLength={50}
-                                    onChange={(event) =>
-                                        setSearch(event.target.value)
-                                    }
-                                />
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Checkbox
-                                    id="online-available"
-                                    checked={filters.available}
-                                    onCheckedChange={(checked) =>
-                                        applyFilters({
-                                            search: search.trim(),
-                                            available: checked === true,
-                                        })
-                                    }
-                                />
-                                <Label htmlFor="online-available">
-                                    Available to invite
-                                </Label>
-                            </div>
-                        </div>
+                {!user.accepts_invites && (
+                    <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-sm text-amber-700 dark:text-amber-200">
+                        Your invites are off. Other players can see you're
+                        online but can't invite you.
+                    </p>
+                )}
 
-                        {players.data.length === 0 ? (
-                            <p className="py-6 text-center text-sm text-muted-foreground">
-                                {filters.search || filters.available ? (
-                                    'No online players match your search.'
-                                ) : (
-                                    <>
-                                        No one else is online right now. Use{' '}
-                                        <Link
-                                            href={dashboard()}
-                                            className="font-medium underline"
-                                        >
-                                            Challenge a friend
-                                        </Link>{' '}
-                                        in the lobby to send a link instead.
-                                    </>
-                                )}
+                <Card className="flex-row flex-wrap items-center gap-3 px-4 py-3">
+                    <div className="relative min-w-48 flex-1">
+                        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            id="online-search"
+                            type="search"
+                            placeholder="Search players by name"
+                            className="h-10 rounded-xl pl-9"
+                            value={search}
+                            maxLength={50}
+                            onChange={(event) => setSearch(event.target.value)}
+                        />
+                    </div>
+                    <div className="flex items-center gap-2 rounded-xl border px-3 py-2">
+                        <Checkbox
+                            id="online-available"
+                            checked={filters.available}
+                            onCheckedChange={(checked) =>
+                                applyFilters({
+                                    search: search.trim(),
+                                    available: checked === true,
+                                })
+                            }
+                        />
+                        <Label htmlFor="online-available">
+                            Available to invite
+                        </Label>
+                    </div>
+                </Card>
+
+                {players.data.length === 0 ? (
+                    <Card className="items-center gap-3 px-6 py-12 text-center">
+                        <span className="flex size-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+                            <Users className="size-7" />
+                        </span>
+                        {filters.search || filters.available ? (
+                            <p className="text-sm text-muted-foreground">
+                                No online players match your search.
                             </p>
                         ) : (
-                            <ul className="flex flex-col gap-1 text-sm">
-                                {players.data.map((player) => (
-                                    <li
-                                        key={player.id}
-                                        className="flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-muted/50"
-                                    >
-                                        <RankBadge
-                                            progress={player.rank}
-                                            compact
+                            <>
+                                <p className="font-semibold">
+                                    No one else is online right now
+                                </p>
+                                <p className="max-w-sm text-sm text-muted-foreground">
+                                    Send a friend a challenge link instead. They
+                                    can play straight from it.
+                                </p>
+                                <Button className="mt-2" asChild>
+                                    <Link href={dashboard()}>
+                                        <UserPlus /> Challenge a friend
+                                    </Link>
+                                </Button>
+                            </>
+                        )}
+                    </Card>
+                ) : (
+                    <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {players.data.map((player) => (
+                            <li key={player.id}>
+                                <Card className="h-full flex-row items-center gap-3 px-4 py-4">
+                                    <span className="relative">
+                                        <PlayerEmblem
+                                            name={player.name}
+                                            id={player.id}
+                                            size="md"
                                         />
+                                        <span
+                                            className={cn(
+                                                'absolute -right-1 -bottom-1 size-3.5 rounded-full border-2 border-card',
+                                                player.inMatch
+                                                    ? 'bg-rose-500'
+                                                    : 'bg-emerald-500',
+                                            )}
+                                        />
+                                    </span>
+                                    <div className="min-w-0 flex-1">
                                         <Link
                                             href={showPlayer(player.id)}
-                                            className="min-w-0 flex-1 truncate font-medium hover:underline"
+                                            className="block truncate font-bold hover:underline"
                                         >
                                             {player.name}
                                         </Link>
-                                        <span className="text-xs text-muted-foreground tabular-nums">
-                                            {player.rating}
-                                        </span>
-                                        <PlayerAction
-                                            player={player}
-                                            canInvite={canInvite}
-                                            onInvite={(mode) =>
-                                                sendInvite(player, mode)
-                                            }
-                                        />
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
+                                        <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                                            <RankBadge
+                                                progress={player.rank}
+                                                compact
+                                            />
+                                            <span className="font-semibold tabular-nums">
+                                                {player.rating}
+                                            </span>
+                                            {player.inMatch && (
+                                                <span className="font-semibold text-rose-500">
+                                                    In a match
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <PlayerAction
+                                        player={player}
+                                        canInvite={canInvite}
+                                        onInvite={(mode) =>
+                                            sendInvite(player, mode)
+                                        }
+                                    />
+                                </Card>
+                            </li>
+                        ))}
+                    </ul>
+                )}
 
-                        {players.last_page > 1 && (
-                            <nav
-                                aria-label="Pages"
-                                className="flex items-center justify-between gap-3 text-sm"
-                            >
-                                <PageLink href={players.prev_page_url}>
-                                    Previous
-                                </PageLink>
-                                <span className="text-muted-foreground tabular-nums">
-                                    Page {players.current_page} of{' '}
-                                    {players.last_page}
-                                </span>
-                                <PageLink href={players.next_page_url}>
-                                    Next
-                                </PageLink>
-                            </nav>
-                        )}
-                    </CardContent>
-                </Card>
+                {players.last_page > 1 && (
+                    <nav
+                        aria-label="Pages"
+                        className="flex items-center justify-between gap-3 text-sm"
+                    >
+                        <PageLink href={players.prev_page_url}>
+                            Previous
+                        </PageLink>
+                        <span className="text-muted-foreground tabular-nums">
+                            Page {players.current_page} of {players.last_page}
+                        </span>
+                        <PageLink href={players.next_page_url}>Next</PageLink>
+                    </nav>
+                )}
             </div>
         </>
     );
@@ -281,7 +308,7 @@ function PlayerAction({
 }) {
     if (player.duelId !== null) {
         return (
-            <Button variant="outline" size="sm" className="w-24" asChild>
+            <Button variant="outline" size="sm" asChild>
                 <Link href={watchDuel(player.duelId)}>
                     <Eye /> Watch
                 </Link>
@@ -301,9 +328,7 @@ function PlayerAction({
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button
-                    variant="outline"
                     size="sm"
-                    className="w-24"
                     disabled={!canInvite}
                     title={
                         canInvite
@@ -334,7 +359,7 @@ function PlayerAction({
 
 function Status({ children }: { children: React.ReactNode }) {
     return (
-        <span className="flex w-24 items-center justify-end gap-1 text-xs text-muted-foreground">
+        <span className="flex items-center justify-end gap-1 text-xs whitespace-nowrap text-muted-foreground">
             {children}
         </span>
     );

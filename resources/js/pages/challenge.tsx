@@ -3,6 +3,7 @@ import { useEcho } from '@laravel/echo-react';
 import { Check, Copy, Flag, Swords } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { PlayerEmblem } from '@/components/tetris/player-emblem';
 import { RankBadge } from '@/components/tetris/rank-badge';
 import type { RankProgress } from '@/components/tetris/rank-badge';
 import { Button } from '@/components/ui/button';
@@ -101,11 +102,16 @@ export default function Challenge({
                     inviteeName={invitee?.name}
                 />
             )}
-            <div className="flex h-full flex-1 items-start justify-center p-4 sm:items-center">
-                <Card className="w-full max-w-md">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <mode.icon className="size-5" />
+            <div className="flex h-full flex-1 items-start justify-center p-4 sm:items-center sm:p-6">
+                <Card
+                    accent={challenge.mode === 'race' ? 'cyan' : 'violet'}
+                    className="w-full max-w-md"
+                >
+                    <CardHeader className="items-center text-center">
+                        <span className="mb-1 flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-white shadow-lg shadow-violet-500/30">
+                            <mode.icon className="size-6" />
+                        </span>
+                        <CardTitle className="justify-center text-2xl font-black">
                             {isChallenger
                                 ? invitee
                                     ? `${mode.label} invite to ${invitee.name}`
@@ -117,7 +123,12 @@ export default function Challenge({
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col gap-4">
-                        <div className="flex items-center gap-3 rounded-lg border p-3">
+                        <div className="flex items-center gap-3 rounded-xl border bg-muted/40 p-3 dark:bg-white/[0.03]">
+                            <PlayerEmblem
+                                name={challenger.name}
+                                id={challenger.id}
+                                size="md"
+                            />
                             <div className="min-w-0 flex-1">
                                 <Link
                                     href={showPlayer(challenger.id)}
@@ -214,6 +225,7 @@ export default function Challenge({
                         ) : auth.user ? (
                             <Button
                                 size="lg"
+                                className="h-12 bg-gradient-to-r from-amber-300 to-amber-400 text-base font-black text-amber-950 italic shadow-lg shadow-amber-500/25 hover:from-amber-200 hover:to-amber-300"
                                 onClick={() =>
                                     router.post(accept(challenge.code).url)
                                 }
@@ -222,7 +234,11 @@ export default function Challenge({
                             </Button>
                         ) : (
                             <div className="flex flex-col gap-2">
-                                <Button size="lg" asChild>
+                                <Button
+                                    size="lg"
+                                    className="h-12 bg-gradient-to-r from-amber-300 to-amber-400 text-base font-black text-amber-950 italic shadow-lg shadow-amber-500/25 hover:from-amber-200 hover:to-amber-300"
+                                    asChild
+                                >
                                     <Link href={register()}>
                                         <mode.icon /> Sign up free to accept
                                     </Link>

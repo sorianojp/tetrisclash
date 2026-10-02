@@ -35,6 +35,7 @@ export function NavMain({
                                     : isCurrentUrl(item.href)
                             }
                             tooltip={{ children: item.title }}
+                            className="font-medium data-[active=true]:bg-gradient-to-r data-[active=true]:from-violet-500/20 data-[active=true]:to-fuchsia-500/5 data-[active=true]:font-semibold data-[active=true]:text-sidebar-accent-foreground data-[active=true]:shadow-[inset_2px_0_0_0_var(--color-violet-400)] [&>svg]:text-muted-foreground data-[active=true]:[&>svg]:text-violet-500 dark:data-[active=true]:[&>svg]:text-violet-300"
                         >
                             <Link href={item.href} prefetch>
                                 {item.icon && <item.icon />}

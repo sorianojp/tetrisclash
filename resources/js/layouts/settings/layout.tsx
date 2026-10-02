@@ -1,8 +1,9 @@
 import { Link } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
-import Heading from '@/components/heading';
+import { Palette, Settings, Shield, SunMoon, UserRound } from 'lucide-react';
+import { PageHeader } from '@/components/tetris/page-header';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import { Card } from '@/components/ui/card';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
@@ -14,23 +15,23 @@ import type { NavItem } from '@/types';
 const sidebarNavItems: NavItem[] = [
     {
         title: 'Profile',
+        icon: UserRound,
         href: edit(),
-        icon: null,
     },
     {
         title: 'Security',
+        icon: Shield,
         href: editSecurity(),
-        icon: null,
     },
     {
         title: 'Appearance',
+        icon: SunMoon,
         href: editAppearance(),
-        icon: null,
     },
     {
         title: 'Game themes',
+        icon: Palette,
         href: editThemes(),
-        icon: null,
     },
 ];
 
@@ -38,16 +39,17 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
 
     return (
-        <div className="px-4 py-6">
-            <Heading
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4 sm:p-6">
+            <PageHeader
+                icon={Settings}
                 title="Settings"
-                description="Manage your profile and account settings"
+                description="Manage your profile, account and how the game looks"
             />
 
-            <div className="flex flex-col lg:flex-row lg:space-x-12">
-                <aside className="w-full max-w-xl lg:w-48">
+            <div className="flex flex-col gap-6 lg:flex-row">
+                <aside className="w-full lg:w-52">
                     <nav
-                        className="flex flex-col space-y-1 space-x-0"
+                        className="flex gap-1 overflow-x-auto lg:flex-col"
                         aria-label="Settings"
                     >
                         {sidebarNavItems.map((item, index) => (
@@ -56,9 +58,11 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                 size="sm"
                                 variant="ghost"
                                 asChild
-                                className={cn('w-full justify-start', {
-                                    'bg-muted': isCurrentOrParentUrl(item.href),
-                                })}
+                                className={cn(
+                                    'h-9 shrink-0 justify-start rounded-lg font-semibold text-muted-foreground lg:w-full',
+                                    isCurrentOrParentUrl(item.href) &&
+                                        'bg-gradient-to-r from-violet-500/20 to-fuchsia-500/5 text-foreground shadow-[inset_2px_0_0_0_var(--color-violet-400)]',
+                                )}
                             >
                                 <Link href={item.href}>
                                     {item.icon && (
@@ -71,13 +75,11 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                     </nav>
                 </aside>
 
-                <Separator className="my-6 lg:hidden" />
-
-                <div className="flex-1 md:max-w-2xl">
-                    <section className="max-w-xl space-y-12">
+                <Card className="min-w-0 flex-1 px-5 py-6 sm:px-8">
+                    <section className="max-w-2xl space-y-12">
                         {children}
                     </section>
-                </div>
+                </Card>
             </div>
         </div>
     );

@@ -1,6 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { echo } from '@laravel/echo-react';
-import { Eye, Flag, Film, WifiOff } from 'lucide-react';
+import { Eye, Flag, Film, Swords, WifiOff } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ClearCallout, describeClear } from '@/components/tetris/clear-callout';
@@ -698,14 +698,15 @@ export default function Duel({
                         linesSent={progress.mine}
                         lines={progress.myLines}
                         raceLines={raceLines}
+                        tone="you"
                     />
                     <div className="flex flex-col items-center gap-1">
                         <div
                             className={cn(
-                                'rounded-lg bg-[#080b18] px-4 py-2 text-center font-mono text-2xl font-bold text-white tabular-nums ring-1 ring-indigo-500/30',
+                                'rounded-xl bg-[#080b18] px-4 py-2 text-center font-mono text-2xl font-black text-white tabular-nums shadow-[0_0_24px_-6px_rgb(139_92_246/0.6)] ring-1 ring-violet-500/40 sm:text-3xl',
                                 phase === 'playing' &&
                                     remaining < 15000 &&
-                                    'text-rose-400',
+                                    'text-rose-400 shadow-[0_0_28px_-4px_rgb(244_63_94/0.7)] ring-rose-500/60 motion-safe:animate-pulse',
                             )}
                         >
                             {formatTime(remaining, false)}
@@ -729,6 +730,7 @@ export default function Duel({
                         lines={progress.theirLines}
                         raceLines={raceLines}
                         align="right"
+                        tone="opponent"
                     />
                 </header>
 
@@ -945,79 +947,113 @@ function Result({
     const change = state.ratingChange ?? 0;
     const xpGained = state.xp[me.id] ?? 0;
 
+    const strip = {
+        win: 'from-amber-300 via-amber-400 to-orange-400',
+        loss: 'from-rose-400 via-pink-500 to-fuchsia-500',
+        draw: 'from-slate-300 to-slate-500',
+    }[outcome];
+
     return (
-        <div className="flex flex-col items-center gap-2 px-4 text-center text-white">
+        <div className="relative mx-3 flex w-full max-w-72 animate-in flex-col items-center gap-3 overflow-hidden rounded-2xl bg-[#0d1224]/95 px-4 pt-6 pb-4 text-center text-white shadow-2xl ring-1 ring-white/10 duration-300 zoom-in-90">
             <span
+                aria-hidden
                 className={cn(
-                    'animate-in text-5xl font-black tracking-tight duration-300 zoom-in-50',
-                    outcome === 'win' && 'text-amber-300',
-                    outcome === 'loss' && 'text-rose-300',
+                    'absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r',
+                    strip,
                 )}
-            >
-                {outcome === 'win'
-                    ? 'YOU WIN!'
-                    : outcome === 'loss'
-                      ? 'YOU LOSE'
-                      : 'DRAW'}
-            </span>
-            <span className="text-sm text-indigo-200">{reason}</span>
-            {!state.ranked && !tournamentId && (
-                <span className="text-xs text-indigo-200/80">
-                    Friendly match: no rating or XP
-                </span>
-            )}
-            {state.ranked && change > 0 && outcome !== 'draw' && (
+            />
+            <div className="flex flex-col items-center gap-1">
                 <span
                     className={cn(
-                        'text-lg font-bold',
-                        outcome === 'win'
-                            ? 'text-emerald-300'
-                            : 'text-rose-300',
+                        'bg-gradient-to-r bg-clip-text text-4xl font-black tracking-tight text-transparent italic',
+                        outcome === 'win' && 'from-amber-200 to-orange-400',
+                        outcome === 'loss' && 'from-rose-300 to-fuchsia-400',
+                        outcome === 'draw' && 'from-slate-100 to-slate-400',
                     )}
                 >
-                    {outcome === 'win' ? '+' : '−'}
-                    {change} rating
+                    {outcome === 'win'
+                        ? 'YOU WIN!'
+                        : outcome === 'loss'
+                          ? 'YOU LOSE'
+                          : 'DRAW'}
                 </span>
+                <span className="text-sm text-indigo-200">{reason}</span>
+                {!state.ranked && !tournamentId && (
+                    <span className="text-xs text-indigo-200/80">
+                        Friendly match: no rating or XP
+                    </span>
+                )}
+            </div>
+            {state.ranked && (
+                <div className="grid w-full grid-cols-2 gap-2">
+                    <div className="rounded-xl bg-white/5 px-2 py-2 ring-1 ring-white/10">
+                        <div className="text-[10px] font-bold tracking-wider text-indigo-300 uppercase">
+                            Rating
+                        </div>
+                        <div
+                            className={cn(
+                                'text-xl font-black tabular-nums',
+                                outcome === 'win' && 'text-emerald-300',
+                                outcome === 'loss' && 'text-rose-300',
+                            )}
+                        >
+                            {outcome === 'draw' || change === 0
+                                ? '±0'
+                                : `${outcome === 'win' ? '+' : '−'}${change}`}
+                        </div>
+                    </div>
+                    <div className="rounded-xl bg-white/5 px-2 py-2 ring-1 ring-white/10">
+                        <div className="text-[10px] font-bold tracking-wider text-indigo-300 uppercase">
+                            XP
+                        </div>
+                        <div className="text-xl font-black text-amber-300 tabular-nums">
+                            +{xpGained}
+                        </div>
+                    </div>
+                </div>
             )}
             {state.ranked && (
                 <>
-                    <span className="text-sm font-semibold text-indigo-100">
-                        +{xpGained} XP
-                    </span>
                     {rankedUp && (
-                        <span className="animate-callout text-2xl font-black text-amber-300">
+                        <span className="animate-callout text-xl font-black text-amber-300">
                             RANK UP! {me.rank.rank} · {me.rank.title}
                         </span>
                     )}
-                    <RankProgressBar progress={me.rank} className="w-56" />
+                    <RankProgressBar
+                        progress={me.rank}
+                        className="w-full text-indigo-200"
+                    />
                 </>
             )}
-            <div className="mt-3 flex flex-wrap justify-center gap-2">
+            <div className="flex w-full flex-col gap-2">
                 {state.ranked && (
                     <Button
+                        className="w-full bg-gradient-to-r from-amber-300 to-amber-400 font-black text-amber-950 italic hover:from-amber-200 hover:to-amber-300"
                         onClick={() =>
                             router.visit(dashboard({ query: { queue: 1 } }))
                         }
                     >
-                        Play again
+                        <Swords /> PLAY AGAIN
                     </Button>
                 )}
                 {tournamentId !== null && (
-                    <Button asChild>
+                    <Button className="w-full" asChild>
                         <Link href={showTournament(tournamentId)}>
                             Back to bracket
                         </Link>
                     </Button>
                 )}
-                <Button variant="secondary" asChild>
-                    <Link href={dashboard()}>Lobby</Link>
-                </Button>
-                <Button variant="secondary" asChild>
-                    <Link href={duelReplay(state.id)}>
-                        <Film /> Replay
-                    </Link>
-                </Button>
-                {share}
+                <div className="flex flex-wrap justify-center gap-2">
+                    <Button variant="secondary" size="sm" asChild>
+                        <Link href={dashboard()}>Lobby</Link>
+                    </Button>
+                    <Button variant="secondary" size="sm" asChild>
+                        <Link href={duelReplay(state.id)}>
+                            <Film /> Replay
+                        </Link>
+                    </Button>
+                    {share}
+                </div>
             </div>
         </div>
     );

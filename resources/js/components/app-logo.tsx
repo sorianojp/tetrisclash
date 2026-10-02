@@ -7,12 +7,15 @@ export default function AppLogo() {
 
     return (
         <>
-            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 shadow-sm shadow-violet-500/30">
-                <AppLogoIcon className="size-5 fill-white" />
+            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 shadow-md shadow-violet-500/40">
+                <AppLogoIcon className="size-5 fill-white drop-shadow" />
             </div>
-            <div className="ml-1 grid flex-1 text-left text-sm">
-                <span className="mb-0.5 truncate leading-tight font-bold tracking-tight">
+            <div className="ml-1 grid flex-1 text-left">
+                <span className="truncate text-sm leading-tight font-black tracking-wide uppercase">
                     {name}
+                </span>
+                <span className="truncate text-[10px] font-semibold tracking-[0.2em] text-muted-foreground uppercase">
+                    1v1 battles
                 </span>
             </div>
         </>
