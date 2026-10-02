@@ -115,14 +115,7 @@ export default function Tournaments({
                         <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             {open.map((tournament) => (
                                 <li key={tournament.id}>
-                                    <Card
-                                        accent={
-                                            tournament.mode === 'race'
-                                                ? 'cyan'
-                                                : 'amber'
-                                        }
-                                        className="h-full gap-4 px-5"
-                                    >
+                                    <Card className="h-full gap-4 px-5">
                                         <div className="flex items-center gap-3">
                                             <span
                                                 className={cn(
@@ -191,7 +184,7 @@ export default function Tournaments({
                 </section>
 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <Card accent="violet">
+                    <Card>
                         <CardHeader>
                             <CardTitle>
                                 <Swords className="size-4 text-violet-500" />
@@ -205,7 +198,7 @@ export default function Tournaments({
                             />
                         </CardContent>
                     </Card>
-                    <Card accent="amber">
+                    <Card>
                         <CardHeader>
                             <CardTitle>
                                 <Crown className="size-4 text-amber-500" />

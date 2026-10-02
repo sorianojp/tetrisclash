@@ -37,7 +37,7 @@ export default function AuthSimpleLayout({
                         </span>
                     </Link>
 
-                    <Card accent="violet" className="gap-6 px-6 py-7 sm:px-8">
+                    <Card className="gap-6 px-6 py-7 sm:px-8">
                         <div className="space-y-1.5 text-center">
                             <h1 className="text-2xl font-black tracking-tight">
                                 {title}

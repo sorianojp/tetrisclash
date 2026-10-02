@@ -1,6 +1,15 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { echo } from '@laravel/echo-react';
-import { Eye, Film, Flag, House, Swords, Trophy, WifiOff } from 'lucide-react';
+import {
+    Eye,
+    Film,
+    Flag,
+    House,
+    Swords,
+    Trophy,
+    WifiOff,
+    X,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ClearCallout, describeClear } from '@/components/tetris/clear-callout';
@@ -18,6 +27,7 @@ import { FieldOverlay } from '@/components/tetris/field-overlay';
 import { OpponentField } from '@/components/tetris/opponent-field';
 import type { OpponentView } from '@/components/tetris/opponent-field';
 import { PlayerPlate } from '@/components/tetris/player-plate';
+import { PlayerEmblem } from '@/components/tetris/player-emblem';
 import { RankProgressBar } from '@/components/tetris/rank-badge';
 import type { RankProgress } from '@/components/tetris/rank-badge';
 import { ShareResult } from '@/components/tetris/share-result';
@@ -139,6 +149,8 @@ export default function Duel({
     const [clock, setClock] = useState(() => Date.now() + clockOffset);
     const [state, setState] = useState(duel);
     const [knockedOut, setKnockedOut] = useState(false);
+    /** The result card covers the boards; it can be closed to look at them. */
+    const [showResult, setShowResult] = useState(true);
     const [presence, setPresence] = useState<Presence>('connecting');
     const [callout, setCallout] = useState<Callout | null>(null);
     const [progress, setProgress] = useState({
@@ -781,23 +793,14 @@ export default function Duel({
                             </FieldOverlay>
                         )}
 
-                        {phase === 'finished' && (
-                            <FieldOverlay>
-                                <Result
-                                    tournamentId={tournament?.id ?? null}
-                                    state={state}
-                                    me={me}
-                                    opponent={opponent}
-                                    raceLines={raceLines}
-                                    rankedUp={rankedUpNow}
-                                    share={
-                                        <ShareResult
-                                            getCard={shareCard}
-                                            filename={`tetris-clash-${duel.mode}-${duel.id}.png`}
-                                            text={shareText()}
-                                        />
-                                    }
-                                />
+                        {phase === 'finished' && !showResult && (
+                            <FieldOverlay className="items-end pb-6">
+                                <Button
+                                    className="bg-gradient-to-r from-amber-300 to-amber-400 font-black text-amber-950 hover:from-amber-200 hover:to-amber-300"
+                                    onClick={() => setShowResult(true)}
+                                >
+                                    <Trophy /> Show result
+                                </Button>
                             </FieldOverlay>
                         )}
                     </div>
@@ -856,6 +859,25 @@ export default function Duel({
                     {matchActions}
                 </div>
             </div>
+
+            {phase === 'finished' && showResult && (
+                <Result
+                    tournamentId={tournament?.id ?? null}
+                    state={state}
+                    me={me}
+                    opponent={opponent}
+                    raceLines={raceLines}
+                    rankedUp={rankedUpNow}
+                    onClose={() => setShowResult(false)}
+                    share={
+                        <ShareResult
+                            getCard={shareCard}
+                            filename={`tetris-clash-${duel.mode}-${duel.id}.png`}
+                            text={shareText()}
+                        />
+                    }
+                />
+            )}
 
             {phase === 'countdown' && introLeft > 0 && (
                 <VersusIntro
@@ -933,6 +955,7 @@ function Result({
     opponent,
     raceLines,
     rankedUp,
+    onClose,
     share,
 }: {
     tournamentId: number | null;
@@ -941,122 +964,190 @@ function Result({
     opponent: Player;
     raceLines: number;
     rankedUp: boolean;
+    onClose: () => void;
     share: ReactNode;
 }) {
     const { outcome, reason } = describeOutcome(state, me, opponent, raceLines);
     const change = state.ratingChange ?? 0;
     const xpGained = state.xp[me.id] ?? 0;
+    const isRace = state.mode === 'race';
+    const score = (id: number) =>
+        isRace
+            ? Math.min(state.lines[id] ?? 0, raceLines)
+            : (state.kos[id] ?? 0);
 
-    const strip = {
-        win: 'from-amber-300 via-amber-400 to-orange-400',
-        loss: 'from-rose-400 via-pink-500 to-fuchsia-500',
-        draw: 'from-slate-300 to-slate-500',
+    const look = {
+        win: {
+            title: 'from-amber-200 to-orange-400',
+            glow: 'shadow-[0_0_80px_-20px_rgb(251_191_36/0.6)]',
+            label: 'YOU WIN!',
+        },
+        loss: {
+            title: 'from-rose-300 to-fuchsia-400',
+            glow: 'shadow-[0_0_80px_-20px_rgb(244_63_94/0.55)]',
+            label: 'YOU LOSE',
+        },
+        draw: {
+            title: 'from-slate-100 to-slate-400',
+            glow: '',
+            label: 'DRAW',
+        },
     }[outcome];
 
     return (
-        <div className="relative mx-3 flex w-full max-w-72 animate-in flex-col items-center gap-3 overflow-hidden rounded-2xl bg-[#0d1224]/95 px-4 pt-6 pb-4 text-center text-white shadow-2xl ring-1 ring-white/10 duration-300 zoom-in-90">
-            <span
-                aria-hidden
+        <div className="fixed inset-0 z-40 flex animate-in items-center justify-center bg-black/60 p-4 backdrop-blur-sm duration-200 fade-in">
+            <div
+                role="dialog"
+                aria-label={look.label}
                 className={cn(
-                    'absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r',
-                    strip,
+                    'relative flex w-full max-w-md animate-in flex-col items-center gap-5 overflow-hidden rounded-3xl bg-[#0d1224] px-6 pt-10 pb-6 text-center text-white ring-1 ring-white/10 duration-300 zoom-in-90 sm:px-8',
+                    look.glow,
                 )}
-            />
-            <div className="flex flex-col items-center gap-1">
-                <span
-                    className={cn(
-                        'inline-block bg-gradient-to-r bg-clip-text pr-[0.15em] pb-[0.1em] text-4xl font-black tracking-tight text-transparent italic',
-                        outcome === 'win' && 'from-amber-200 to-orange-400',
-                        outcome === 'loss' && 'from-rose-300 to-fuchsia-400',
-                        outcome === 'draw' && 'from-slate-100 to-slate-400',
-                    )}
+            >
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="absolute top-4 right-4 rounded-md p-1 text-indigo-300 hover:bg-white/10 hover:text-white"
+                    title="Hide to see the boards"
                 >
-                    {outcome === 'win'
-                        ? 'YOU WIN!'
-                        : outcome === 'loss'
-                          ? 'YOU LOSE'
-                          : 'DRAW'}
-                </span>
-                <span className="text-sm text-indigo-200">{reason}</span>
-                {!state.ranked && !tournamentId && (
-                    <span className="text-xs text-indigo-200/80">
-                        Friendly match: no rating or XP
+                    <X className="size-5" />
+                    <span className="sr-only">Hide result</span>
+                </button>
+
+                <div className="flex flex-col items-center gap-1.5">
+                    <span
+                        className={cn(
+                            'inline-block bg-gradient-to-r bg-clip-text pb-[0.1em] text-5xl font-black tracking-tight text-transparent sm:text-6xl',
+                            look.title,
+                        )}
+                    >
+                        {look.label}
                     </span>
-                )}
-            </div>
-            {state.ranked && (
-                <div className="grid w-full grid-cols-2 gap-2">
-                    <div className="rounded-xl bg-white/5 px-2 py-2 ring-1 ring-white/10">
-                        <div className="text-[10px] font-bold tracking-wider text-indigo-300 uppercase">
-                            Rating
-                        </div>
-                        <div
-                            className={cn(
-                                'text-xl font-black tabular-nums',
-                                outcome === 'win' && 'text-emerald-300',
-                                outcome === 'loss' && 'text-rose-300',
-                            )}
-                        >
-                            {outcome === 'draw' || change === 0
-                                ? '±0'
-                                : `${outcome === 'win' ? '+' : '−'}${change}`}
-                        </div>
-                    </div>
-                    <div className="rounded-xl bg-white/5 px-2 py-2 ring-1 ring-white/10">
-                        <div className="text-[10px] font-bold tracking-wider text-indigo-300 uppercase">
-                            XP
-                        </div>
-                        <div className="text-xl font-black text-amber-300 tabular-nums">
-                            +{xpGained}
-                        </div>
-                    </div>
-                </div>
-            )}
-            {state.ranked && (
-                <>
-                    {rankedUp && (
-                        <span className="animate-callout text-xl font-black text-amber-300">
-                            RANK UP! {me.rank.rank} · {me.rank.title}
+                    <span className="text-base text-indigo-200">{reason}</span>
+                    {!state.ranked && !tournamentId && (
+                        <span className="text-sm text-indigo-200/80">
+                            Friendly match: no rating or XP
                         </span>
                     )}
-                    <RankProgressBar
-                        progress={me.rank}
-                        className="w-full text-indigo-200"
-                    />
-                </>
-            )}
-            <div className="flex w-full flex-col gap-2">
+                </div>
+
+                {/* The final score, you on the left. */}
+                <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-2xl bg-white/5 px-4 py-4 ring-1 ring-white/10">
+                    <ScoreSide player={me} tone="you" />
+                    <span className="text-3xl font-black tabular-nums">
+                        {score(me.id)}
+                        <span className="mx-1.5 text-indigo-300">–</span>
+                        {score(opponent.id)}
+                        <span className="block text-[10px] font-bold tracking-widest text-indigo-300 uppercase">
+                            {isRace ? 'Lines' : 'KOs'}
+                        </span>
+                    </span>
+                    <ScoreSide player={opponent} tone="opponent" />
+                </div>
+
                 {state.ranked && (
-                    <Button
-                        className="w-full bg-gradient-to-r from-amber-300 to-amber-400 font-black text-amber-950 italic hover:from-amber-200 hover:to-amber-300"
-                        onClick={() =>
-                            router.visit(dashboard({ query: { queue: 1 } }))
-                        }
-                    >
-                        <Swords /> PLAY AGAIN
-                    </Button>
+                    <div className="grid w-full grid-cols-2 gap-3">
+                        <div className="rounded-2xl bg-white/5 px-3 py-3 ring-1 ring-white/10">
+                            <div className="text-xs font-bold tracking-wider text-indigo-300 uppercase">
+                                Rating
+                            </div>
+                            <div
+                                className={cn(
+                                    'text-3xl font-black tabular-nums',
+                                    outcome === 'win' && 'text-emerald-300',
+                                    outcome === 'loss' && 'text-rose-300',
+                                )}
+                            >
+                                {outcome === 'draw' || change === 0
+                                    ? '±0'
+                                    : `${outcome === 'win' ? '+' : '−'}${change}`}
+                            </div>
+                        </div>
+                        <div className="rounded-2xl bg-white/5 px-3 py-3 ring-1 ring-white/10">
+                            <div className="text-xs font-bold tracking-wider text-indigo-300 uppercase">
+                                XP
+                            </div>
+                            <div className="text-3xl font-black text-amber-300 tabular-nums">
+                                +{xpGained}
+                            </div>
+                        </div>
+                    </div>
                 )}
-                {tournamentId !== null && (
-                    <Button className="w-full" asChild>
-                        <Link href={showTournament(tournamentId)}>
-                            <Trophy /> Back to bracket
-                        </Link>
-                    </Button>
+
+                {state.ranked && (
+                    <div className="flex w-full flex-col items-center gap-2">
+                        {rankedUp && (
+                            <span className="animate-callout text-2xl font-black text-amber-300">
+                                RANK UP! {me.rank.rank} · {me.rank.title}
+                            </span>
+                        )}
+                        <RankProgressBar
+                            progress={me.rank}
+                            className="w-full text-indigo-200"
+                        />
+                    </div>
                 )}
-                <div className="flex flex-wrap justify-center gap-2">
-                    <Button variant="secondary" size="sm" asChild>
-                        <Link href={dashboard()}>
-                            <House /> Lobby
-                        </Link>
-                    </Button>
-                    <Button variant="secondary" size="sm" asChild>
-                        <Link href={duelReplay(state.id)}>
-                            <Film /> Replay
-                        </Link>
-                    </Button>
-                    {share}
+
+                <div className="flex w-full flex-col gap-2">
+                    {state.ranked && (
+                        <Button
+                            size="lg"
+                            className="h-12 w-full bg-gradient-to-r from-amber-300 to-amber-400 text-base font-black text-amber-950 hover:from-amber-200 hover:to-amber-300"
+                            onClick={() =>
+                                router.visit(dashboard({ query: { queue: 1 } }))
+                            }
+                        >
+                            <Swords /> PLAY AGAIN
+                        </Button>
+                    )}
+                    {tournamentId !== null && (
+                        <Button size="lg" className="h-12 w-full" asChild>
+                            <Link href={showTournament(tournamentId)}>
+                                <Trophy /> Back to bracket
+                            </Link>
+                        </Button>
+                    )}
+                    <div className="grid grid-cols-3 gap-2 [&>*]:w-full">
+                        <Button variant="secondary" asChild>
+                            <Link href={dashboard()}>
+                                <House /> Lobby
+                            </Link>
+                        </Button>
+                        <Button variant="secondary" asChild>
+                            <Link href={duelReplay(state.id)}>
+                                <Film /> Replay
+                            </Link>
+                        </Button>
+                        {share}
+                    </div>
                 </div>
             </div>
+        </div>
+    );
+}
+
+function ScoreSide({
+    player,
+    tone,
+}: {
+    player: Player;
+    tone: 'you' | 'opponent';
+}) {
+    return (
+        <div className="flex min-w-0 flex-col items-center gap-1.5">
+            <PlayerEmblem
+                name={player.name}
+                id={player.id}
+                size="md"
+                tone={
+                    tone === 'you'
+                        ? 'from-amber-300 to-orange-500 text-amber-950'
+                        : 'from-rose-400 to-fuchsia-600 text-white'
+                }
+            />
+            <span className="w-full truncate text-sm font-bold">
+                {player.name}
+            </span>
         </div>
     );
 }

@@ -72,10 +72,7 @@ export default function Player({
             <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 p-4 sm:p-6">
                 {liveDuelId !== null && (
                     <Link href={watchDuel(liveDuelId)}>
-                        <Card
-                            accent="rose"
-                            className="flex-row items-center justify-between gap-3 px-5 py-4 transition-colors hover:bg-rose-500/5"
-                        >
+                        <Card className="flex-row items-center justify-between gap-3 px-5 py-4 transition-colors hover:bg-rose-500/5">
                             <span className="flex items-center gap-2 text-sm font-semibold">
                                 <span className="relative flex size-2.5">
                                     <span className="absolute inline-flex size-full rounded-full bg-rose-500 opacity-60 motion-safe:animate-ping" />
@@ -153,7 +150,7 @@ export default function Player({
                 </Card>
 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-[1fr_1.6fr]">
-                    <Card accent="emerald">
+                    <Card>
                         <CardHeader>
                             <CardTitle>
                                 <Timer className="size-4 text-emerald-500" />
@@ -195,7 +192,7 @@ export default function Player({
                         </CardContent>
                     </Card>
 
-                    <Card accent="cyan">
+                    <Card>
                         <CardHeader>
                             <CardTitle>
                                 <History className="size-4 text-cyan-500" />
@@ -215,7 +212,7 @@ export default function Player({
                     </Card>
                 </div>
 
-                <Card accent="amber">
+                <Card>
                     <CardHeader>
                         <CardTitle className="justify-between">
                             <span className="flex items-center gap-2">

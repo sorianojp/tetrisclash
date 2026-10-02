@@ -7,11 +7,9 @@ import { cn } from '@/lib/utils';
 /** Side colours, as in the match intro: you in amber, your opponent in rose. */
 const TONES = {
     you: {
-        edge: 'from-amber-300 to-orange-400',
         emblem: 'from-amber-300 to-orange-500 text-amber-950',
     },
     opponent: {
-        edge: 'from-rose-400 to-fuchsia-500',
         emblem: 'from-rose-400 to-fuchsia-600 text-white',
     },
 } as const;
@@ -47,16 +45,6 @@ export function PlayerPlate({
                 align === 'right' && 'flex-row-reverse text-right',
             )}
         >
-            {look && (
-                <span
-                    aria-hidden
-                    className={cn(
-                        'absolute inset-y-0 w-1 bg-gradient-to-b',
-                        align === 'right' ? 'right-0' : 'left-0',
-                        look.edge,
-                    )}
-                />
-            )}
             <PlayerEmblem
                 name={player.name}
                 id={player.id}

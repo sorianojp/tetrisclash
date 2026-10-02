@@ -1,7 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { Film } from 'lucide-react';
 import { PlayerEmblem } from '@/components/tetris/player-emblem';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { replay as duelReplay } from '@/routes/duels';
 import { show as showPlayer } from '@/routes/players';
@@ -40,9 +39,19 @@ export function DuelHistory({
             {duels.map((duel) => (
                 <li
                     key={duel.id}
-                    className="flex items-center gap-2.5 rounded-lg border border-transparent px-1.5 py-1 transition-colors hover:border-border hover:bg-muted/40"
+                    className={cn(
+                        'relative flex items-center gap-2.5 overflow-hidden rounded-lg border py-1.5 pr-1.5 pl-3.5 transition-colors hover:bg-muted/40',
+                        RESULT_STYLES[duel.result].row,
+                    )}
                 >
-                    <ResultTile result={duel.result} />
+                    {/* The result as a coloured edge, so it can't be mistaken for the avatar. */}
+                    <span
+                        aria-hidden
+                        className={cn(
+                            'absolute inset-y-0 left-0 w-1',
+                            RESULT_STYLES[duel.result].edge,
+                        )}
+                    />
                     <PlayerEmblem
                         name={duel.opponent}
                         id={duel.opponentId}
@@ -67,9 +76,11 @@ export function DuelHistory({
                             )
                                 ? ` · ${duel.reason}`
                                 : ''}
+                            {duel.finishedAt && ` · ${duel.finishedAt}`}
                         </span>
                     </span>
-                    <span className="flex flex-col items-end leading-tight">
+                    <span className="flex flex-col items-end gap-0.5 leading-tight">
+                        <ResultBadge result={duel.result} />
                         {/* The server stores the size of the change; the result gives its sign. */}
                         {duel.ranked &&
                             duel.ratingChange !== null &&
@@ -77,18 +88,13 @@ export function DuelHistory({
                                 <span
                                     className={cn(
                                         'text-xs font-bold tabular-nums',
-                                        duel.result === 'win'
-                                            ? 'text-emerald-600 dark:text-emerald-400'
-                                            : 'text-rose-600 dark:text-rose-400',
+                                        RESULT_STYLES[duel.result].text,
                                     )}
                                 >
                                     {duel.result === 'win' ? '+' : '−'}
                                     {duel.ratingChange}
                                 </span>
                             )}
-                        <span className="text-[11px] whitespace-nowrap text-muted-foreground">
-                            {duel.finishedAt}
-                        </span>
                     </span>
                     {duel.hasReplay ? (
                         <Link
@@ -108,43 +114,37 @@ export function DuelHistory({
     );
 }
 
-/** A one-letter result block: W, L or D. */
-function ResultTile({ result }: { result: 'win' | 'loss' | 'draw' }) {
-    const styles = {
-        win: 'bg-emerald-500 text-white shadow-emerald-500/30',
-        loss: 'bg-rose-500 text-white shadow-rose-500/30',
-        draw: 'bg-muted text-muted-foreground',
-    };
+const RESULT_STYLES = {
+    win: {
+        row: 'border-emerald-500/20 bg-emerald-500/[0.06]',
+        edge: 'bg-emerald-500',
+        text: 'text-emerald-600 dark:text-emerald-400',
+        badge: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+    },
+    loss: {
+        row: 'border-rose-500/20 bg-rose-500/[0.06]',
+        edge: 'bg-rose-500',
+        text: 'text-rose-600 dark:text-rose-400',
+        badge: 'border-rose-500/40 bg-rose-500/10 text-rose-700 dark:text-rose-300',
+    },
+    draw: {
+        row: 'border-border',
+        edge: 'bg-muted-foreground/40',
+        text: 'text-muted-foreground',
+        badge: 'border-border bg-muted text-muted-foreground',
+    },
+};
 
+/** "WIN" / "LOSS" / "DRAW": an outlined pill, unlike the solid avatar blocks. */
+export function ResultBadge({ result }: { result: 'win' | 'loss' | 'draw' }) {
     return (
         <span
-            title={result}
             className={cn(
-                'flex size-6 shrink-0 items-center justify-center rounded-md text-xs font-black uppercase shadow-sm',
-                styles[result],
-            )}
-        >
-            {result[0]}
-        </span>
-    );
-}
-
-export function ResultBadge({ result }: { result: 'win' | 'loss' | 'draw' }) {
-    const styles = {
-        win: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
-        loss: 'bg-rose-500/15 text-rose-600 dark:text-rose-400',
-        draw: 'bg-muted text-muted-foreground',
-    };
-
-    return (
-        <Badge
-            variant="outline"
-            className={cn(
-                'w-12 justify-center border-transparent uppercase',
-                styles[result],
+                'inline-flex w-12 justify-center rounded-full border px-2 py-0.5 text-[10px] font-black tracking-wider uppercase',
+                RESULT_STYLES[result].badge,
             )}
         >
             {result}
-        </Badge>
+        </span>
     );
 }

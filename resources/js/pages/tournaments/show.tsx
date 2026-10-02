@@ -170,7 +170,7 @@ export default function TournamentShow({
                 )}
 
                 {tournament.status === 'open' ? (
-                    <Card accent="emerald">
+                    <Card>
                         <CardHeader>
                             <CardTitle className="justify-between">
                                 <span className="flex items-center gap-2">
@@ -287,9 +287,6 @@ function MatchCard({ match, myId }: { match: Match; myId: number }) {
                 mine && 'ring-2 ring-violet-500/40',
             )}
         >
-            {match.live && (
-                <span className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-rose-400 via-pink-500 to-fuchsia-500" />
-            )}
             {match.players.map((player, i) => (
                 <div
                     key={player?.id ?? `tbd-${i}`}

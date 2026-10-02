@@ -234,10 +234,7 @@ export default function Lobby({
             <Head title="Lobby" />
             <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-4 sm:p-6">
                 {activeDuelId && (
-                    <Card
-                        accent="amber"
-                        className="flex-row flex-wrap items-center justify-between gap-3 px-5 py-4"
-                    >
+                    <Card className="flex-row flex-wrap items-center justify-between gap-3 px-5 py-4">
                         <span className="flex items-center gap-2 text-sm font-semibold">
                             <span className="relative flex size-2.5">
                                 <span className="absolute inline-flex size-full rounded-full bg-amber-400 opacity-60 motion-safe:animate-ping" />
@@ -265,7 +262,7 @@ export default function Lobby({
                                         <Swords className="size-3.5" /> Ranked
                                         1v1
                                     </p>
-                                    <h1 className="mt-3 text-4xl font-black tracking-tight italic sm:text-5xl">
+                                    <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">
                                         Battle for{' '}
                                         <span className="inline-block bg-gradient-to-r from-amber-300 via-rose-300 to-fuchsia-300 bg-clip-text pr-[0.15em] pb-[0.12em] text-transparent">
                                             the top
@@ -312,7 +309,7 @@ export default function Lobby({
                                     <div className="flex flex-wrap gap-3">
                                         <Button
                                             size="lg"
-                                            className="h-12 bg-gradient-to-r from-amber-300 to-amber-400 px-6 text-base font-black text-amber-950 italic shadow-lg shadow-amber-500/30 hover:from-amber-200 hover:to-amber-300"
+                                            className="h-12 bg-gradient-to-r from-amber-300 to-amber-400 px-6 text-base font-black text-amber-950 shadow-lg shadow-amber-500/30 hover:from-amber-200 hover:to-amber-300"
                                             onClick={startSearch}
                                             disabled={
                                                 activeDuelId !== null ||
@@ -320,7 +317,7 @@ export default function Lobby({
                                             }
                                         >
                                             <Swords /> FIND MATCH
-                                            <span className="flex items-center gap-0.5 rounded bg-amber-950/15 px-1.5 text-xs not-italic">
+                                            <span className="flex items-center gap-0.5 rounded bg-amber-950/15 px-1.5 text-xs">
                                                 <Zap className="size-3" />1
                                             </span>
                                         </Button>
@@ -388,7 +385,7 @@ export default function Lobby({
                     </Card>
 
                     {/* Your player card, like the ones in the match intro. */}
-                    <Card accent="amber" className="gap-5 px-6">
+                    <Card className="gap-5 px-6">
                         <div className="flex items-center gap-4">
                             <PlayerEmblem
                                 name={user.name}
@@ -437,7 +434,7 @@ export default function Lobby({
                 </div>
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                    <Card accent="violet">
+                    <Card>
                         <CardHeader>
                             <CardTitle className="justify-between">
                                 <span className="flex items-center gap-2">
@@ -519,7 +516,7 @@ export default function Lobby({
                         </CardContent>
                     </Card>
 
-                    <Card accent="cyan">
+                    <Card>
                         <CardHeader>
                             <CardTitle>
                                 <History className="size-4 text-cyan-500" />
@@ -535,7 +532,7 @@ export default function Lobby({
                     </Card>
 
                     <div className="flex flex-col gap-6">
-                        <Card accent="emerald">
+                        <Card>
                             <CardHeader>
                                 <CardTitle className="justify-between">
                                     <span className="flex items-center gap-2">

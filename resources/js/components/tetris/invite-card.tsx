@@ -70,10 +70,6 @@ export function InviteCard({
     return (
         <Dialog open onOpenChange={(open) => !open && onDismiss()}>
             <DialogContent className="gap-0 overflow-hidden rounded-3xl border-violet-500/30 p-0 sm:max-w-sm">
-                <span
-                    aria-hidden
-                    className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500"
-                />
                 <div className="flex flex-col items-center gap-4 px-6 pt-8 pb-6 text-center">
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-500/15 px-3 py-1 text-[11px] font-bold tracking-[0.2em] text-violet-600 uppercase dark:text-violet-300">
                         <mode.icon className="size-3.5" /> {mode.label} invite
@@ -104,7 +100,7 @@ export function InviteCard({
                     <div className="flex w-full flex-col gap-2">
                         <Button
                             size="lg"
-                            className="h-12 bg-gradient-to-r from-amber-300 to-amber-400 text-base font-black text-amber-950 italic shadow-lg shadow-amber-500/25 hover:from-amber-200 hover:to-amber-300"
+                            className="h-12 bg-gradient-to-r from-amber-300 to-amber-400 text-base font-black text-amber-950 shadow-lg shadow-amber-500/25 hover:from-amber-200 hover:to-amber-300"
                             onClick={onAccept}
                         >
                             <Check /> ACCEPT

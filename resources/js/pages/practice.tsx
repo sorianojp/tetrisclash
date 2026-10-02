@@ -514,7 +514,7 @@ export default function Practice({
                                     />
                                 ))}
                         </div>
-                        <Card accent="violet" className="gap-3 px-4 py-5">
+                        <Card className="gap-3 px-4 py-5">
                             <h2 className="flex items-center gap-2 text-sm font-bold">
                                 <Crown className="size-4 text-amber-500" />
                                 {MODES[mode].label} leaderboard

@@ -19,7 +19,6 @@ const SIDES = {
         label: 'You',
         tag: 'bg-amber-300 text-amber-950',
         ring: 'ring-amber-300/50 shadow-[0_0_60px_-12px_rgb(251_191_36/0.55)]',
-        bar: 'from-amber-300 via-amber-400 to-orange-400',
         emblem: 'from-amber-300 via-amber-400 to-orange-500 text-amber-950',
         enter: 'motion-safe:animate-card-in-left',
     },
@@ -27,7 +26,6 @@ const SIDES = {
         label: 'Opponent',
         tag: 'bg-rose-400 text-rose-950',
         ring: 'ring-rose-400/50 shadow-[0_0_60px_-12px_rgb(244_63_94/0.55)]',
-        bar: 'from-rose-400 via-pink-500 to-fuchsia-500',
         emblem: 'from-rose-400 via-pink-500 to-fuchsia-600 text-white',
         enter: 'motion-safe:animate-card-in-right',
     },
@@ -93,7 +91,7 @@ export function VersusIntro({
                         aria-hidden
                         className="absolute top-1/2 left-1/2 h-40 w-px -translate-x-1/2 -translate-y-1/2 bg-gradient-to-b from-transparent via-white/40 to-transparent sm:h-72"
                     />
-                    <span className="relative inline-block bg-gradient-to-br from-amber-300 via-rose-400 to-fuchsia-400 bg-clip-text pr-[0.2em] pb-[0.1em] pl-1 text-4xl font-black text-transparent italic drop-shadow-[0_0_24px_rgb(244_63_94/0.6)] motion-safe:animate-versus-slam sm:text-7xl">
+                    <span className="relative inline-block bg-gradient-to-br from-amber-300 via-rose-400 to-fuchsia-400 bg-clip-text pr-[0.2em] pb-[0.1em] pl-1 text-4xl font-black text-transparent drop-shadow-[0_0_24px_rgb(244_63_94/0.6)] motion-safe:animate-versus-slam sm:text-7xl">
                         VS
                     </span>
                 </div>
@@ -155,13 +153,6 @@ function PlayerCard({
                 )}
             >
                 {/* The card's colour strip, and a holographic sheen that sweeps across once. */}
-                <span
-                    aria-hidden
-                    className={cn(
-                        'absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r',
-                        look.bar,
-                    )}
-                />
                 <span
                     aria-hidden
                     className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_35%,rgb(255_255_255/0.16)_48%,rgb(232_121_249/0.12)_52%,transparent_65%)] bg-[length:250%_100%] bg-[position:150%_0] motion-safe:animate-card-sheen"

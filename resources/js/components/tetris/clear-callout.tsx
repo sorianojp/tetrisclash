@@ -65,7 +65,7 @@ export function ClearCallout({ callout }: { callout: Callout | null }) {
     return (
         <div
             key={callout.id}
-            className="pointer-events-none absolute inset-x-0 top-1/3 flex animate-callout flex-col items-center gap-0.5 italic"
+            className="pointer-events-none absolute inset-x-0 top-1/3 flex animate-callout flex-col items-center gap-0.5"
         >
             {callout.lines.map((line) => (
                 <span
@@ -76,7 +76,7 @@ export function ClearCallout({ callout }: { callout: Callout | null }) {
                 </span>
             ))}
             {callout.attack > 0 && (
-                <span className="text-sm font-bold text-rose-300 not-italic drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+                <span className="text-sm font-bold text-rose-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
                     +{callout.attack} attack
                 </span>
             )}
