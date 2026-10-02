@@ -25,7 +25,7 @@ import { PracticeLeaderboard } from '@/components/tetris/practice-leaderboard';
 import type { PracticeBoards } from '@/components/tetris/practice-leaderboard';
 import type { DuelSummary } from '@/components/tetris/duel-history';
 import { PlayerEmblem } from '@/components/tetris/player-emblem';
-import { RankBadge, RankProgressBar } from '@/components/tetris/rank-badge';
+import { RankBadge, RankShowcase } from '@/components/tetris/rank-badge';
 import type { RankProgress } from '@/components/tetris/rank-badge';
 import { StatTile } from '@/components/tetris/stat-tile';
 import { Button } from '@/components/ui/button';
@@ -386,26 +386,20 @@ export default function Lobby({
 
                     {/* Your player card, like the ones in the match intro. */}
                     <Card className="gap-5 px-6">
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2.5">
                             <PlayerEmblem
                                 name={user.name}
                                 id={user.id}
-                                size="lg"
+                                size="sm"
                             />
-                            <div className="min-w-0 flex-1">
-                                <p className="text-[11px] font-bold tracking-[0.2em] text-amber-600 uppercase dark:text-amber-300">
-                                    Your card
-                                </p>
-                                <h2 className="truncate text-2xl font-black tracking-tight">
-                                    {user.name}
-                                </h2>
-                                <RankBadge
-                                    progress={stats.rank}
-                                    className="mt-1"
-                                />
-                            </div>
+                            <h2 className="min-w-0 flex-1 truncate text-lg font-black tracking-tight">
+                                {user.name}
+                            </h2>
+                            <span className="text-[11px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
+                                Your rank
+                            </span>
                         </div>
-                        <RankProgressBar progress={stats.rank} />
+                        <RankShowcase progress={stats.rank} />
                         <div className="grid grid-cols-3 gap-2">
                             <StatTile
                                 icon={Trophy}

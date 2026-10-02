@@ -13,8 +13,9 @@ import type { AchievementStatus } from '@/components/tetris/achievement-list';
 import { DuelHistory } from '@/components/tetris/duel-history';
 import type { DuelSummary } from '@/components/tetris/duel-history';
 import { PlayerEmblem } from '@/components/tetris/player-emblem';
-import { RankBadge, RankProgressBar } from '@/components/tetris/rank-badge';
+import { RankProgressBar } from '@/components/tetris/rank-badge';
 import type { RankProgress } from '@/components/tetris/rank-badge';
+import { RankEmblem, rankTier } from '@/components/tetris/rank-emblem';
 import { StatTile } from '@/components/tetris/stat-tile';
 import {
     Card,
@@ -103,19 +104,37 @@ export default function Player({
                                 {player.name}
                             </h1>
                             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-indigo-200">
-                                <RankBadge
-                                    progress={player.rank}
-                                    className="bg-white/15 text-sm text-white"
-                                />
                                 {player.joinedAt && (
                                     <span>Playing since {player.joinedAt}</span>
                                 )}
                             </div>
                         </div>
-                        <RankProgressBar
-                            progress={player.rank}
-                            className="relative w-full text-indigo-100 sm:w-60"
-                        />
+                        <div className="relative flex items-center gap-4 rounded-2xl bg-black/25 p-3 pr-5 ring-1 ring-white/10">
+                            <RankEmblem
+                                rank={player.rank.rank}
+                                title={player.rank.title}
+                                size="xl"
+                            />
+                            <div className="flex w-40 flex-col gap-1.5">
+                                <span className="text-[11px] font-black tracking-[0.25em] text-indigo-200 uppercase">
+                                    Rank
+                                </span>
+                                <span className="text-4xl leading-none font-black tabular-nums">
+                                    {player.rank.rank}
+                                </span>
+                                <span className="text-sm leading-tight font-bold">
+                                    {player.rank.title}{' '}
+                                    {rankTier(
+                                        player.rank.rank,
+                                        player.rank.title,
+                                    )}
+                                </span>
+                                <RankProgressBar
+                                    progress={player.rank}
+                                    className="text-indigo-100"
+                                />
+                            </div>
+                        </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4 sm:p-6">
                         <StatTile

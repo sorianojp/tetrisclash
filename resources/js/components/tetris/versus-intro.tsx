@@ -1,5 +1,6 @@
 import { Flag, Swords } from 'lucide-react';
-import { RankBadge, RankProgressBar } from '@/components/tetris/rank-badge';
+import { RankProgressBar } from '@/components/tetris/rank-badge';
+import { RankEmblem, rankTier } from '@/components/tetris/rank-emblem';
 import type { RankProgress } from '@/components/tetris/rank-badge';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
@@ -164,15 +165,23 @@ function PlayerCard({
                     >
                         {player.name}
                     </h2>
-                    <RankBadge
-                        progress={player.rank}
-                        compact
-                        className="bg-white/10 text-white sm:hidden"
-                    />
-                    <RankBadge
-                        progress={player.rank}
-                        className="hidden max-w-full bg-white/10 text-white sm:inline-flex"
-                    />
+                    {/* The rank, front and centre: badge, number and title. */}
+                    <div className="flex items-center gap-2 rounded-xl bg-white/5 py-1 pr-3 pl-1 ring-1 ring-white/10">
+                        <RankEmblem
+                            rank={player.rank.rank}
+                            title={player.rank.title}
+                            size="md"
+                        />
+                        <div className="flex min-w-0 flex-col items-start leading-tight">
+                            <span className="text-[10px] font-bold tracking-widest text-indigo-300 uppercase">
+                                Rank {player.rank.rank}
+                            </span>
+                            <span className="truncate text-xs font-black sm:text-sm">
+                                {player.rank.title}{' '}
+                                {rankTier(player.rank.rank, player.rank.title)}
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Stacked rows on phones, side by side from tablets up. */}

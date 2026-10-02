@@ -12,8 +12,9 @@ import {
 import type { ReactNode } from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { ControlsLegend } from '@/components/tetris/controls-legend';
-import { RankBadge } from '@/components/tetris/rank-badge';
+import { RankEmblem } from '@/components/tetris/rank-emblem';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { formatTime } from '@/lib/format';
 import { dashboard, home, login, register } from '@/routes';
 import {
@@ -259,6 +260,7 @@ export default function About({ rules, xp, ranks }: Props) {
                         id="ranks"
                         title="Ranks & rating"
                         icon={<Trophy />}
+                        featured
                         intro="You have two numbers. Your rank shows how far you've come; your rating shows how strong you are right now."
                     >
                         <div className="grid gap-3 sm:grid-cols-2">
@@ -315,34 +317,46 @@ export default function About({ rules, xp, ranks }: Props) {
                             </div>
                         </div>
 
-                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {/* The ladder: every title's badge, group by group. */}
+                        <div className="flex flex-col gap-4">
                             {Object.entries(groups).map(([group, bands]) => (
                                 <div
                                     key={group}
-                                    className="rounded-lg border p-3"
+                                    className="rounded-2xl border bg-card p-4 sm:p-5"
                                 >
-                                    <h3 className="mb-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                                        {group}
-                                    </h3>
-                                    <ul className="flex flex-col gap-1.5 text-sm">
+                                    <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+                                        <h3 className="text-lg font-black tracking-tight">
+                                            {group}
+                                        </h3>
+                                        <span className="text-xs font-semibold text-muted-foreground tabular-nums">
+                                            Ranks {bands[0].from}–
+                                            {bands[bands.length - 1].to}
+                                        </span>
+                                    </div>
+                                    <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                                         {bands.map((band) => (
                                             <li
                                                 key={band.from}
-                                                className="flex items-center justify-between gap-2"
+                                                className="flex flex-col items-center gap-2 rounded-xl border bg-muted/40 px-2 pt-4 pb-3 text-center dark:bg-white/[0.03]"
                                             >
-                                                <RankBadge
-                                                    progress={{
-                                                        rank: band.from,
-                                                        title: band.title,
-                                                        xp: band.xp,
-                                                        xpIntoRank: 0,
-                                                        xpForNext: null,
-                                                    }}
+                                                <RankEmblem
+                                                    rank={band.from}
+                                                    title={band.title}
+                                                    size="xl"
+                                                    showTier={false}
+                                                    className="drop-shadow-[0_6px_12px_rgb(0_0_0/0.35)]"
                                                 />
-                                                <span className="text-xs whitespace-nowrap text-muted-foreground tabular-nums">
+                                                <span className="mt-1 text-sm leading-tight font-black">
+                                                    {band.title}
+                                                </span>
+                                                <span className="text-xs font-semibold text-muted-foreground tabular-nums">
                                                     {band.from === band.to
                                                         ? `Rank ${band.from}`
                                                         : `Ranks ${band.from}–${band.to}`}
+                                                </span>
+                                                <span className="text-[11px] text-muted-foreground tabular-nums">
+                                                    {band.xp.toLocaleString()}{' '}
+                                                    XP
                                                 </span>
                                             </li>
                                         ))}
@@ -448,18 +462,34 @@ function Section({
     title,
     icon,
     intro,
+    featured = false,
     children,
 }: {
     id: string;
     title: string;
     icon: ReactNode;
     intro?: string;
+    /** A headline section: bigger title, set apart from the rest. */
+    featured?: boolean;
     children: ReactNode;
 }) {
     return (
-        <section id={id} className="flex scroll-mt-6 flex-col gap-4">
+        <section
+            id={id}
+            className={cn(
+                'flex scroll-mt-6 flex-col gap-4',
+                featured &&
+                    'rounded-3xl border bg-muted/30 p-4 sm:p-6 dark:bg-white/[0.02]',
+            )}
+        >
             <div>
-                <h2 className="flex items-center gap-2 text-xl font-bold [&_svg]:size-5 [&_svg]:text-violet-500">
+                <h2
+                    className={cn(
+                        'flex items-center gap-2 text-xl font-bold [&_svg]:size-5 [&_svg]:text-violet-500',
+                        featured &&
+                            'text-3xl font-black tracking-tight sm:text-4xl [&_svg]:size-8',
+                    )}
+                >
                     {icon}
                     {title}
                 </h2>
