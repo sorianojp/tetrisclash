@@ -1,5 +1,4 @@
 import { Swords } from 'lucide-react';
-import { LiveBotTag } from '@/components/tetris/live-bot-tag';
 import { RankEmblem, rankTier } from '@/components/tetris/rank-emblem';
 import type { RankProgress } from '@/components/tetris/rank-badge';
 import { cn } from '@/lib/utils';
@@ -22,13 +21,7 @@ export function PlayerPlate({
     align = 'left',
     tone,
 }: {
-    player: {
-        id: number;
-        name: string;
-        rating: number;
-        rank: RankProgress;
-        autopilot?: boolean;
-    };
+    player: { id: number; name: string; rating: number; rank: RankProgress };
     mode: 'battle' | 'race';
     kos: number;
     kosToWin: number;
@@ -75,7 +68,6 @@ export function PlayerPlate({
                     <span className="truncate font-black tracking-tight">
                         {player.name}
                     </span>
-                    {player.autopilot && <LiveBotTag />}
                     <span className="hidden text-xs text-muted-foreground tabular-nums sm:inline">
                         {player.rating}
                     </span>

@@ -35,13 +35,7 @@ type DuelState = {
     finished: boolean;
 };
 
-type Player = {
-    id: number;
-    name: string;
-    rating: number;
-    rank: RankProgress;
-    autopilot: boolean;
-};
+type Player = { id: number; name: string; rating: number; rank: RankProgress };
 type Member = { id: number; name: string };
 type BoardView = OpponentView & { linesSent: number; lines: number };
 type WatchWhisper = { s: string; p: number; l: number; c?: number; u: number };

@@ -13,7 +13,7 @@ import type { Game } from './engine';
 /**
  * Autopilot: an account an admin has flagged (users.autopilot) can let its browser play by
  * itself, for a livestream. It plays ranked while it has energy, Zen while energy refills,
- * and goes back to ranked once it's full, forever. The flag makes it LIVE BOT to everyone;
+ * and goes back to ranked once it's full, forever. Only the account itself sees that;
  * the switch here only says whether *this* browser is the one doing the playing, so signing
  * in on a phone doesn't start a second autopilot.
  */

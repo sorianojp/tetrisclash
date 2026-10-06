@@ -25,7 +25,6 @@ import {
     useShownEmote,
 } from '@/components/tetris/emotes';
 import { FieldOverlay } from '@/components/tetris/field-overlay';
-import { LiveBotTag } from '@/components/tetris/live-bot-tag';
 import { OpponentField } from '@/components/tetris/opponent-field';
 import type { OpponentView } from '@/components/tetris/opponent-field';
 import { PlayerPlate } from '@/components/tetris/player-plate';
@@ -91,7 +90,6 @@ type Player = {
     rank: RankProgress;
     wins: number;
     losses: number;
-    autopilot: boolean;
 };
 
 type Props = {
@@ -1225,7 +1223,6 @@ function ScoreSide({
             <span className="w-full truncate text-sm font-bold">
                 {player.name}
             </span>
-            {player.autopilot && <LiveBotTag />}
         </div>
     );
 }

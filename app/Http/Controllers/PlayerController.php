@@ -25,7 +25,6 @@ class PlayerController extends Controller
                 'wins' => $player->wins,
                 'losses' => $player->losses,
                 'rank' => $player->rankProgress(),
-                'autopilot' => $player->isAutopilot(),
             ],
             'records' => $player->practiceRecords(),
             'placements' => PracticeLeaderboards::placements($player),

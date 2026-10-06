@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            // Set by an admin: the account's browser plays itself (for a livestream), and
-            // everyone sees it tagged LIVE BOT.
+            // Set by an admin: the account's browser plays itself (for a livestream).
             $table->boolean('autopilot')->default(false);
         });
     }

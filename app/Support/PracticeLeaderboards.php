@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
  * left off. The top lists are
  * cached for a few seconds and dropped whenever a result is saved.
  *
- * @phpstan-type Entry array{id: int, name: string, value: int, position: int, rank: array{rank: int, title: string, xp: int, xpIntoRank: int, xpForNext: int|null}, replayId: int|null, autopilot: bool}
+ * @phpstan-type Entry array{id: int, name: string, value: int, position: int, rank: array{rank: int, title: string, xp: int, xpIntoRank: int, xpForNext: int|null}, replayId: int|null}
  * @phpstan-type Board array{entries: list<Entry>, you: array{position: int, value: int}|null}
  * @phpstan-type PracticeRecord array{column: string, lowerIsBetter: bool, min: int, max: int}
  */
@@ -145,7 +145,7 @@ final class PracticeLeaderboards
             ->orderBy($column, $record['lowerIsBetter'] ? 'asc' : 'desc')
             ->orderBy('id')
             ->limit(self::SIZE)
-            ->get(['id', 'name', 'xp', 'autopilot', $column])
+            ->get(['id', 'name', 'xp', $column])
             ->map(fn (User $player) => ['player' => $player, 'value' => (int) $player->{$column}])
             ->values()
             ->all();
@@ -168,7 +168,7 @@ final class PracticeLeaderboards
 
         $players = User::query()
             ->whereIn('id', $rows->pluck('user_id'))
-            ->get(['id', 'name', 'xp', 'autopilot'])
+            ->get(['id', 'name', 'xp'])
             ->keyBy('id');
 
         $top = [];
@@ -262,7 +262,6 @@ final class PracticeLeaderboards
                 'value' => $value,
                 'position' => $position,
                 'rank' => $player->rankProgress(),
-                'autopilot' => $player->isAutopilot(),
                 'replayId' => $replays["{$player->id}:{$value}"] ?? null,
             ];
         }

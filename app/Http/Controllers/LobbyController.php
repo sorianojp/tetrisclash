@@ -74,7 +74,7 @@ class LobbyController extends Controller
     }
 
     /**
-     * @return Collection<int, array{id: int, name: string, rating: int, wins: int, losses: int, rank: array{rank: int, title: string, xp: int, xpIntoRank: int, xpForNext: int|null}, autopilot: bool}>
+     * @return Collection<int, array{id: int, name: string, rating: int, wins: int, losses: int, rank: array{rank: int, title: string, xp: int, xpIntoRank: int, xpForNext: int|null}}>
      */
     private function leaderboard(): Collection
     {
@@ -83,7 +83,7 @@ class LobbyController extends Controller
             ->where(fn ($query) => $query->where('wins', '>', 0)->orWhere('losses', '>', 0))
             ->orderByDesc('rating')
             ->limit(10)
-            ->get(['id', 'name', 'rating', 'wins', 'losses', 'xp', 'autopilot'])
+            ->get(['id', 'name', 'rating', 'wins', 'losses', 'xp'])
             ->map(fn (User $player) => [
                 'id' => $player->id,
                 'name' => $player->name,
@@ -91,7 +91,6 @@ class LobbyController extends Controller
                 'wins' => $player->wins,
                 'losses' => $player->losses,
                 'rank' => $player->rankProgress(),
-                'autopilot' => $player->isAutopilot(),
             ]);
     }
 }

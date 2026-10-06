@@ -36,7 +36,7 @@ export function AutopilotBar({
             </span>
             <div className="flex min-w-0 flex-col leading-tight">
                 <span className="text-[10px] font-black tracking-[0.2em] text-cyan-300 uppercase">
-                    Live bot{autopilot.running ? '' : ' · paused'}
+                    Autopilot{autopilot.running ? '' : ' · paused'}
                 </span>
                 <span className="truncate text-sm font-bold">
                     {autopilot.running ? status : 'Autopilot is off'}

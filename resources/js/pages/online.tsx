@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { InviteToggle } from '@/components/tetris/invite-toggle';
-import { LiveBotTag } from '@/components/tetris/live-bot-tag';
 import { PageHeader } from '@/components/tetris/page-header';
 import { RankEmblem, rankTier } from '@/components/tetris/rank-emblem';
 import type { RankProgress } from '@/components/tetris/rank-badge';
@@ -40,7 +39,6 @@ type OnlinePlayer = {
     rating: number;
     rank: RankProgress;
     acceptsInvites: boolean;
-    autopilot: boolean;
     inMatch: boolean;
     /** Their live duel, when they're in one. */
     duelId: number | null;
@@ -230,7 +228,6 @@ export default function Online({
                                         >
                                             {player.name}
                                         </Link>
-                                        {player.autopilot && <LiveBotTag />}
                                         <p className="truncate text-sm font-bold">
                                             {player.rank.title}{' '}
                                             {rankTier(

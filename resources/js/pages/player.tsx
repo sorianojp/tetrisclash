@@ -12,7 +12,6 @@ import { AchievementList } from '@/components/tetris/achievement-list';
 import type { AchievementStatus } from '@/components/tetris/achievement-list';
 import { DuelHistory } from '@/components/tetris/duel-history';
 import type { DuelSummary } from '@/components/tetris/duel-history';
-import { LiveBotTag } from '@/components/tetris/live-bot-tag';
 import { PlayerEmblem } from '@/components/tetris/player-emblem';
 import { RankProgressBar } from '@/components/tetris/rank-badge';
 import type { RankProgress } from '@/components/tetris/rank-badge';
@@ -44,7 +43,6 @@ type Props = {
         wins: number;
         losses: number;
         rank: RankProgress;
-        autopilot: boolean;
     };
     records: PracticeRecords;
     /** All-time leaderboard position per mode. */
@@ -106,7 +104,6 @@ export default function Player({
                                 {player.name}
                             </h1>
                             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-indigo-200">
-                                {player.autopilot && <LiveBotTag />}
                                 {player.joinedAt && (
                                     <span>Playing since {player.joinedAt}</span>
                                 )}

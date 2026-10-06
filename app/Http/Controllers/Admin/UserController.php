@@ -178,8 +178,7 @@ class UserController extends Controller
 
     /**
      * Put an account on autopilot (or take it off). Its browser then plays ranked and Zen on
-     * its own, and it's tagged LIVE BOT everywhere. It can't answer invites, so it stops
-     * taking them.
+     * its own. It can't answer invites, so it stops taking them.
      */
     public function updateAutopilot(Request $request, User $user): RedirectResponse
     {

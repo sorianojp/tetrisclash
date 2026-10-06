@@ -121,8 +121,8 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
-     * Played by its own browser on autopilot (a livestream account). Unlike a bot, everyone
-     * can see it: it's tagged LIVE BOT wherever it shows up.
+     * Played by its own browser on autopilot (a livestream account). Only admins and the
+     * account itself know; to everyone else it's a regular player.
      */
     public function isAutopilot(): bool
     {

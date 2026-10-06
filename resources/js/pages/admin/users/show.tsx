@@ -472,8 +472,8 @@ function AutopilotCard({ user }: { user: Props['user'] }) {
                 <CardDescription>
                     For livestreams: once switched on here, the account can
                     start autopilot from its lobby. It plays ranked while it has
-                    energy and Zen while energy refills, and everyone sees it
-                    tagged LIVE BOT. It stops taking invites.
+                    energy and Zen while energy refills. It stops taking
+                    invites. Other players aren't told.
                 </CardDescription>
             </CardHeader>
             <CardContent>

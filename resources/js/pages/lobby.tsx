@@ -21,7 +21,6 @@ import { ControlsLegend } from '@/components/tetris/controls-legend';
 import { DuelHistory } from '@/components/tetris/duel-history';
 import { EnergyMeter, liveEnergy } from '@/components/tetris/energy-meter';
 import type { EnergyStatus } from '@/components/tetris/energy-meter';
-import { LiveBotTag } from '@/components/tetris/live-bot-tag';
 import { OnlineNow } from '@/components/tetris/online-now';
 import { PracticeLeaderboard } from '@/components/tetris/practice-leaderboard';
 import type { PracticeBoards } from '@/components/tetris/practice-leaderboard';
@@ -78,7 +77,6 @@ type Props = {
         wins: number;
         losses: number;
         rank: RankProgress;
-        autopilot: boolean;
     }[];
     practiceLeaderboards: PracticeBoards;
     recentDuels: DuelSummary[];
@@ -428,7 +426,6 @@ export default function Lobby({
                             <h2 className="min-w-0 flex-1 truncate text-lg font-black tracking-tight">
                                 {user.name}
                             </h2>
-                            {user.autopilot && <LiveBotTag />}
                             <span className="text-[11px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
                                 Your rank
                             </span>
@@ -527,7 +524,6 @@ export default function Lobby({
                                             >
                                                 {player.name}
                                             </Link>
-                                            {player.autopilot && <LiveBotTag />}
                                             <RankBadge
                                                 progress={player.rank}
                                                 compact

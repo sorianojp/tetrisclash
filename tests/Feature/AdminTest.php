@@ -180,7 +180,7 @@ test('an admin can set rating, xp and energy', function () {
     $this->actingAs(admin())->patch(route('admin.users.energy', $player), ['energy' => Energy::max() + 1])->assertSessionHasErrors('energy');
 });
 
-test('an admin can put an account on autopilot, which tags it for everyone', function () {
+test('an admin can put an account on autopilot, which other players are not told', function () {
     $streamer = User::factory()->create(['rating' => 1800]);
 
     $this->actingAs(User::factory()->create())->patch(route('admin.users.autopilot', $streamer), ['autopilot' => true])->assertForbidden();
@@ -189,7 +189,7 @@ test('an admin can put an account on autopilot, which tags it for everyone', fun
     expect($streamer->fresh())->autopilot->toBeTrue()->accepts_invites->toBeFalse()->rating->toBe(1800);
 
     $this->actingAs(User::factory()->create())->get(route('players.show', $streamer))
-        ->assertInertia(fn (Assert $page) => $page->where('player.autopilot', true));
+        ->assertInertia(fn (Assert $page) => $page->missing('player.autopilot'));
 
     // Its browser needs energy on the practice page, to know when to go back to ranked.
     $this->actingAs($streamer->fresh())->get(route('practice'))
