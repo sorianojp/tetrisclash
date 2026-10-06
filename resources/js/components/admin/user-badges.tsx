@@ -6,6 +6,7 @@ export function UserBadges({
     user: {
         isAdmin: boolean;
         isBot: boolean;
+        autopilot?: boolean;
         banned: boolean;
         verified: boolean;
     };
@@ -14,6 +15,7 @@ export function UserBadges({
         <>
             {user.isAdmin && <Badge variant="secondary">Admin</Badge>}
             {user.isBot && <Badge variant="outline">Bot</Badge>}
+            {user.autopilot && <Badge variant="outline">Live bot</Badge>}
             {user.banned && <Badge variant="destructive">Banned</Badge>}
             {!user.verified && <Badge variant="outline">Unverified</Badge>}
         </>

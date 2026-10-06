@@ -8,18 +8,19 @@ type Step = { at: number; run: () => void };
 /**
  * A bot at the controls of one game: it plans each piece and plays it out as timed key
  * presses at its own pace. Time is whatever clock the caller passes in: real time in a duel,
- * simulated time in practice.
+ * simulated time in practice. It makes its own game, or takes over one that already exists
+ * (an autopilot account's game on the page).
  */
 export class BotPlayer {
     readonly game: Game;
     private steps: Step[] = [];
 
     constructor(
-        options: GameOptions,
+        options: GameOptions | Game,
         private readonly style: BotStyle,
         private readonly random: () => number = Math.random,
     ) {
-        this.game = new Game(options);
+        this.game = options instanceof Game ? options : new Game(options);
     }
 
     /** Run the key presses that are due; plan the next piece when there's nothing queued. */

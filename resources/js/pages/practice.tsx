@@ -3,9 +3,12 @@ import { Crown, RotateCcw, Swords } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { toast } from 'sonner';
+import { AutopilotBar } from '@/components/tetris/autopilot-bar';
 import { ClearCallout, describeClear } from '@/components/tetris/clear-callout';
 import type { Callout } from '@/components/tetris/clear-callout';
 import { ControlsLegend } from '@/components/tetris/controls-legend';
+import { liveEnergy } from '@/components/tetris/energy-meter';
+import type { EnergyStatus } from '@/components/tetris/energy-meter';
 import { FieldOverlay } from '@/components/tetris/field-overlay';
 import { PracticeLeaderboard } from '@/components/tetris/practice-leaderboard';
 import type { PracticeBoards } from '@/components/tetris/practice-leaderboard';
@@ -22,6 +25,11 @@ import { formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { dashboard, practice, register } from '@/routes';
 import { records as recordsRoute } from '@/routes/practice';
+import {
+    AUTOPILOT_PAUSE_MS,
+    useAutopilot,
+    useAutopilotDriver,
+} from '@/tetris/autopilot';
 import type { GameStats } from '@/tetris/engine';
 import {
     DIG_ROWS,
@@ -89,12 +97,22 @@ function recordValue(
 export default function Practice({
     records: initialRecords,
     leaderboards,
+    energy,
+    serverNow,
 }: {
     records: PracticeRecords;
     leaderboards: PracticeBoards;
+    /** Only for autopilot accounts, which head back to ranked once it's full. */
+    energy: EnergyStatus | null;
+    serverNow: number;
 }) {
     const { auth } = usePage().props;
-    const [mode, setMode] = useState<Mode>('sprint');
+    const autopilot = useAutopilot();
+    const [clockOffset] = useState(() => serverNow - Date.now());
+    // Autopilot only ever practices Zen.
+    const [mode, setMode] = useState<Mode>(() =>
+        autopilot.running ? 'zen' : 'sprint',
+    );
     const [seed, setSeed] = useState(newSeed);
     const [phase, setPhase] = useState<Phase>('countdown');
     const [countdownEndsAt, setCountdownEndsAt] = useState(
@@ -220,6 +238,8 @@ export default function Practice({
         },
     });
 
+    useAutopilotDriver(gameRef, autopilot.running, phase === 'playing');
+
     const restart = (nextMode: Mode = mode) => {
         setMode(nextMode);
         setSeed(newSeed());
@@ -287,6 +307,31 @@ export default function Practice({
 
         return () => window.removeEventListener('keydown', onKey);
     });
+
+    const energyNow = energy ? liveEnergy(energy, now + clockOffset) : null;
+    const energyFull = energyNow !== null && energyNow.current >= energy!.max;
+
+    // Autopilot: Zen, run after run, until energy is full again; then back to ranked.
+    useEffect(() => {
+        if (!autopilot.running) {
+            return;
+        }
+
+        if (energyFull) {
+            router.visit(dashboard());
+
+            return;
+        }
+
+        if (mode !== 'zen') {
+            restart('zen');
+        } else if (phase === 'done') {
+            const next = setTimeout(() => restart('zen'), AUTOPILOT_PAUSE_MS);
+
+            return () => clearTimeout(next);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [autopilot.running, energyFull, mode, phase]);
 
     /** The headline number of a run: its time or its score. */
     const resultValue = (finished: Result) =>
@@ -534,6 +579,15 @@ export default function Practice({
                     </aside>
                 </div>
             </div>
+
+            <AutopilotBar
+                status="Zen while energy refills"
+                energy={
+                    energyNow && energy
+                        ? { ...energyNow, max: energy.max }
+                        : undefined
+                }
+            />
         </>
     );
 }

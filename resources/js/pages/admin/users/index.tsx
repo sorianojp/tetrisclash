@@ -25,6 +25,7 @@ type AdminUser = {
     verified: boolean;
     isAdmin: boolean;
     isBot: boolean;
+    autopilot: boolean;
     banned: boolean;
     lastSeen: string | null;
     joined: string | null;

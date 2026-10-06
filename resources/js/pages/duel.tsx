@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { AutopilotBar } from '@/components/tetris/autopilot-bar';
 import { ClearCallout, describeClear } from '@/components/tetris/clear-callout';
 import type { Callout } from '@/components/tetris/clear-callout';
 import {
@@ -24,6 +25,7 @@ import {
     useShownEmote,
 } from '@/components/tetris/emotes';
 import { FieldOverlay } from '@/components/tetris/field-overlay';
+import { LiveBotTag } from '@/components/tetris/live-bot-tag';
 import { OpponentField } from '@/components/tetris/opponent-field';
 import type { OpponentView } from '@/components/tetris/opponent-field';
 import { PlayerPlate } from '@/components/tetris/player-plate';
@@ -45,6 +47,11 @@ import { dashboard } from '@/routes';
 import { forfeit, heartbeat, ko, replay as duelReplay } from '@/routes/duels';
 import { store as storeReplay } from '@/routes/duels/replay';
 import { show as showTournament } from '@/routes/tournaments';
+import {
+    AUTOPILOT_PAUSE_MS,
+    useAutopilot,
+    useAutopilotDriver,
+} from '@/tetris/autopilot';
 import { launchAttack, pointIn } from '@/tetris/projectiles';
 import { PLAYER_LAYOUT } from '@/tetris/render';
 import { ReplayRecorder, encodeReplay } from '@/tetris/replay';
@@ -84,6 +91,7 @@ type Player = {
     rank: RankProgress;
     wins: number;
     losses: number;
+    autopilot: boolean;
 };
 
 type Props = {
@@ -114,6 +122,9 @@ export type BoardWhisper = { s: string; p: number; l: number; c?: number };
 const BOARD_COUNTDOWN_MS = 3000;
 const INTRO_MS = 5000;
 const INTRO_FADE_MS = 350;
+
+/** If the result still hasn't come this long after time's up, autopilot moves on anyway. */
+const AUTOPILOT_GIVE_UP_MS = 60_000;
 
 /** How long the board stays frozen after being topped out. */
 const KO_PAUSE_MS = 1500;
@@ -265,6 +276,13 @@ export default function Duel({
             },
         },
     });
+
+    const autopilot = useAutopilot();
+    useAutopilotDriver(
+        gameRef,
+        autopilot.running,
+        phase === 'playing' && !knockedOut,
+    );
 
     /** Fly an attack orb between the two boards. */
     const fireAttack = (lines: number, direction: 'outgoing' | 'incoming') => {
@@ -558,6 +576,28 @@ export default function Duel({
 
         return () => window.removeEventListener('keydown', onKey);
     });
+
+    // Autopilot: say GG, give the result a moment on screen, then back to the lobby (which
+    // queues again, or heads to Zen when energy is out).
+    const stuck = phase === 'timeup' && clock - endsAt > AUTOPILOT_GIVE_UP_MS;
+
+    useEffect(() => {
+        if (!autopilot.running || (phase !== 'finished' && !stuck)) {
+            return;
+        }
+
+        const gg = setTimeout(() => sendEmote(0), 1200);
+        const next = setTimeout(
+            () => router.visit(dashboard()),
+            AUTOPILOT_PAUSE_MS * 1.5,
+        );
+
+        return () => {
+            clearTimeout(gg);
+            clearTimeout(next);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [autopilot.running, phase, stuck]);
 
     const surrender = () => {
         if (!confirmForfeit) {
@@ -927,6 +967,14 @@ export default function Duel({
                     progress={Math.min(1, introLeft / INTRO_MS)}
                 />
             )}
+
+            <AutopilotBar
+                status={
+                    phase === 'finished'
+                        ? 'Match over: back to the lobby'
+                        : `${modeLabel} vs ${opponent.name}`
+                }
+            />
         </>
     );
 }
@@ -1177,6 +1225,7 @@ function ScoreSide({
             <span className="w-full truncate text-sm font-bold">
                 {player.name}
             </span>
+            {player.autopilot && <LiveBotTag />}
         </div>
     );
 }

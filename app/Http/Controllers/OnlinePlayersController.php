@@ -52,7 +52,7 @@ class OnlinePlayersController extends Controller
             // where `rating - ?` fails outright for anyone rated below the viewer.
             ->orderByRaw('CASE WHEN rating >= ? THEN rating - ? ELSE ? - rating END', array_fill(0, 3, $user->rating))
             ->orderBy('name')
-            ->paginate(self::PER_PAGE, ['id', 'name', 'rating', 'xp', 'accepts_invites'])
+            ->paginate(self::PER_PAGE, ['id', 'name', 'rating', 'xp', 'accepts_invites', 'autopilot'])
             ->withQueryString();
 
         $inMatch = self::playersInMatch($players->getCollection()->pluck('id'));
@@ -64,6 +64,7 @@ class OnlinePlayersController extends Controller
                 'rating' => $player->rating,
                 'rank' => $player->rankProgress(),
                 'acceptsInvites' => $player->accepts_invites,
+                'autopilot' => $player->isAutopilot(),
                 'inMatch' => $inMatch->has($player->id),
                 'duelId' => $inMatch->get($player->id),
             ]),

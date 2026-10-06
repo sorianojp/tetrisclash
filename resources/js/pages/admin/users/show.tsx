@@ -2,6 +2,7 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
     Ban,
     BatteryCharging,
+    Bot,
     ExternalLink,
     Eye,
     Film,
@@ -33,6 +34,7 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { destroy as deleteRun } from '@/routes/admin/practice/runs';
 import {
+    autopilot as setAutopilot,
     ban,
     energy as setEnergy,
     index as usersIndex,
@@ -63,6 +65,7 @@ type Props = {
         verified: boolean;
         isAdmin: boolean;
         isBot: boolean;
+        autopilot: boolean;
         ban: { at: string | null; reason: string | null } | null;
         joined: string | null;
         lastSeen: string | null;
@@ -151,6 +154,7 @@ export default function AdminUser({
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <StatsCard user={user} />
                     <EnergyCard user={user} />
+                    {!user.isBot && <AutopilotCard user={user} />}
                 </div>
 
                 <Card>
@@ -447,6 +451,40 @@ function EnergyCard({ user }: { user: Props['user'] }) {
                     onClick={() => set(user.energy.max)}
                 >
                     <BatteryCharging /> Refill
+                </Button>
+            </CardContent>
+        </Card>
+    );
+}
+
+function AutopilotCard({ user }: { user: Props['user'] }) {
+    const set = (on: boolean) =>
+        router.patch(
+            setAutopilot(user.id).url,
+            { autopilot: on },
+            { preserveScroll: true },
+        );
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Autopilot</CardTitle>
+                <CardDescription>
+                    For livestreams: once switched on here, the account can
+                    start autopilot from its lobby. It plays ranked while it has
+                    energy and Zen while energy refills, and everyone sees it
+                    tagged LIVE BOT. It stops taking invites.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Button
+                    variant={user.autopilot ? 'destructive' : 'secondary'}
+                    onClick={() => set(!user.autopilot)}
+                >
+                    <Bot />
+                    {user.autopilot
+                        ? 'Turn autopilot off'
+                        : 'Turn autopilot on'}
                 </Button>
             </CardContent>
         </Card>

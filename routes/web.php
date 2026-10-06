@@ -80,6 +80,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::delete('users/{user}/ban', [AdminUserController::class, 'unban'])->name('users.unban');
     Route::patch('users/{user}/stats', [AdminUserController::class, 'updateStats'])->name('users.stats');
     Route::patch('users/{user}/energy', [AdminUserController::class, 'updateEnergy'])->name('users.energy');
+    Route::patch('users/{user}/autopilot', [AdminUserController::class, 'updateAutopilot'])->name('users.autopilot');
     Route::post('users/{user}/achievements', [AdminUserController::class, 'grantAchievement'])->name('users.achievements.store');
     Route::delete('users/{user}/achievements/{key}', [AdminUserController::class, 'revokeAchievement'])->name('users.achievements.destroy');
     Route::delete('users/{user}/records/{mode}', [AdminUserController::class, 'resetRecord'])->name('users.records.destroy');

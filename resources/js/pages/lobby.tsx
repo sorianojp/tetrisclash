@@ -16,10 +16,12 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { AutopilotBar } from '@/components/tetris/autopilot-bar';
 import { ControlsLegend } from '@/components/tetris/controls-legend';
 import { DuelHistory } from '@/components/tetris/duel-history';
 import { EnergyMeter, liveEnergy } from '@/components/tetris/energy-meter';
 import type { EnergyStatus } from '@/components/tetris/energy-meter';
+import { LiveBotTag } from '@/components/tetris/live-bot-tag';
 import { OnlineNow } from '@/components/tetris/online-now';
 import { PracticeLeaderboard } from '@/components/tetris/practice-leaderboard';
 import type { PracticeBoards } from '@/components/tetris/practice-leaderboard';
@@ -53,6 +55,7 @@ import { show as showDuel } from '@/routes/duels';
 import { join, leave } from '@/routes/matchmaking';
 import { show as showPlayer } from '@/routes/players';
 import { show as showTournament } from '@/routes/tournaments';
+import { AUTOPILOT_PAUSE_MS, useAutopilot } from '@/tetris/autopilot';
 import {
     PRACTICE_MODES,
     RECORD_MODES,
@@ -75,6 +78,7 @@ type Props = {
         wins: number;
         losses: number;
         rank: RankProgress;
+        autopilot: boolean;
     }[];
     practiceLeaderboards: PracticeBoards;
     recentDuels: DuelSummary[];
@@ -91,6 +95,9 @@ const OUT_OF_ENERGY =
 /** Re-join the queue this often so the server knows we're still searching. */
 const QUEUE_REFRESH_MS = 5000;
 
+/** A long-running autopilot tab starts fresh every so often (from here, between matches). */
+const AUTOPILOT_RELOAD_AFTER_MS = 3 * 60 * 60 * 1000;
+
 export default function Lobby({
     stats,
     leaderboard,
@@ -103,6 +110,7 @@ export default function Lobby({
     serverNow,
 }: Props) {
     const user = useUser();
+    const autopilot = useAutopilot();
     const [searching, setSearching] = useState(false);
     const [searchStartedAt, setSearchStartedAt] = useState(0);
     /** Rating gap the server currently accepts for us; null = any opponent. */
@@ -139,6 +147,8 @@ export default function Lobby({
         } else if (response.inTournament) {
             searchingRef.current = false;
             setSearching(false);
+            // Bracket matches need a person to show up for them; hand back the controls.
+            autopilot.stop();
             toast.info(
                 "You're still in a tournament. Your next match starts on its own.",
                 {
@@ -221,6 +231,29 @@ export default function Lobby({
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // Autopilot: rejoin a match in progress, queue for ranked while there's energy, and
+    // practice Zen while it refills.
+    useEffect(() => {
+        if (!autopilot.running || searching) {
+            return;
+        }
+
+        const next = setTimeout(() => {
+            if (activeDuelId) {
+                goToDuel(activeDuelId);
+            } else if (performance.now() > AUTOPILOT_RELOAD_AFTER_MS) {
+                window.location.assign(dashboard().url);
+            } else if (hasEnergy) {
+                startSearch();
+            } else {
+                router.visit(practice({ query: { mode: 'zen' } }));
+            }
+        }, AUTOPILOT_PAUSE_MS / 2);
+
+        return () => clearTimeout(next);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [autopilot.running, searching, hasEnergy, activeDuelId]);
 
     /** Open a challenge link; the server sends us to its page to share it. */
     const challenge = (mode: 'battle' | 'race') =>
@@ -395,6 +428,7 @@ export default function Lobby({
                             <h2 className="min-w-0 flex-1 truncate text-lg font-black tracking-tight">
                                 {user.name}
                             </h2>
+                            {user.autopilot && <LiveBotTag />}
                             <span className="text-[11px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
                                 Your rank
                             </span>
@@ -493,6 +527,7 @@ export default function Lobby({
                                             >
                                                 {player.name}
                                             </Link>
+                                            {player.autopilot && <LiveBotTag />}
                                             <RankBadge
                                                 progress={player.rank}
                                                 compact
@@ -574,6 +609,17 @@ export default function Lobby({
                     </div>
                 </div>
             </div>
+
+            <AutopilotBar
+                status={
+                    searching
+                        ? 'Ranked: searching for an opponent'
+                        : hasEnergy
+                          ? 'Ranked: finding the next match'
+                          : 'Out of energy: off to Zen'
+                }
+                energy={{ ...liveEnergyNow, max: energy.max }}
+            />
         </>
     );
 }

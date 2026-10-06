@@ -27,6 +27,7 @@ class DuelController extends Controller
             'rank' => $player->rankProgress(),
             'wins' => $player->wins,
             'losses' => $player->losses,
+            'autopilot' => $player->isAutopilot(),
         ];
 
         return Inertia::render('duel', [
@@ -78,6 +79,7 @@ class DuelController extends Controller
             'name' => $player->name,
             'rating' => $player->rating,
             'rank' => $player->rankProgress(),
+            'autopilot' => $player->isAutopilot(),
         ];
 
         return Inertia::render('watch', [

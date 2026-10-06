@@ -58,6 +58,7 @@ class UserController extends Controller
                 'verified' => $user->email_verified_at !== null,
                 'isAdmin' => $user->isAdmin(),
                 'isBot' => $user->isBot(),
+                'autopilot' => $user->isAutopilot(),
                 'banned' => $user->isBanned(),
                 'lastSeen' => $user->last_seen_at?->diffForHumans(),
                 'joined' => $user->created_at?->diffForHumans(),
@@ -81,6 +82,7 @@ class UserController extends Controller
                 'verified' => $user->email_verified_at !== null,
                 'isAdmin' => $user->isAdmin(),
                 'isBot' => $user->isBot(),
+                'autopilot' => $user->isAutopilot(),
                 'ban' => $user->isBanned() ? [
                     'at' => $user->banned_at?->toDayDateTimeString(),
                     'reason' => $user->ban_reason,
@@ -172,6 +174,24 @@ class UserController extends Controller
             : ['energy' => $amount, 'energy_updated_at' => now()])->save();
 
         return $this->done(__('Energy set to :amount.', ['amount' => $amount]));
+    }
+
+    /**
+     * Put an account on autopilot (or take it off). Its browser then plays ranked and Zen on
+     * its own, and it's tagged LIVE BOT everywhere. It can't answer invites, so it stops
+     * taking them.
+     */
+    public function updateAutopilot(Request $request, User $user): RedirectResponse
+    {
+        abort_if($user->isBot(), 422, 'Bots are played by the bot runner.');
+
+        $on = $request->validate([
+            'autopilot' => ['required', 'boolean'],
+        ])['autopilot'];
+
+        $user->forceFill($on ? ['autopilot' => true, 'accepts_invites' => false] : ['autopilot' => false])->save();
+
+        return $this->done($on ? __('Autopilot on.') : __('Autopilot off.'));
     }
 
     public function grantAchievement(Request $request, User $user): RedirectResponse

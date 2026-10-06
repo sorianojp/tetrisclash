@@ -50,6 +50,9 @@ class LobbyController extends Controller
         return Inertia::render('practice', [
             'records' => $user?->practiceRecords() ?? array_map(fn () => null, User::PRACTICE_RECORDS),
             'leaderboards' => PracticeLeaderboards::all($user),
+            // Autopilot practices Zen while energy refills, and goes back to ranked once it's full.
+            'energy' => $user?->isAutopilot() ? $user->energyStatus() : null,
+            'serverNow' => now()->getTimestampMs(),
         ])->withViewData(['meta' => [
             'title' => 'Play Tetris online: sprint, ultra, dig and more',
             'description' => 'Play free Tetris practice modes in your browser, no sign-up needed: 40-line sprint, 2-minute ultra, dig, survival and zen. Beat the leaderboard times.',
@@ -71,7 +74,7 @@ class LobbyController extends Controller
     }
 
     /**
-     * @return Collection<int, array{id: int, name: string, rating: int, wins: int, losses: int, rank: array{rank: int, title: string, xp: int, xpIntoRank: int, xpForNext: int|null}}>
+     * @return Collection<int, array{id: int, name: string, rating: int, wins: int, losses: int, rank: array{rank: int, title: string, xp: int, xpIntoRank: int, xpForNext: int|null}, autopilot: bool}>
      */
     private function leaderboard(): Collection
     {
@@ -80,7 +83,7 @@ class LobbyController extends Controller
             ->where(fn ($query) => $query->where('wins', '>', 0)->orWhere('losses', '>', 0))
             ->orderByDesc('rating')
             ->limit(10)
-            ->get(['id', 'name', 'rating', 'wins', 'losses', 'xp'])
+            ->get(['id', 'name', 'rating', 'wins', 'losses', 'xp', 'autopilot'])
             ->map(fn (User $player) => [
                 'id' => $player->id,
                 'name' => $player->name,
@@ -88,6 +91,7 @@ class LobbyController extends Controller
                 'wins' => $player->wins,
                 'losses' => $player->losses,
                 'rank' => $player->rankProgress(),
+                'autopilot' => $player->isAutopilot(),
             ]);
     }
 }

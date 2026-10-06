@@ -1,4 +1,5 @@
 import { Flag, Swords } from 'lucide-react';
+import { LiveBotTag } from '@/components/tetris/live-bot-tag';
 import { RankProgressBar } from '@/components/tetris/rank-badge';
 import { RankEmblem, rankTier } from '@/components/tetris/rank-emblem';
 import type { RankProgress } from '@/components/tetris/rank-badge';
@@ -12,6 +13,7 @@ type Player = {
     rank: RankProgress;
     wins: number;
     losses: number;
+    autopilot?: boolean;
 };
 
 /** Each side's colours: you in amber, the opponent in rose, like the board glows. */
@@ -165,6 +167,7 @@ function PlayerCard({
                     >
                         {player.name}
                     </h2>
+                    {player.autopilot && <LiveBotTag className="text-xs" />}
                     {/* The rank, front and centre: badge, number and title. */}
                     <div className="flex items-center gap-2 rounded-xl bg-white/5 py-1 pr-3 pl-1 ring-1 ring-white/10">
                         <RankEmblem

@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import { Film } from 'lucide-react';
 import { useState } from 'react';
+import { LiveBotTag } from '@/components/tetris/live-bot-tag';
 import { RankBadge } from '@/components/tetris/rank-badge';
 import type { RankProgress } from '@/components/tetris/rank-badge';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -21,6 +22,7 @@ export type PracticeBoard = {
         rank: RankProgress;
         /** The recorded run behind this result, when there is one. */
         replayId: number | null;
+        autopilot: boolean;
     }[];
     /** The viewer's standing, or null without a result on this board. */
     you: { position: number; value: number } | null;
@@ -95,6 +97,7 @@ export function PracticeLeaderboard({
                             >
                                 {entry.name}
                             </Link>
+                            {entry.autopilot && <LiveBotTag />}
                             <span className="font-semibold tabular-nums">
                                 {formatRecord(mode, entry.value)}
                             </span>

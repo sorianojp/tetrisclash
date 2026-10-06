@@ -9,6 +9,8 @@ export type User = {
     piece_theme?: string;
     board_skin?: string;
     is_admin?: boolean;
+    /** Plays itself on a livestream (see resources/js/tetris/autopilot.ts). */
+    autopilot?: boolean;
     created_at: string;
     updated_at: string;
     [key: string]: unknown;

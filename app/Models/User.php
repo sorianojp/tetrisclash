@@ -53,6 +53,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property CarbonImmutable|null $banned_at
  * @property string|null $ban_reason
  * @property CarbonImmutable|null $bot_paused_at
+ * @property bool $autopilot
  */
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'bot_key'])]
@@ -73,6 +74,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         'piece_theme' => 'classic',
         'board_skin' => 'midnight',
         'is_admin' => false,
+        'autopilot' => false,
     ];
 
     /**
@@ -116,6 +118,15 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function scopeBots(Builder $query): void
     {
         $query->whereNotNull('bot_key');
+    }
+
+    /**
+     * Played by its own browser on autopilot (a livestream account). Unlike a bot, everyone
+     * can see it: it's tagged LIVE BOT wherever it shows up.
+     */
+    public function isAutopilot(): bool
+    {
+        return $this->autopilot;
     }
 
     public function isAdmin(): bool
@@ -251,6 +262,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'is_admin' => 'boolean',
             'banned_at' => 'datetime',
             'bot_paused_at' => 'datetime',
+            'autopilot' => 'boolean',
         ];
     }
 }
