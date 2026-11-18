@@ -581,7 +581,6 @@ export default function Practice({
             </div>
 
             <AutopilotBar
-                status="Zen while energy refills"
                 energy={
                     energyNow && energy
                         ? { ...energyNow, max: energy.max }

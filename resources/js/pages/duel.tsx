@@ -966,13 +966,7 @@ export default function Duel({
                 />
             )}
 
-            <AutopilotBar
-                status={
-                    phase === 'finished'
-                        ? 'Match over: back to the lobby'
-                        : `${modeLabel} vs ${opponent.name}`
-                }
-            />
+            <AutopilotBar />
         </>
     );
 }

@@ -606,16 +606,7 @@ export default function Lobby({
                 </div>
             </div>
 
-            <AutopilotBar
-                status={
-                    searching
-                        ? 'Ranked: searching for an opponent'
-                        : hasEnergy
-                          ? 'Ranked: finding the next match'
-                          : 'Out of energy: off to Zen'
-                }
-                energy={{ ...liveEnergyNow, max: energy.max }}
-            />
+            <AutopilotBar energy={{ ...liveEnergyNow, max: energy.max }} />
         </>
     );
 }
